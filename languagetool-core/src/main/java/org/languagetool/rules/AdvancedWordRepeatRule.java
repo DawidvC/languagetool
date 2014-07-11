@@ -1,4 +1,4 @@
-/* LanguageTool, a natural language style checker 
+/* LanguageTool, a natural language style checker
  * Copyright (C) 2005 Daniel Naber (http://www.danielnaber.de)
  * 
  * This library is free software; you can redistribute it and/or
@@ -18,18 +18,19 @@
  */
 package org.languagetool.rules;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ResourceBundle;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.languagetool.AnalyzedSentence;
 import org.languagetool.AnalyzedToken;
 import org.languagetool.AnalyzedTokenReadings;
 import org.languagetool.JLanguageTool;
 import org.languagetool.tools.StringTools;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.ResourceBundle;
-import java.util.TreeSet;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Rule for detecting same words in the sentence but not just in a row
@@ -43,9 +44,10 @@ public abstract class AdvancedWordRepeatRule extends Rule {
       super.setCategory(new Category(messages.getString("category_misc")));
     }
     setDefaultOff();
+    setLocQualityIssueType(ITSIssueType.Style);
   }
-  
-  protected abstract Pattern getExcludedWordsPattern();
+
+  protected abstract Set<String> getExcludedWordsPattern();
   protected abstract Pattern getExcludedNonWordsPattern();
   protected abstract Pattern getExcludedPos();
   protected abstract String getMessage();
@@ -55,11 +57,11 @@ public abstract class AdvancedWordRepeatRule extends Rule {
    * Tests if any word form is repeated in the sentence.
    */
   @Override
-  public final RuleMatch[] match(final AnalyzedSentence text) {
+  public final RuleMatch[] match(final AnalyzedSentence sentence) {
     final List<RuleMatch> ruleMatches = new ArrayList<>();
-    final AnalyzedTokenReadings[] tokens = text.getTokensWithoutWhitespace();
+    final AnalyzedTokenReadings[] tokens = sentence.getTokensWithoutWhitespace();
     boolean repetition = false;
-    final TreeSet<String> inflectedWords = new TreeSet<>();
+    final Set<String> inflectedWords = new TreeSet<>();
     String prevLemma;
     int curToken = 0;
     // start from real token, 0 = SENT_START
@@ -86,8 +88,8 @@ public abstract class AdvancedWordRepeatRule extends Rule {
             hasLemma = false;
             break;
           }
-          final Matcher m1 = getExcludedWordsPattern().matcher(lemma);
-          if (m1.matches()) {
+
+          if (getExcludedWordsPattern().contains(lemma)) {
             isWord = false;
             break;
           }
@@ -104,7 +106,7 @@ public abstract class AdvancedWordRepeatRule extends Rule {
       }
 
       final Matcher m1 = getExcludedNonWordsPattern().matcher(tokens[i].getToken());
-      if (m1.matches()) {
+      if (isWord && m1.matches()) {
         isWord = false;
       }
 
@@ -141,7 +143,7 @@ public abstract class AdvancedWordRepeatRule extends Rule {
       if (repetition) {
         final int pos = tokens[i].getStartPos();
         final RuleMatch ruleMatch = new RuleMatch(this, pos, pos
-                + token.length(), getMessage(), getShortMessage());
+            + token.length(), getMessage(), getShortMessage());
         ruleMatches.add(ruleMatch);
         repetition = false;
       }

@@ -39,15 +39,15 @@ public class ManualSynthesizerAdapter extends BaseSynthesizer implements Synthes
   }
 
   @Override
-  protected void initSynthesizer() throws IOException {
-    synthesizer = new IStemmer() { // null synthesiser 
+  protected IStemmer createStemmer() {
+    return new IStemmer() { // null synthesiser 
       @Override
       public List<WordData> lookup(CharSequence word) {
         return new ArrayList<>();
       }
     };
   }
-
+  
   @Override
   protected void initPossibleTags() throws IOException {
     if (possibleTags == null) {

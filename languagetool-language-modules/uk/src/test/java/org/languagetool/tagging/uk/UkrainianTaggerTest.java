@@ -42,18 +42,29 @@ public class UkrainianTaggerTest extends TestCase {
   
   public void testTagger() throws IOException {
     TestTools.myAssert("300 р. до н. е.", 
-      "300/[300]numr -- р/[null]null -- до/[до]noun:n:nv|до/[до]pryim:rv_rod -- н/[null]null -- е/[null]null",
+      "300/[300]numr -- р/[р]todo -- до/[до]noun:n:nv|до/[до]pryim:rv_rod -- н/[null]null -- е/[null]null",
        tokenizer, tagger);
     
-  
+    // one-way case sensitivity
+    TestTools.myAssert("києві", "києві/[кий]noun:m:v_dav", tokenizer, tagger);
+    TestTools.myAssert("Києві", "Києві/[Київ]noun:m:v_mis|Києві/[кий]noun:m:v_dav", tokenizer, tagger);
+    TestTools.myAssert("віл", "віл/[віл]noun:m:v_naz:ist", tokenizer, tagger);
+    TestTools.myAssert("Віл", "Віл/[віл]noun:m:v_naz:ist", tokenizer, tagger);
+    TestTools.myAssert("ВІЛ", "ВІЛ/[ВІЛ]noun:nv|ВІЛ/[віл]noun:m:v_naz:ist", tokenizer, tagger);
+    TestTools.myAssert("далі", "далі/[далі]adv", tokenizer, tagger);
+    TestTools.myAssert("Далі", "Далі/[Даль]noun:m:v_mis:ist|Далі/[Далі]noun:m:nv|Далі/[далі]adv", tokenizer, tagger);
+    TestTools.myAssert("Бен", "Бен/[Бен]noun:m:v_naz:ist|Бен/[бен]todo", tokenizer, tagger);
+    TestTools.myAssert("бен", "бен/[бен]todo", tokenizer, tagger);
+
     TestTools.myAssert("Справу порушено судом", 
       "Справу/[справа]noun:f:v_zna -- порушено/[порушено]impers -- судом/[суд]noun:m:v_oru|судом/[судома]noun:p:v_rod",
        tokenizer, tagger);
        
     String expected = 
-      "Майже/[майже]todo -- два/[два]noun:m:v_naz|два/[два]noun:m:v_zna|два/[два]noun:n:v_naz|два/[два]noun:n:v_zna -- роки/[рік]noun:p:v_naz|роки/[рік]noun:p:v_zna -- тому/[той]pron|тому/[том]noun:m:v_dav|тому/[том]noun:m:v_rod"
+      "Майже/[майже]adv -- два/[два]numr:m:v_naz|два/[два]numr:m:v_zna|два/[два]numr:n:v_naz|два/[два]numr:n:v_zna -- роки/[рік]noun:p:v_naz|роки/[рік]noun:p:v_zna"
+    + " -- тому/[той]pron:m:v_dav|тому/[той]pron:m:v_mis|тому/[той]pron:n:v_dav|тому/[той]pron:n:v_mis|тому/[том]noun:m:v_dav|тому/[том]noun:m:v_mis|тому/[том]noun:m:v_rod"
     + " -- Люба/[Люба]noun:f:v_naz|Люба/[любий]adj:f:v_naz -- разом/[раз]noun:m:v_oru -- із/[із]pryim:rv_rod:rv_zna:rv_oru"
-    + " -- чоловіком/[чоловік]noun:m:v_oru -- Степаном/[Степан]noun:m:v_oru -- виїхали/[виїхати]verb:past:m -- туди/[туди]adv"
+    + " -- чоловіком/[чоловік]noun:m:v_oru:ist -- Степаном/[Степан]noun:m:v_oru -- виїхали/[виїхати]verb:past:m:perf -- туди/[туди]adv"
     + " -- на/[на]excl|на/[на]part|на/[на]pryim:rv_zna:rv_mis -- "
     + "проживання/[проживання]noun:n:v_naz|проживання/[проживання]noun:n:v_rod|проживання/[проживання]noun:n:v_zna|проживання/[проживання]noun:p:v_naz|проживання/[проживання]noun:p:v_zna";
   

@@ -45,19 +45,15 @@ public class GermanTaggerTest extends TestCase {
     assertEquals("Hauses[Haus/SUB:GEN:SIN:NEU]", toSortedString(aToken));
     assertEquals("Haus", aToken.getReadings().get(0).getLemma());
     
-    aToken = tagger.lookup("hauses");
-    assertNull(aToken);
-    
-    aToken = tagger.lookup("Groß");
-    assertNull(aToken);
+    assertNull(tagger.lookup("hauses"));
+    assertNull(tagger.lookup("Groß"));
 
-    aToken = tagger.lookup("Lieblingsbuchstabe");
-    assertEquals("Lieblingsbuchstabe[Lieblingsbuchstabe/SUB:NOM:SIN:MAS]", toSortedString(aToken));
+    assertEquals("Lieblingsbuchstabe[Lieblingsbuchstabe/SUB:NOM:SIN:MAS]", toSortedString(tagger.lookup("Lieblingsbuchstabe")));
 
     aToken = tagger.lookup("großer");
     assertEquals("großer[groß/ADJ:DAT:SIN:FEM:GRU:SOL, groß/ADJ:GEN:PLU:FEM:GRU:SOL, groß/ADJ:GEN:PLU:MAS:GRU:SOL, " +
             "groß/ADJ:GEN:PLU:NEU:GRU:SOL, groß/ADJ:GEN:SIN:FEM:GRU:SOL, groß/ADJ:NOM:SIN:MAS:GRU:IND, " +
-            "groß/ADJ:NOM:SIN:MAS:GRU:SOL]", toSortedString(aToken));
+            "groß/ADJ:NOM:SIN:MAS:GRU:SOL]", toSortedString(tagger.lookup("großer")));
     assertEquals("groß", aToken.getReadings().get(0).getLemma());
     
     // from both german.dict and added.txt:
@@ -142,17 +138,12 @@ public class GermanTaggerTest extends TestCase {
   }
 
   public void testTag() throws IOException {
-    final GermanTagger tagger = new GermanTagger();
-
-    final List<String> upperCaseWord = new ArrayList<>();
-    upperCaseWord.add("Das");
-
-    List<AnalyzedTokenReadings> readings = tagger.tag(upperCaseWord);
-    assertEquals("[Das[der/ART:DEF:AKK:SIN:NEU*,der/ART:DEF:NOM:SIN:NEU*," +
-    		"der/PRO:DEM:AKK:SIN:NEU*,der/PRO:DEM:NOM:SIN:NEU*,der/PRO:PER:AKK:SIN:NEU*,der/PRO:PER:NOM:SIN:NEU*]]", readings.toString());
-    
-    readings = tagger.tag(upperCaseWord, false);
-    assertEquals("[Das[null/null*]]", readings.toString());
+    GermanTagger tagger = new GermanTagger();
+    List<String> upperCaseWord = Arrays.asList("Das");
+    List<AnalyzedTokenReadings> readings = tagger.tag(upperCaseWord, false);
+    assertEquals("[Das[Das/null*]]", readings.toString());
+    List<AnalyzedTokenReadings> readings2 = tagger.tag(upperCaseWord, true);
+    assertTrue(readings2.toString().startsWith("[Das[der/ART:"));
   }
 
   public void testTagWithManualDictExtension() throws IOException {
@@ -160,7 +151,7 @@ public class GermanTaggerTest extends TestCase {
     final GermanTagger tagger = new GermanTagger();
     final List<AnalyzedTokenReadings> readings = tagger.tag(Collections.singletonList("Wichtigtuerinnen"));
     assertEquals("[Wichtigtuerinnen[Wichtigtuerin/SUB:AKK:PLU:FEM*," +
-    		"Wichtigtuerin/SUB:DAT:PLU:FEM*,Wichtigtuerin/SUB:GEN:PLU:FEM*,Wichtigtuerin/SUB:NOM:PLU:FEM*]]", readings.toString());
+        "Wichtigtuerin/SUB:DAT:PLU:FEM*,Wichtigtuerin/SUB:GEN:PLU:FEM*,Wichtigtuerin/SUB:NOM:PLU:FEM*]]", readings.toString());
   }
 
   public void testDictionary() throws IOException {

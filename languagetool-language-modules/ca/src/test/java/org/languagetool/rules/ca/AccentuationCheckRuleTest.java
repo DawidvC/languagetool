@@ -42,6 +42,9 @@ public class AccentuationCheckRuleTest extends TestCase {
   public void testRule() throws IOException {
 
     // correct sentences:
+    //assertCorrect("A ponent continua la serra de Fontpobra");
+    assertCorrect("M'espero qualsevol cosa.");
+    assertCorrect("Carrega de nou l'arxiu.");
     assertCorrect("Espero d'ell moltes coses");
     assertCorrect("cal que abans figuri inscrit en l'Ordre del dia");
     assertCorrect("El lloc era, però, habitat de molt abans,");
@@ -83,8 +86,15 @@ public class AccentuationCheckRuleTest extends TestCase {
     assertCorrect("La magnífica conservació del palau.");
 
     // errors:
+    assertIncorrect("De positiva influencia en ell.");
+    assertIncorrect("tren de llarga distancia");
+//    assertIncorrect("com la nostra pròpia desgracia");
+//  assertIncorrect("la seva influencia");
+    assertIncorrect("Cal una nova formula que substitueixi el caduc Estat del benestar.");
+    assertIncorrect("Porta-la i nosaltres fem la copia i la compulsem.");
+    assertIncorrect("Carrega d'arxius.");
     assertIncorrect("Vaig arribar a fer una radio que no va funcionar mai.");
-    assertIncorrect("No em fumaré cap faria com feia abans.");
+    assertIncorrect("No em fumaré una faria com feia abans.");
     assertIncorrect("M'he fumat una faria.");
     assertIncorrect("Les seues contraries.");
     assertIncorrect("Amb renuncies i esforç.");
@@ -95,8 +105,7 @@ public class AccentuationCheckRuleTest extends TestCase {
     assertIncorrect("De manera obvia.");
     assertIncorrect("Ell fa tasques especifiques.");
     assertIncorrect("Un home adulter.");
-    // assertIncorrect("Va deixar els nens atonits."); del v. "atonir"
-    // (=esbalair)
+    // assertIncorrect("Va deixar els nens atonits."); del v. "atonir" (=esbalair)
     assertIncorrect("La sureda ocupa amplies extensions en la muntanya.");
     assertIncorrect("Féu una magnifica digitació.");
     assertIncorrect("Els habitats de la comarca.");

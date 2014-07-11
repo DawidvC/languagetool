@@ -22,12 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.languagetool.Language;
-import org.languagetool.rules.CommaWhitespaceRule;
-import org.languagetool.rules.DoublePunctuationRule;
-import org.languagetool.rules.GenericUnpairedBracketsRule;
-import org.languagetool.rules.Rule;
-import org.languagetool.rules.UppercaseSentenceStartRule;
-import org.languagetool.rules.WhitespaceRule;
+import org.languagetool.rules.*;
 import org.languagetool.rules.spelling.hunspell.HunspellNoSuggestionRule;
 import org.languagetool.tagging.Tagger;
 import org.languagetool.tagging.disambiguation.Disambiguator;
@@ -41,10 +36,16 @@ public class Danish extends Language {
   private Tagger tagger;
   private SentenceTokenizer sentenceTokenizer;
   private Disambiguator disambiguator;
-  
+  private String name = "Danish";
+
   @Override
-  public final String getName() {
-    return "Danish";
+  public String getName() {
+    return name;
+  }
+
+  @Override
+  public void setName(final String name) {
+    this.name = name;
   }
 
   @Override
@@ -53,7 +54,7 @@ public class Danish extends Language {
   }
 
   @Override
-  public final String[] getCountryVariants() {
+  public final String[] getCountries() {
     return new String[]{"DK"};
   }
   
@@ -105,7 +106,7 @@ public class Danish extends Language {
             HunspellNoSuggestionRule.class,
             UppercaseSentenceStartRule.class,  // abbreviation exceptions, done in DanishSentenceTokenizer
             // "WORD_REPEAT_RULE" implemented in grammar.xml
-            WhitespaceRule.class
+            MultipleWhitespaceRule.class
     );
   }
 

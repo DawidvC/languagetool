@@ -36,7 +36,7 @@ public class WordRepeatRule extends Rule {
   public WordRepeatRule(final ResourceBundle messages, final Language language) {
     super(messages);
     super.setCategory(new Category(messages.getString("category_misc")));
-    setLocQualityIssueType("duplication");
+    setLocQualityIssueType(ITSIssueType.Duplication);
   }
 
   /**
@@ -63,13 +63,16 @@ public class WordRepeatRule extends Rule {
   }
 
   @Override
-  public RuleMatch[] match(final AnalyzedSentence text) {
+  public RuleMatch[] match(final AnalyzedSentence sentence) {
     final List<RuleMatch> ruleMatches = new ArrayList<>();
-    final AnalyzedTokenReadings[] tokens = text.getTokensWithoutWhitespace();
+    final AnalyzedTokenReadings[] tokens = sentence.getTokensWithoutWhitespace();
     String prevToken = "";
     // we start from token 1, token no. 0 is guaranteed to be SENT_START
     for (int i = 1; i < tokens.length; i++) {
       final String token = tokens[i].getToken();
+        if (tokens[i].isImmunized()) {
+          continue;
+        }
       if (isWord(token) && prevToken.equalsIgnoreCase(token) && !ignore(tokens, i)) {
         final String msg = messages.getString("repetition");
         final int prevPos = tokens[i - 1].getStartPos();
@@ -87,7 +90,9 @@ public class WordRepeatRule extends Rule {
   // avoid "..." etc. to be matched:
   private boolean isWord(String token) {
     boolean isWord = true;
-    if (token.length() == 1) {
+    if (token.length() == 0) {
+      isWord = false;
+    } else if (token.length() == 1) {
       final char c = token.charAt(0);
       if (!Character.isLetter(c)) {
         isWord = false;

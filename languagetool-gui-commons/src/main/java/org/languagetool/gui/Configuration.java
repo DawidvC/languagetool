@@ -32,9 +32,12 @@ import java.util.*;
  */
 public class Configuration {
   
-  static final int DEFAULT_SERVER_PORT = 8081;  // TODO: should be HTTPServerConfig.DEFAULT_PORT but we don't have that dependency
+  static final int DEFAULT_SERVER_PORT = 8081;  // should be HTTPServerConfig.DEFAULT_PORT but we don't have that dependency
+  static final int FONT_STYLE_INVALID = -1;
+  static final int FONT_SIZE_INVALID = -1;
 
   private static final String CONFIG_FILE = "languagetool.properties";
+
   private static final String DISABLED_RULES_CONFIG_KEY = "disabledRules";
   private static final String ENABLED_RULES_CONFIG_KEY = "enabledRules";
   private static final String DISABLED_CATEGORIES_CONFIG_KEY = "disabledCategories";
@@ -44,10 +47,16 @@ public class Configuration {
   private static final String SERVER_RUN_CONFIG_KEY = "serverMode";
   private static final String SERVER_PORT_CONFIG_KEY = "serverPort";
   private static final String USE_GUI_CONFIG_KEY = "useGUIConfig";
-  private static final String DELIMITER = ",";
+  private static final String FONT_NAME_CONFIG_KEY = "font.name";
+  private static final String FONT_STYLE_CONFIG_KEY = "font.style";
+  private static final String FONT_SIZE_CONFIG_KEY = "font.size";
+  private static final String LF_NAME_CONFIG_KEY = "lookAndFeelName";
 
-  private final File configFile;
-  private final HashMap<String, String> configForOtherLangs;
+  private static final String DELIMITER = ",";
+  private static final String EXTERNAL_RULE_DIRECTORY = "extRulesDirectory";
+
+  private File configFile;
+  private final HashMap<String, String> configForOtherLangs = new HashMap<>();
 
   private Set<String> disabledRuleIds = new HashSet<>();
   private Set<String> enabledRuleIds = new HashSet<>();
@@ -57,14 +66,17 @@ public class Configuration {
   private boolean runServer;
   private boolean autoDetect;
   private boolean guiConfig;
+  private String fontName;
+  private int fontStyle;
+  private int fontSize;
   private int serverPort = DEFAULT_SERVER_PORT;
+  private String externalRuleDirectory;
+  private String lookAndFeelName;
 
   /**
    * Uses the configuration file from the default location.
    * @param lang The language for the configuration, used to distinguish 
    * rules that are enabled or disabled per language.
-   *  
-   * @throws IOException
    */
   public Configuration(final Language lang) throws IOException {
     this(new File(System.getProperty("user.home")), CONFIG_FILE, lang);
@@ -72,16 +84,66 @@ public class Configuration {
   
   public Configuration(final File baseDir, final String filename, final Language lang)
       throws IOException {
+    this();
     if (!baseDir.isDirectory()) {
       throw new IllegalArgumentException("Not a directory: " + baseDir);
     }
     configFile = new File(baseDir, filename);
-    configForOtherLangs = new HashMap<>();
     loadConfiguration(lang);
   }
 
   public Configuration(final File baseDir, final Language lang) throws IOException {
     this(baseDir, CONFIG_FILE, lang);
+  }
+
+  Configuration() {
+    fontStyle = FONT_STYLE_INVALID;
+    fontSize = FONT_SIZE_INVALID;
+  }
+
+  /**
+   *
+   * Returns a copy of the given configuration.
+   *
+   * @param configuration the object to copy.
+   * @return the copy.
+   * @since 2.6
+   */
+  Configuration copy(Configuration configuration) {
+    Configuration copy = new Configuration();
+    copy.restoreState(configuration);
+    return copy;
+  }
+
+  /**
+   * Restore the state of this object from configuration
+   *
+   * @param configuration the object from which we will read the state
+   * @since 2.6
+   */
+  void restoreState(Configuration configuration) {
+    this.configFile = configuration.configFile;
+    this.language = configuration.language;
+    this.motherTongue = configuration.motherTongue;
+    this.runServer = configuration.runServer;
+    this.autoDetect = configuration.autoDetect;
+    this.guiConfig = configuration.guiConfig;
+    this.fontName = configuration.fontName;
+    this.fontStyle = configuration.fontStyle;
+    this.fontSize = configuration.fontSize;    
+    this.serverPort = configuration.serverPort;
+    this.lookAndFeelName = configuration.lookAndFeelName;
+    this.externalRuleDirectory = configuration.externalRuleDirectory;
+    this.disabledRuleIds.clear();
+    this.disabledRuleIds.addAll(configuration.disabledRuleIds);
+    this.enabledRuleIds.clear();
+    this.enabledRuleIds.addAll(configuration.enabledRuleIds);
+    this.disabledCategoryNames.clear();
+    this.disabledCategoryNames.addAll(configuration.disabledCategoryNames);
+    this.configForOtherLangs.clear();
+    for (String key : configuration.configForOtherLangs.keySet()) {
+      this.configForOtherLangs.put(key, configuration.configForOtherLangs.get(key));
+    }
   }
 
   public Set<String> getDisabledRuleIds() {
@@ -148,22 +210,132 @@ public class Configuration {
     this.guiConfig = useGUIConfig;
   }
 
- public boolean getUseGUIConfig() {
+  public boolean getUseGUIConfig() {
     return guiConfig;
-}
-
+  }
   
   public void setServerPort(final int serverPort) {
     this.serverPort = serverPort;
+  }
+
+  public String getExternalRuleDirectory() {
+    return externalRuleDirectory;
+  }
+
+  public void setExternalRuleDirectory(final String path) {
+    externalRuleDirectory = path;
+  }
+
+  /**
+   *
+   * Returns the name of the GUI's editing textarea font.
+   *
+   * @return the name of the font.
+   * @since 2.6
+   * 
+   * @see java.awt.Font#getFamily()
+   */
+  public String getFontName() {
+    return fontName;
+  }
+
+  /**
+   *
+   * Sets the name of the GUI's editing textarea font.
+   *
+   * @param fontName the name of the font.
+   * @since 2.6
+   * 
+   * @see java.awt.Font#getFamily()
+   */
+  public void setFontName(String fontName) {
+    this.fontName = fontName;
+  }
+
+  /**
+   *
+   * Returns the style of the GUI's editing textarea font.
+   *
+   * @return the style of the font.
+   * @since 2.6
+   * 
+   * @see java.awt.Font#getStyle()
+   */
+  public int getFontStyle() {
+    return fontStyle;
+  }
+
+  /**
+   *
+   * Sets the style of the GUI's editing textarea font.
+   *
+   * @param fontStyle the style of the font.
+   * @since 2.6
+   * 
+   * @see java.awt.Font#getStyle()
+   */
+  public void setFontStyle(int fontStyle) {
+    this.fontStyle = fontStyle;
+  }
+
+  /**
+   *
+   * Returns the size of the GUI's editing textarea font.
+   *
+   * @return the size of the font.
+   * @since 2.6
+   * 
+   * @see java.awt.Font#getSize()
+   */
+  public int getFontSize() {
+    return fontSize;
+  }
+
+  /**
+   *
+   * Sets the size of the GUI's editing textarea font.
+   *
+   * @param fontSize the size of the font.
+   * @since 2.6
+   * 
+   * @see java.awt.Font#getSize()
+   */
+  public void setFontSize(int fontSize) {
+    this.fontSize = fontSize;
+  }
+
+  /**
+   *
+   * Returns the name of the GUI's LaF.
+   *
+   * @return the name of the LaF.
+   * @since 2.6
+   * 
+   * @see javax.swing.UIManager.LookAndFeelInfo#getName()
+   */
+  public String getLookAndFeelName() {
+    return this.lookAndFeelName;
+  }
+
+  /**
+   *
+   * Sets the name of the GUI's LaF.
+   *
+   * @param lookAndFeelName the name of the LaF.
+   * @since 2.6 @see
+   * 
+   * @see javax.swing.UIManager.LookAndFeelInfo#getName()
+   */
+  public void setLookAndFeelName(String lookAndFeelName) {
+    this.lookAndFeelName = lookAndFeelName;
   }
 
   private void loadConfiguration(final Language lang) throws IOException {
 
     final String qualifier = getQualifier(lang);
 
-    FileInputStream fis = null;
-    try {
-      fis = new FileInputStream(configFile);
+    try (FileInputStream fis = new FileInputStream(configFile)) {
+
       final Properties props = new Properties();
       props.load(fis);
 
@@ -176,7 +348,7 @@ public class Configuration {
         language = Language.getLanguageForShortName(languageStr);
       }
       final String motherTongueStr = (String) props.get(MOTHER_TONGUE_CONFIG_KEY);
-      if (motherTongueStr != null) {
+      if (motherTongueStr != null && !motherTongueStr.equals("xx")) {
         motherTongue = Language.getLanguageForShortName(motherTongueStr);
       }
             
@@ -184,9 +356,30 @@ public class Configuration {
       guiConfig = "true".equals(props.get(USE_GUI_CONFIG_KEY));
       runServer = "true".equals(props.get(SERVER_RUN_CONFIG_KEY));
 
+      fontName = (String) props.get(FONT_NAME_CONFIG_KEY);
+      if (props.get(FONT_STYLE_CONFIG_KEY) != null) {
+        try {
+          fontStyle = Integer.parseInt((String) props.get(FONT_STYLE_CONFIG_KEY));
+        } catch (NumberFormatException e) {
+          // Ignore
+        }
+      }
+      if (props.get(FONT_SIZE_CONFIG_KEY) != null) {
+        try {
+          fontSize = Integer.parseInt((String) props.get(FONT_SIZE_CONFIG_KEY));
+        } catch (NumberFormatException e) {
+          // Ignore
+        }
+      }
+      lookAndFeelName = (String) props.get(LF_NAME_CONFIG_KEY);
+
       final String serverPortString = (String) props.get(SERVER_PORT_CONFIG_KEY);
       if (serverPortString != null) {
         serverPort = Integer.parseInt(serverPortString);
+      }
+      final String extRules = (String) props.get(EXTERNAL_RULE_DIRECTORY);
+      if (extRules != null) {
+        externalRuleDirectory = extRules;
       }
       
       //store config for other languages
@@ -194,17 +387,13 @@ public class Configuration {
       
     } catch (final FileNotFoundException e) {
       // file not found: okay, leave disabledRuleIds empty
-    } finally {
-      if (fis != null) {
-        fis.close();
-      }
     }
   }
 
   private String getQualifier(final Language lang) {
     String qualifier = "";
     if (lang != null) {
-      qualifier = "." + lang.getShortNameWithVariant();
+      qualifier = "." + lang.getShortNameWithCountryAndVariant();
     }
     return qualifier;
   }
@@ -212,7 +401,7 @@ public class Configuration {
   private void loadConfigForOtherLanguages(final Language lang, final Properties prop) {
     for (Language otherLang : Language.getAllLanguages()) {
       if (!otherLang.equals(lang)) {
-        final String languageSuffix = "." + otherLang.getShortNameWithVariant();
+        final String languageSuffix = "." + otherLang.getShortNameWithCountryAndVariant();
         storeConfigKeyFromProp(prop, DISABLED_RULES_CONFIG_KEY + languageSuffix);
         storeConfigKeyFromProp(prop, ENABLED_RULES_CONFIG_KEY + languageSuffix);
         storeConfigKeyFromProp(prop, DISABLED_CATEGORIES_CONFIG_KEY + languageSuffix);
@@ -229,7 +418,7 @@ public class Configuration {
   private Collection<? extends String> getListFromProperties(final Properties props, final String key) {
     final String value = (String) props.get(key);
     final List<String> list = new ArrayList<>();
-    if (value != null) {
+    if (value != null && !value.isEmpty()) {
       final String[] names = value.split(DELIMITER);
       list.addAll(Arrays.asList(names));
     }
@@ -238,32 +427,43 @@ public class Configuration {
 
   public void saveConfiguration(final Language lang) throws IOException {
     final Properties props = new Properties();
-    
     final String qualifier = getQualifier(lang);
     
     addListToProperties(props, DISABLED_RULES_CONFIG_KEY + qualifier, disabledRuleIds);
     addListToProperties(props, ENABLED_RULES_CONFIG_KEY + qualifier, enabledRuleIds);
     addListToProperties(props, DISABLED_CATEGORIES_CONFIG_KEY + qualifier, disabledCategoryNames);
-    if (language != null) {
-      props.setProperty(LANGUAGE_CONFIG_KEY, language.getShortNameWithVariant());
+    if (language != null && !language.isExternal()) {  // external languages won't be known at startup, so don't save them
+      props.setProperty(LANGUAGE_CONFIG_KEY, language.getShortNameWithCountryAndVariant());
     }
     if (motherTongue != null) {
       props.setProperty(MOTHER_TONGUE_CONFIG_KEY, motherTongue.getShortName());
     }
-    props.setProperty(AUTO_DETECT_CONFIG_KEY, Boolean.valueOf(autoDetect).toString());
-    props.setProperty(USE_GUI_CONFIG_KEY, Boolean.valueOf(guiConfig).toString());
-    props.setProperty(SERVER_RUN_CONFIG_KEY, Boolean.valueOf(runServer).toString());
-    props.setProperty(SERVER_PORT_CONFIG_KEY, Integer.valueOf(serverPort).toString());
+    props.setProperty(AUTO_DETECT_CONFIG_KEY, Boolean.toString(autoDetect));
+    props.setProperty(USE_GUI_CONFIG_KEY, Boolean.toString(guiConfig));
+    props.setProperty(SERVER_RUN_CONFIG_KEY, Boolean.toString(runServer));
+    props.setProperty(SERVER_PORT_CONFIG_KEY, Integer.toString(serverPort));
+    if (fontName != null) {
+      props.setProperty(FONT_NAME_CONFIG_KEY, fontName);
+    }
+    if (fontStyle != FONT_STYLE_INVALID) {
+      props.setProperty(FONT_STYLE_CONFIG_KEY, Integer.toString(fontStyle));
+    }
+    if (fontSize != FONT_SIZE_INVALID) {
+      props.setProperty(FONT_SIZE_CONFIG_KEY, Integer.toString(fontSize));
+    }
+    if (this.lookAndFeelName != null) {
+      props.setProperty(LF_NAME_CONFIG_KEY, lookAndFeelName);
+    }    
+    if (externalRuleDirectory != null) {
+      props.setProperty(EXTERNAL_RULE_DIRECTORY, externalRuleDirectory);
+    }
 
     for (final String key : configForOtherLangs.keySet()) {
       props.setProperty(key, configForOtherLangs.get(key));
     }
 
-    final FileOutputStream fos = new FileOutputStream(configFile);
-    try {
+    try (FileOutputStream fos = new FileOutputStream(configFile)) {
       props.store(fos, "LanguageTool configuration");
-    } finally {
-      fos.close();
     }
   }
 

@@ -26,6 +26,7 @@ import org.languagetool.AnalyzedSentence;
 import org.languagetool.AnalyzedTokenReadings;
 import org.languagetool.JLanguageTool;
 import org.languagetool.Language;
+import org.languagetool.rules.ITSIssueType;
 import org.languagetool.rules.Rule;
 import org.languagetool.rules.RuleMatch;
 import org.languagetool.tokenizers.WordTokenizer;
@@ -57,10 +58,12 @@ public abstract class SpellingCheckRule extends Rule {
   private boolean wordsWithDotsPresent = false;
   private boolean considerIgnoreWords = true;
 
+  private boolean convertsCase = false;
+
   public SpellingCheckRule(final ResourceBundle messages, final Language language) {
     super(messages);
     this.language = language;
-    setLocQualityIssueType("misspelling");
+    setLocQualityIssueType(ITSIssueType.Misspelling);
   }
 
   @Override
@@ -70,10 +73,10 @@ public abstract class SpellingCheckRule extends Rule {
   public abstract String getDescription();
 
   @Override
-  public abstract RuleMatch[] match(AnalyzedSentence text) throws IOException;
+  public abstract RuleMatch[] match(AnalyzedSentence sentence) throws IOException;
 
   @Override
-  public boolean isSpellingRule() {
+  public boolean isDictionaryBasedSpellingRule() {
     return true;
   }
 
@@ -107,13 +110,28 @@ public abstract class SpellingCheckRule extends Rule {
     }
   }
 
-  protected boolean ignoreToken(AnalyzedTokenReadings[] tokens, int idx) throws IOException {
-    return ignoreWord(tokens[idx].getToken());
+  protected List<String> getAdditionalSuggestions(List<String> suggestions, String word) {
+    List<String> moreSuggestions = new ArrayList<>();
+    if ("Languagetool".equals(word) && !suggestions.contains(LANGUAGETOOL)) {
+      moreSuggestions.add(LANGUAGETOOL);
+    }
+    return moreSuggestions;
   }
 
   /**
-   * @throws IOException
-   * @deprecated please use {@link #ignoreToken(AnalyzedTokenReadings[], int)} - deprecated since 2.2
+   * Returns true iff the token at the given position should be ignored by the spell checker.
+   */
+  protected boolean ignoreToken(AnalyzedTokenReadings[] tokens, int idx) throws IOException {
+    List<String> words = new ArrayList<>();
+    for (AnalyzedTokenReadings token : tokens) {
+      words.add(token.getToken());
+    }
+    return ignoreWord(words, idx);
+  }
+
+  /**
+   * Returns true iff the word should be ignored by the spell checker.
+   * If possible, use {@link #ignoreToken(org.languagetool.AnalyzedTokenReadings[], int)} instead.
    */
   protected boolean ignoreWord(String word) throws IOException {
     if (!considerIgnoreWords) {
@@ -123,8 +141,40 @@ public abstract class SpellingCheckRule extends Rule {
       // TODO?: this is needed at least for German as Hunspell tokenization includes the dot:
       word = word.endsWith(".") ? word.substring(0, word.length() - 1) : word;
     }
-    return wordsToBeIgnored.contains(word);
+    return (wordsToBeIgnored.contains(word)
+        || (convertsCase &&
+        wordsToBeIgnored.contains(word.toLowerCase(language.getLocale()))));
   }
+
+  /**
+   * Returns true iff the word at the given position should be ignored by the spell checker.
+   * If possible, use {@link #ignoreToken(org.languagetool.AnalyzedTokenReadings[], int)} instead.
+   * @since 2.6
+   */
+  protected boolean ignoreWord(List<String> words, int idx) throws IOException {
+    return ignoreWord(words.get(idx));
+  }
+
+  /**
+   * Used to check whether the dictionary will use case conversions for
+   * spell checking.
+   * @return true if the dictionary converts case
+   * @since 2.5
+   */
+  public boolean isConvertsCase() {
+    return convertsCase;
+  }
+
+  /**
+   * Used to determine whether the dictionary will use case conversions for
+   * spell checking.
+   * @param convertsCase if true, then conversions are used.
+   * @since 2.5
+   */
+  public void setConvertsCase(boolean convertsCase) {
+    this.convertsCase = convertsCase;
+  }
+
 
   protected boolean isUrl(String token) {
     for (String protocol : WordTokenizer.getProtocols()) {
@@ -156,7 +206,7 @@ public abstract class SpellingCheckRule extends Rule {
           if (isComment) {
             continue;
           }
-          if (language.getShortNameWithVariant().equals("de-CH")) {
+          if (language.getShortNameWithCountryAndVariant().equals("de-CH")) {
             // hack: Swiss German doesn't use "ß" but always "ss" - replace this, otherwise
             // misspellings (from Swiss point-of-view) like "äußere" wouldn't be found:
             wordsToBeIgnored.add(line.replace("ß", "ss"));

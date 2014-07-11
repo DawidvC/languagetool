@@ -25,6 +25,7 @@ import java.util.ResourceBundle;
 
 import org.languagetool.rules.AbstractSimpleReplaceRule;
 import org.languagetool.rules.Category;
+import org.languagetool.rules.ITSIssueType;
 
 /**
  * A rule that matches words which should not be used and suggests
@@ -41,6 +42,7 @@ public class SimpleReplaceRule extends AbstractSimpleReplaceRule {
   // locale used on case-conversion
   private static final Locale CA_LOCALE = new Locale("CA");
 
+  @Override
   public final String getFileName() {
     return FILE_NAME;
   }
@@ -48,7 +50,7 @@ public class SimpleReplaceRule extends AbstractSimpleReplaceRule {
   public SimpleReplaceRule(final ResourceBundle messages) throws IOException {
     super(messages);
     super.setCategory(new Category("Errors ortogràfics"));
-    super.setLocQualityIssueType("misspelling");
+    super.setLocQualityIssueType(ITSIssueType.Misspelling);
     this.setIgnoreTaggedWords();
   }  
 
@@ -62,6 +64,7 @@ public class SimpleReplaceRule extends AbstractSimpleReplaceRule {
     return "Detecta paraules incorrectes i proposa suggeriments de canvi";
   }
 
+  @Override
   public String getShort() {
     return "Paraula incorrecta";
   }

@@ -2,7 +2,7 @@
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
 <!-- 
  * LanguageTool, a natural language style checker 
- * Copyright (c) Marcin Miłkowski, 2010 (http://www.languagetool.org)
+ * Copyright (c) Marcin Miłkowski, 2014 (http://www.languagetool.org)
  * 
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -154,6 +154,13 @@
 			<xs:attribute name="chunk" use="optional">
 				<xs:simpleType>
 					<xs:restriction base="xs:NMTOKEN">
+						<!--
+						For English, the Penn treebank has been used to train the OpenNLP models we use internally:
+						http://bulba.sdsu.edu/jeanette/thesis/PennTags.html#Phrase
+						The first character is used to fit these phrases to our token-based system:
+						B = beginning of phrase, I = inside phrase, E = end of phrase (only for noun phrases)
+						Feel free to add others provided by OpenNLP if you need them.
+						-->
 						<!-- start of noun phrases: -->
 						<xs:enumeration value="B-NP-singular" />
 						<xs:enumeration value="B-NP-plural" />
@@ -163,6 +170,12 @@
 						<!-- end of noun phrases: -->
 						<xs:enumeration value="E-NP-singular" />
 						<xs:enumeration value="E-NP-plural" />
+						<!-- verb phrases: -->
+						<xs:enumeration value="B-VP" />
+						<xs:enumeration value="I-VP" />
+						<!-- prepositional phrases: -->
+						<xs:enumeration value="B-PP" />
+						<xs:enumeration value="I-PP" />
 					</xs:restriction>
 				</xs:simpleType>
 			</xs:attribute>
@@ -187,7 +200,6 @@
 				<xs:simpleType>
 					<xs:restriction base="xs:integer">
 						<xs:minInclusive value="0" />
-						<xs:maxInclusive value="1" />
 					</xs:restriction>
 				</xs:simpleType>
 			</xs:attribute>
@@ -200,6 +212,8 @@
 			</xs:attribute>
 			<xs:attribute name="negate_pos" type="binaryYesNo" use="optional"
 				default="no" />
+            <xs:attribute name="case_sensitive" type="binaryYesNo"
+                      use="optional" />
 		</xs:complexType>
 	</xs:element>
 
@@ -263,6 +277,8 @@
 				default="no" />
 			<xs:attribute name="negate" type="binaryYesNo" use="optional"
 				default="no" />
+            <xs:attribute name="case_sensitive" type="binaryYesNo"
+                          use="optional" />
 		</xs:complexType>
 	</xs:element>
  
@@ -274,7 +290,8 @@
 					<xs:element ref="and" />
 					<xs:element ref="marker" minOccurs="0" maxOccurs="1"/>
 					<xs:element ref="token" />
-			</xs:choice>
+                    <xs:element ref="unify-ignore" minOccurs="0" maxOccurs="unbounded"/>
+			    </xs:choice>
 			</xs:sequence>						
 			<xs:attribute name="negate" type="binaryYesNo" use="optional"
 				default="no" />
@@ -328,14 +345,27 @@
 		</xs:documentation>
 	</xs:annotation>
 	<xs:element name="marker">
-		<xs:complexType mixed="true">
+		<xs:complexType mixed="false">
             <xs:choice minOccurs="0" maxOccurs="unbounded">
    				<xs:element ref="token" />
                 <xs:element ref="unify" />
                 <xs:element ref="and" />
                 <xs:element ref="phraseref" />
+                <xs:element ref="unify-ignore" />
    			</xs:choice>
 		</xs:complexType>
 	</xs:element>
- 
+
+    <xs:annotation>
+        <xs:documentation xml:lang="en">Marks the neutral part of the unified sequence.</xs:documentation>
+    </xs:annotation>
+    <xs:element name="unify-ignore">
+        <xs:complexType>
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+            <xs:element ref="and" />
+            <xs:element ref="marker" minOccurs="0" maxOccurs="1"/>
+            <xs:element ref="token" />
+        </xs:choice>
+        </xs:complexType>
+    </xs:element>
 </xs:schema>

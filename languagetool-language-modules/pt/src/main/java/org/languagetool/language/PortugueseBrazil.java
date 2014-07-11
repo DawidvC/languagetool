@@ -18,16 +18,19 @@
  */
 package org.languagetool.language;
 
+/**
+ * @deprecated use {@link BrazilianPortuguese} instead (deprecated since 2.6)
+ */
 public class PortugueseBrazil extends Portuguese {
 
-	  @Override
-	  public String getName() {
-	    return "Portuguese (Brazil)";
-	  }
+  @Override
+  public String getName() {
+    return "Portuguese (Brazil)";
+  }
 
-	  @Override
-	  public String[] getCountryVariants() {
-	    return new String[]{"BR"};
-	  }
+  @Override
+  public String[] getCountries() {
+    return new String[]{"BR"};
+  }
 
 }

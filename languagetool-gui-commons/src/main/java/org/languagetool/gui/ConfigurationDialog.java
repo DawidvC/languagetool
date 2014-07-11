@@ -18,18 +18,35 @@
  */
 package org.languagetool.gui;
 
-import org.languagetool.JLanguageTool;
-import org.languagetool.Language;
-import org.languagetool.rules.Rule;
-import org.languagetool.tools.StringTools;
-
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
-import java.util.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Enumeration;
 import java.util.List;
+import java.util.Locale;
+import java.util.ResourceBundle;
+import java.util.Set;
+import java.util.TreeMap;
+import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.event.TreeModelEvent;
+import javax.swing.event.TreeModelListener;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
+import org.languagetool.JLanguageTool;
+import org.languagetool.Language;
+import org.languagetool.rules.Rule;
 
 /**
  * Dialog that offers the available rules so they can be turned on/off
@@ -51,41 +68,82 @@ public class ConfigurationDialog implements ActionListener {
   
   private JCheckBox serverCheckbox;
   private JTextField serverPortField;
-
-  private final List<JCheckBox> checkBoxes = new ArrayList<>();
-  private final List<String> checkBoxesRuleIds = new ArrayList<>();
-  private final List<String> checkBoxesCategories = new ArrayList<>();
-
-  private final List<String> defaultOffRules = new ArrayList<>();
-
-  private Set<String> inactiveRuleIds = new HashSet<>();
-  private Set<String> enabledRuleIds = new HashSet<>();
-  private Set<String> inactiveCategoryNames = new HashSet<>();
-  private final List<JCheckBox> categoryCheckBoxes = new ArrayList<>();
-  private final List<String> checkBoxesCategoryNames = new ArrayList<>();
-  private Language motherTongue;
-  private boolean serverMode;
-  private int serverPort;
-  private boolean useGUIConfig;
+  private JTree configTree;
+  
+  private final Configuration original;
+  private final Configuration config;
 
   private final Frame owner;
   private final boolean insideOOo;
+  
+  private JCheckBox serverSettingsCheckbox;
 
-private JCheckBox serverSettingsCheckbox;
-
+  @Deprecated
   public ConfigurationDialog(Frame owner, boolean insideOOo) {
     this.owner = owner;
     this.insideOOo = insideOOo;
+    this.original = null;
+    this.config = new Configuration();
     messages = JLanguageTool.getMessageBundle();
   }
 
+  public ConfigurationDialog(Frame owner, boolean insideOOo, Configuration config) {
+    this.owner = owner;
+    this.insideOOo = insideOOo;
+    this.original = config;
+    this.config = original.copy(original);
+    messages = JLanguageTool.getMessageBundle();
+  }
+
+  private DefaultMutableTreeNode createTree(List<Rule> rules) {
+    DefaultMutableTreeNode root = new DefaultMutableTreeNode("Rules");
+    String lastRule = null;
+    TreeMap<String, DefaultMutableTreeNode> parents = new TreeMap<>();
+    for (final Rule rule : rules) {
+      if (!parents.containsKey(rule.getCategory().getName())) {
+
+        boolean enabled = true;
+        if (config.getDisabledCategoryNames() != null && config.getDisabledCategoryNames().contains(rule.getCategory().getName())) {
+          enabled = false;
+        }
+        DefaultMutableTreeNode categoryNode = new CategoryNode(rule.getCategory(), enabled);
+        root.add(categoryNode);
+        parents.put(rule.getCategory().getName(), categoryNode);
+      }
+      if (!rule.getId().equals(lastRule)) {
+        RuleNode ruleNode = new RuleNode(rule, getState(rule));
+        parents.get(rule.getCategory().getName()).add(ruleNode);
+      }
+      lastRule = rule.getId();
+    }
+    return root;
+  }
+
+  private boolean getState(Rule rule) {
+    boolean ret = true;
+
+    if (config.getDisabledRuleIds().contains(rule.getId())) {
+      ret = false;
+    }
+    if (config.getDisabledCategoryNames().contains(rule.getCategory().getName())) {
+      ret = false;
+    }
+    if (rule.isDefaultOff() && !config.getEnabledRuleIds().contains(rule.getId())) {
+      ret = false;
+    }
+
+    if (rule.isDefaultOff() && rule.getCategory().isDefaultOff()
+            && config.getEnabledRuleIds().contains(rule.getId())) {
+      config.getDisabledCategoryNames().remove(rule.getCategory().getName());
+    }
+    return ret;
+  }
+
   public void show(List<Rule> rules) {
+    if(original != null)
+      config.restoreState(original);
     dialog = new JDialog(owner, true);
     dialog.setTitle(messages.getString("guiConfigWindowTitle"));
-    checkBoxes.clear();
-    checkBoxesRuleIds.clear();
-    categoryCheckBoxes.clear();
-    checkBoxesCategoryNames.clear();
 
     Collections.sort(rules, new CategoryComparator());
 
@@ -107,88 +165,184 @@ private JCheckBox serverSettingsCheckbox;
     GridBagConstraints cons = new GridBagConstraints();
     cons.anchor = GridBagConstraints.NORTHWEST;
     cons.gridx = 0;
-    int row = 0;
-    String prevID = null;
-    String prevCategory = null;
-    for (final Rule rule : rules) {
-      // avoid displaying rules from rule groups more than once:
-      if (prevID == null || !rule.getId().equals(prevID)) {
-        cons.gridy = row;
-        final JCheckBox checkBox = new JCheckBox(rule.getDescription());
-        if (inactiveRuleIds != null
-            && (inactiveRuleIds.contains(rule.getId()) || inactiveCategoryNames
-                .contains(rule.getCategory().getName()))) {
-          checkBox.setSelected(false);
-        } else {
-          checkBox.setSelected(true);
-        }
+    cons.weightx = 1.0;
+    cons.weighty = 1.0;
+    cons.fill = GridBagConstraints.BOTH;
+    DefaultMutableTreeNode rootNode = createTree(rules);
+    DefaultTreeModel treeModel = new DefaultTreeModel(rootNode);
+    treeModel.addTreeModelListener(new TreeModelListener() {
 
-        if (rule.isDefaultOff()) {
-          if (enabledRuleIds.contains(rule.getId())) {
-            checkBox.setSelected(true);
+      @Override
+      public void treeNodesChanged(TreeModelEvent e) {
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode) e.getTreePath().getLastPathComponent();
+        int index = e.getChildIndices()[0];
+        node = (DefaultMutableTreeNode) (node.getChildAt(index));
+        if (node instanceof RuleNode) {
+          RuleNode o = (RuleNode) node;
+          if (o.getRule().isDefaultOff()) {
+            if (o.isEnabled()) {
+              config.getEnabledRuleIds().add(o.getRule().getId());
+            } else {
+              config.getEnabledRuleIds().remove(o.getRule().getId());
+            }
           } else {
-            checkBox.setSelected(false);
+            if (o.isEnabled()) {
+              config.getDisabledRuleIds().remove(o.getRule().getId());
+            } else {
+              config.getDisabledRuleIds().add(o.getRule().getId());
+            }
           }
         }
-
-        if (rule.isDefaultOff()) {
-          defaultOffRules.add(rule.getId());
-          if (rule.getCategory().isDefaultOff()) {
-            inactiveCategoryNames.add(rule.getCategory().getName());
-          }
-        } else {
-          if (rule.getCategory().isDefaultOff()) {
-            inactiveCategoryNames.remove(rule.getCategory().getName());
-          }
-        }
-
-        final ActionListener ruleCheckBoxListener = makeRuleCheckboxListener();
-        checkBox.addActionListener(ruleCheckBoxListener);
-        checkBoxes.add(checkBox);
-        checkBoxesRuleIds.add(rule.getId());
-        checkBoxesCategories.add(rule.getCategory().getName());
-        final boolean showHeadline = rule.getCategory() != null
-            && !rule.getCategory().getName().equals(prevCategory);
-        if ((showHeadline || prevCategory == null)
-            && rule.getCategory() != null) {
-
-          // TODO: maybe use a Tree of Checkboxes here, like in:
-          // http://www.javaworld.com/javaworld/jw-09-2007/jw-09-checkboxtree.html
-          final JCheckBox categoryCheckBox = new JCheckBox(rule.getCategory()
-              .getName());
-          if (inactiveCategoryNames != null
-              && inactiveCategoryNames.contains(rule.getCategory().getName())) {
-            categoryCheckBox.setSelected(false);
+        if (node instanceof CategoryNode) {
+          CategoryNode o = (CategoryNode) node;
+          if (o.isEnabled()) {
+            config.getDisabledCategoryNames().remove(o.getCategory().getName());
           } else {
-            categoryCheckBox.setSelected(true);
+            config.getDisabledCategoryNames().add(o.getCategory().getName());
           }
-
-          final ActionListener categoryCheckBoxListener = makeCategoryCheckboxListener();
-          categoryCheckBox.addActionListener(categoryCheckBoxListener);
-          categoryCheckBoxes.add(categoryCheckBox);
-          checkBoxesCategoryNames.add(rule.getCategory().getName());
-          checkBoxPanel.add(categoryCheckBox, cons);
-          prevCategory = rule.getCategory().getName();
-          cons.gridy++;
-          row++;
         }
-        checkBox.setMargin(new Insets(0, 20, 0, 0)); // indent
-        checkBoxPanel.add(checkBox, cons);
-        row++;
       }
-      prevID = rule.getId();
-    }
+
+      @Override
+      public void treeNodesInserted(TreeModelEvent e) {
+      }
+
+      @Override
+      public void treeNodesRemoved(TreeModelEvent e) {
+      }
+
+      @Override
+      public void treeStructureChanged(TreeModelEvent e) {
+      }
+    });
+    configTree = new JTree(treeModel);
+    configTree.setRootVisible(false);
+    configTree.setEditable(false);
+    configTree.setCellRenderer(new CheckBoxTreeCellRenderer());
+    TreeListener.install(configTree);
+    checkBoxPanel.add(configTree, cons);
+
+    MouseAdapter ma = new MouseAdapter() {
+      private void handlePopupEvent(MouseEvent e) {
+        final JTree tree = (JTree) e.getSource();
+
+        TreePath path = tree.getPathForLocation(e.getX(), e.getY());
+        if (path == null) {
+          return;
+        }
+
+        DefaultMutableTreeNode node
+                = (DefaultMutableTreeNode) path.getLastPathComponent();
+
+        TreePath[] paths = tree.getSelectionPaths();
+
+        boolean isSelected = false;
+        if (paths != null) {
+          for (TreePath selectionPath : paths) {
+            if (selectionPath.equals(path)) {
+              isSelected = true;
+            }
+          }
+        }
+        if (!isSelected) {
+          tree.setSelectionPath(path);
+        }
+        if (node.isLeaf()) {
+          JPopupMenu popup = new JPopupMenu();
+          final JMenuItem aboutRuleMenuItem = new JMenuItem(messages.getString("guiAboutRuleMenu"));
+          aboutRuleMenuItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+              RuleNode node = (RuleNode) tree.getSelectionPath().getLastPathComponent();
+              Rule rule = node.getRule();
+              Language lang = config.getLanguage();
+              if(lang == null) {
+                lang = Language.getLanguageForLocale(Locale.getDefault());
+              }
+              Tools.showRuleInfoDialog(tree, messages.getString("guiAboutRuleTitle"),
+                      rule.getDescription(), rule, messages,
+                      lang.getShortNameWithCountryAndVariant());
+            }
+          });
+          popup.add(aboutRuleMenuItem);
+          popup.show(tree, e.getX(), e.getY());
+        }
+      }
+
+      @Override
+      public void mousePressed(MouseEvent e) {
+        if (e.isPopupTrigger()) {
+          handlePopupEvent(e);
+        }
+      }
+
+      @Override
+      public void mouseReleased(MouseEvent e) {
+        if (e.isPopupTrigger()) {
+          handlePopupEvent(e);
+        }
+      }
+    };
+    configTree.addMouseListener(ma);
+    final JPanel treeButtonPanel = new JPanel();
+    cons = new GridBagConstraints();
+    cons.gridx = 0;
+    cons.gridy = 0;
+    final JButton expandAllButton = new JButton(messages.getString("guiExpandAll"));
+    treeButtonPanel.add(expandAllButton, cons);
+    expandAllButton.addActionListener(new ActionListener() {
+
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        TreeNode root = (TreeNode) configTree.getModel().getRoot();
+        TreePath parent = new TreePath(root);
+        for (Enumeration categ = root.children(); categ.hasMoreElements();) {
+          TreeNode n = (TreeNode) categ.nextElement();
+          TreePath child = parent.pathByAddingChild(n);
+          configTree.expandPath(child);
+        }
+      }
+    });
+
+    cons.gridx = 1;
+    cons.gridy = 0;
+    final JButton collapseAllbutton = new JButton(messages.getString("guiCollapseAll"));
+    treeButtonPanel.add(collapseAllbutton, cons);
+    collapseAllbutton.addActionListener(new ActionListener() {
+
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        TreeNode root = (TreeNode) configTree.getModel().getRoot();
+        TreePath parent = new TreePath(root);
+        for (Enumeration categ = root.children(); categ.hasMoreElements();) {
+          TreeNode n = (TreeNode) categ.nextElement();
+          TreePath child = parent.pathByAddingChild(n);
+          configTree.collapsePath(child);
+        }
+      }
+    });
 
     final JPanel motherTonguePanel = new JPanel();
     motherTonguePanel.add(new JLabel(messages.getString("guiMotherTongue")), cons);
     motherTongueBox = new JComboBox(getPossibleMotherTongues());
-    if (motherTongue != null) {
-      if (motherTongue == Language.DEMO) {
-        motherTongueBox.setSelectedItem(NO_MOTHER_TONGUE);
-      } else {
-        motherTongueBox.setSelectedItem(motherTongue.getTranslatedName(messages));
-      }
+    if (config.getMotherTongue() != null) {
+      motherTongueBox.setSelectedItem(config.getMotherTongue().getTranslatedName(messages));
     }
+    motherTongueBox.addItemListener(new ItemListener() {
+
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        if (e.getStateChange() == ItemEvent.SELECTED) {
+          Language motherTongue;
+          if (motherTongueBox.getSelectedItem() instanceof String) {
+            motherTongue = getLanguageForLocalizedName(motherTongueBox.getSelectedItem().toString());
+          } else {
+            motherTongue = (Language) motherTongueBox.getSelectedItem();
+          }
+          config.setMotherTongue(motherTongue);
+        }
+      }
+    });
     motherTonguePanel.add(motherTongueBox, cons);
     
     final JPanel portPanel = new JPanel();
@@ -202,20 +356,10 @@ private JCheckBox serverSettingsCheckbox;
     cons.fill = GridBagConstraints.NONE;
     cons.weightx = 0.0f;
     if (!insideOOo) {
-    	
-      serverCheckbox = new JCheckBox(StringTools.getLabel(messages
-          .getString("guiRunOnPort")));
-      serverCheckbox.setMnemonic(StringTools.getMnemonic(messages
-          .getString("guiRunOnPort")));
-      serverCheckbox.setSelected(serverMode);
+      serverCheckbox = new JCheckBox(Tools.getLabel(messages.getString("guiRunOnPort")));
+      serverCheckbox.setMnemonic(Tools.getMnemonic(messages.getString("guiRunOnPort")));
+      serverCheckbox.setSelected(config.getRunServer());
       portPanel.add(serverCheckbox, cons);
-      serverPortField = new JTextField(Integer.toString(serverPort));
-      serverPortField.setEnabled(serverCheckbox.isSelected());
-      serverSettingsCheckbox = new JCheckBox(StringTools.getLabel(messages
-    		  .getString("useGUIConfig")));
-      // TODO: without this the box is just a few pixels small, but why??:
-      serverPortField.setMinimumSize(new Dimension(100, 25));
-      cons.gridx = 1;
       serverCheckbox.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(@SuppressWarnings("unused") ActionEvent e) {
@@ -223,27 +367,72 @@ private JCheckBox serverSettingsCheckbox;
           serverSettingsCheckbox.setEnabled(serverCheckbox.isSelected());
         }
       });
+      serverCheckbox.addItemListener(new ItemListener() {
+
+        @Override
+        public void itemStateChanged(ItemEvent e) {
+          config.setRunServer(serverCheckbox.isSelected());
+        }
+      });
+
+      serverPortField = new JTextField(Integer.toString(config.getServerPort()));
+      serverPortField.setEnabled(serverCheckbox.isSelected());
+      serverSettingsCheckbox = new JCheckBox(Tools.getLabel(messages.getString("useGUIConfig")));
+      // TODO: without this the box is just a few pixels small, but why??:
+      serverPortField.setMinimumSize(new Dimension(100, 25));
+      cons.gridx = 1;
       portPanel.add(serverPortField, cons);
+      serverPortField.getDocument().addDocumentListener(new DocumentListener() {
+
+        @Override
+        public void insertUpdate(DocumentEvent e) {
+          changedUpdate(e);
+        }
+
+        @Override
+        public void removeUpdate(DocumentEvent e) {
+          changedUpdate(e);
+        }
+
+        @Override
+        public void changedUpdate(DocumentEvent e) {
+          try {
+            int serverPort = Integer.parseInt(serverPortField.getText());
+            if (serverPort > -1 && serverPort < 65536) {
+              serverPortField.setForeground(null);
+              config.setServerPort(serverPort);
+            } else {
+              serverPortField.setForeground(Color.RED);
+            }
+          } catch (NumberFormatException ex) {
+            serverPortField.setForeground(Color.RED);
+          }
+        }
+      });
+
       cons.gridx = 0;
       cons.gridy = 10;      
-      serverSettingsCheckbox.setMnemonic(StringTools.getMnemonic(messages
-    		  .getString("useGUIConfig")));
-      serverSettingsCheckbox.setSelected(useGUIConfig);
-      serverSettingsCheckbox.setEnabled(serverMode);
+      serverSettingsCheckbox.setMnemonic(Tools.getMnemonic(messages
+          .getString("useGUIConfig")));
+      serverSettingsCheckbox.setSelected(config.getUseGUIConfig());
+      serverSettingsCheckbox.setEnabled(config.getRunServer());
+      serverSettingsCheckbox.addItemListener(new ItemListener() {
+
+        @Override
+        public void itemStateChanged(ItemEvent e) {
+          config.setUseGUIConfig(serverSettingsCheckbox.isSelected());
+        }
+      });
       portPanel.add(serverSettingsCheckbox, cons);
     }
 
     final JPanel buttonPanel = new JPanel();
     buttonPanel.setLayout(new GridBagLayout());
-    okButton = new JButton(StringTools.getLabel(messages
-        .getString("guiOKButton")));
-    okButton.setMnemonic(StringTools.getMnemonic(messages
-        .getString("guiOKButton")));
+    okButton = new JButton(Tools.getLabel(messages.getString("guiOKButton")));
+    okButton.setMnemonic(Tools.getMnemonic(messages.getString("guiOKButton")));
     okButton.addActionListener(this);
-    cancelButton = new JButton(StringTools.getLabel(messages
-        .getString("guiCancelButton")));
-    cancelButton.setMnemonic(StringTools.getMnemonic(messages
-        .getString("guiCancelButton")));
+    cancelButton = new JButton(Tools.getLabel(messages.getString("guiCancelButton")));
+    cancelButton.setMnemonic(Tools.getMnemonic(messages.getString("guiCancelButton")));
     cancelButton.addActionListener(this);
     cons = new GridBagConstraints();
     cons.insets = new Insets(0, 4, 0, 0);
@@ -266,11 +455,19 @@ private JCheckBox serverSettingsCheckbox;
     cons.weightx = 0.0f;
     cons.weighty = 0.0f;
     cons.fill = GridBagConstraints.NONE;
+    cons.anchor = GridBagConstraints.LINE_END;
+    contentPane.add(treeButtonPanel, cons);
+    
+    cons.gridx = 0;
+    cons.gridy = 2;
+    cons.weightx = 0.0f;
+    cons.weighty = 0.0f;
+    cons.fill = GridBagConstraints.NONE;
     cons.anchor = GridBagConstraints.WEST;
     contentPane.add(motherTonguePanel, cons);
 
     cons.gridx = 0;
-    cons.gridy = 2;
+    cons.gridy = 3;
     cons.weightx = 0.0f;
     cons.weighty = 0.0f;
     cons.fill = GridBagConstraints.NONE;
@@ -278,7 +475,7 @@ private JCheckBox serverSettingsCheckbox;
     contentPane.add(portPanel, cons);
 
     cons.gridx = 0;
-    cons.gridy = 3;
+    cons.gridy = 4;
     cons.weightx = 0.0f;
     cons.weighty = 0.0f;
     cons.fill = GridBagConstraints.NONE;
@@ -296,53 +493,11 @@ private JCheckBox serverSettingsCheckbox;
     dialog.setVisible(true);
   }
 
-  private ActionListener makeRuleCheckboxListener() {
-    return new ActionListener() {
-      @Override
-      public void actionPerformed(final ActionEvent actionEvent) {
-        final JCheckBox cBox = (JCheckBox) actionEvent.getSource();
-        final boolean selected = cBox.getModel().isSelected();
-        int i = 0;
-        for (final JCheckBox chBox : checkBoxes) {
-          if (chBox.equals(cBox)) {
-            final int catNo = checkBoxesCategoryNames
-                    .indexOf(checkBoxesCategories.get(i));
-            if (selected && !categoryCheckBoxes.get(catNo).isSelected()) {
-              categoryCheckBoxes.get(catNo).setSelected(true);
-            }
-          }
-          i++;
-        }
-      }
-    };
-  }
-
-  private ActionListener makeCategoryCheckboxListener() {
-    return new ActionListener() {
-      @Override
-      public void actionPerformed(final ActionEvent actionEvent) {
-        final JCheckBox cBox = (JCheckBox) actionEvent.getSource();
-        final boolean selected = cBox.getModel().isSelected();
-        int i = 0;
-        for (final JCheckBox ruleBox : checkBoxes) {
-          if (ruleBox.isSelected() != selected) {
-            if (checkBoxesCategories.get(i).equals(cBox.getText())) {
-              ruleBox.setSelected(selected);
-            }
-          }
-          i++;
-        }
-      }
-    };
-  }
-
   private Object[] getPossibleMotherTongues() {
     final List<Object> motherTongues = new ArrayList<>();
     motherTongues.add(NO_MOTHER_TONGUE);
-    for (final Language lang : Language.LANGUAGES) {
-      if (lang != Language.DEMO) {
-        motherTongues.add(lang.getTranslatedName(messages));
-      }
+    for (final Language lang : Language.REAL_LANGUAGES) {
+     motherTongues.add(lang.getTranslatedName(messages));
     }
     return motherTongues.toArray();
   }
@@ -350,86 +505,53 @@ private JCheckBox serverSettingsCheckbox;
   @Override
   public void actionPerformed(ActionEvent e) {
     if (e.getSource() == okButton) {
-      int i = 0;
-      inactiveCategoryNames.clear();
-      for (final JCheckBox checkBox : categoryCheckBoxes) {
-        if (!checkBox.isSelected()) {
-          final String categoryName = checkBoxesCategoryNames.get(i);
-          inactiveCategoryNames.add(categoryName);
-        }
-        i++;
+      if(original != null) {
+        original.restoreState(config);
       }
-      i = 0;
-      inactiveRuleIds.clear();
-      enabledRuleIds.clear();
-      for (final JCheckBox checkBox : checkBoxes) {
-        if (!checkBox.isSelected()) {
-          final String ruleId = checkBoxesRuleIds.get(i);
-          if (!defaultOffRules.contains(ruleId)) {
-            inactiveRuleIds.add(ruleId);
-          }
-        }
-
-        if (checkBox.isSelected()) {
-          final String ruleId = checkBoxesRuleIds.get(i);
-          if (defaultOffRules.contains(ruleId)) {
-            enabledRuleIds.add(ruleId);
-          }
-        }
-
-        i++;
-      }
-
-      if (motherTongueBox.getSelectedItem() instanceof String) {
-        motherTongue = getLanguageForLocalizedName(motherTongueBox
-            .getSelectedItem().toString());
-      } else {
-        motherTongue = (Language) motherTongueBox.getSelectedItem();
-      }
-      
-      if (serverCheckbox != null) {
-        serverMode = serverCheckbox.isSelected();
-        serverPort = Integer.parseInt(serverPortField.getText());
-      }
-      if (serverSettingsCheckbox != null) {
-          useGUIConfig = serverSettingsCheckbox.isSelected();          
-        }
       dialog.setVisible(false);
     } else if (e.getSource() == cancelButton) {
       dialog.setVisible(false);
     }
   }
 
+  @Deprecated
   public void setDisabledRules(Set<String> ruleIDs) {
-    inactiveRuleIds = ruleIDs;
+    config.setDisabledRuleIds(ruleIDs);
   }
 
+  @Deprecated
   public Set<String> getDisabledRuleIds() {
-    return inactiveRuleIds;
+    return config.getDisabledRuleIds();
   }
 
+  @Deprecated
   public void setEnabledRules(Set<String> ruleIDs) {
-    enabledRuleIds = ruleIDs;
+    config.setEnabledRuleIds(ruleIDs);
   }
 
+  @Deprecated
   public Set<String> getEnabledRuleIds() {
-    return enabledRuleIds;
+    return config.getEnabledRuleIds();
   }
 
+  @Deprecated
   public void setDisabledCategories(Set<String> categoryNames) {
-    inactiveCategoryNames = categoryNames;
+    config.setDisabledCategoryNames(categoryNames);
   }
 
+  @Deprecated
   public Set<String> getDisabledCategoryNames() {
-    return inactiveCategoryNames;
+    return config.getDisabledCategoryNames();
   }
 
+  @Deprecated
   public void setMotherTongue(Language motherTongue) {
-    this.motherTongue = motherTongue;
+    config.setMotherTongue(motherTongue);
   }
 
+  @Deprecated
   public Language getMotherTongue() {
-    return motherTongue;
+    return config.getMotherTongue();
   }
   
   /**
@@ -441,10 +563,7 @@ private JCheckBox serverSettingsCheckbox;
    * @return a Language object or <code>null</code>
    */
   private Language getLanguageForLocalizedName(final String languageName) {
-    for (final Language element : Language.LANGUAGES) {
-      if (NO_MOTHER_TONGUE.equals(languageName)) {
-        return Language.DEMO;
-      }
+    for (final Language element : Language.REAL_LANGUAGES) {
       if (languageName.equals(element.getTranslatedName(messages))) {
         return element;
       }
@@ -452,56 +571,51 @@ private JCheckBox serverSettingsCheckbox;
     return null;
   }
 
+  @Deprecated
   public void setRunServer(boolean serverMode) {
-    this.serverMode = serverMode;
+    config.setRunServer(serverMode);
   }
-  
+
+  @Deprecated
   public void setUseGUIConfig(boolean useGUIConfig) {
-	  this.useGUIConfig = useGUIConfig;
+    config.setUseGUIConfig(useGUIConfig);
   }
-  
+
+  @Deprecated
   public boolean getUseGUIConfig() {
-	  if (serverSettingsCheckbox == null) {
-		  return false;
-	  }
-	  return serverSettingsCheckbox.isSelected();
-  }  
+    return config.getUseGUIConfig();
+  }
 
-
+  @Deprecated
   public boolean getRunServer() {
-    if (serverCheckbox == null) {
-      return false;
-    }
-    return serverCheckbox.isSelected();
+    return config.getRunServer();
   }
 
+  @Deprecated
   public void setServerPort(int serverPort) {
-    this.serverPort = serverPort;
+    config.setServerPort(serverPort);
   }
 
+  @Deprecated
   public int getServerPort() {
-    if (serverPortField == null) {
-      return Configuration.DEFAULT_SERVER_PORT;
-    }
-    return Integer.parseInt(serverPortField.getText());
+    return config.getServerPort();
   }
 
-}
+  static class CategoryComparator implements Comparator<Rule> {
 
-class CategoryComparator implements Comparator<Rule> {
-
-  @Override
-  public int compare(final Rule r1, final Rule r2) {
-    final boolean hasCat = r1.getCategory() != null && r2.getCategory() != null;
-    if (hasCat) {
-      final int res = r1.getCategory().getName().compareTo(
-          r2.getCategory().getName());
-      if (res == 0) {
-        return r1.getDescription().compareToIgnoreCase(r2.getDescription());
+    @Override
+    public int compare(final Rule r1, final Rule r2) {
+      final boolean hasCat = r1.getCategory() != null && r2.getCategory() != null;
+      if (hasCat) {
+        final int res = r1.getCategory().getName().compareTo(r2.getCategory().getName());
+        if (res == 0) {
+          return r1.getDescription().compareToIgnoreCase(r2.getDescription());
+        }
+        return res;
       }
-      return res;
+      return r1.getDescription().compareToIgnoreCase(r2.getDescription());
     }
-    return r1.getDescription().compareToIgnoreCase(r2.getDescription());
+
   }
 
 }

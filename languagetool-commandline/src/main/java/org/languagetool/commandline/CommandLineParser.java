@@ -19,9 +19,6 @@
 package org.languagetool.commandline;
 
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 import org.languagetool.Language;
 import org.languagetool.tools.LanguageIdentifierTools;
@@ -135,7 +132,7 @@ public class CommandLineParser {
    * up-to-date if you add an option
    */
   public void printUsage(PrintStream stream) {
-    stream.println("Usage: java -jar LanguageTool.jar [OPTION]... FILE\n"
+    stream.println("Usage: java -jar languagetool-commandline.jar [OPTION]... FILE\n"
             + " FILE                      plain text file to be checked\n"
             + " Available options:\n"
             + "  -r, --recursive          work recursively on directory, not on a single file\n"
@@ -166,17 +163,7 @@ public class CommandLineParser {
   }
 
   private Language getLanguage(String userSuppliedLangCode) {
-    try {
-      return Language.getLanguageForShortName(userSuppliedLangCode);
-    } catch (IllegalArgumentException e){
-      final List<String> supportedLanguages = new ArrayList<>();
-      for (final Language lang : Language.LANGUAGES) {
-        supportedLanguages.add(lang.getShortNameWithVariant());
-      }
-      Collections.sort(supportedLanguages);
-      throw new IllegalArgumentException("Unknown language '" + userSuppliedLangCode
-                  + "'. Supported languages are: " + supportedLanguages);
-    }
+    return Language.getLanguageForShortName(userSuppliedLangCode);
   }
 
 }

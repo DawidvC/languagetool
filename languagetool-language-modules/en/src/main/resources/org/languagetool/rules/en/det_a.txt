@@ -3,6 +3,7 @@
 # line starts with '*').
 # Add words that allow both 'a' and 'an' to det_a.txt and det_an.txt.
 # Also see: http://www.learnenglish.org.uk/grammar/archive/articles_pronunciation.html
+BSc
 Eucharistic
 eukaryote
 euphemism
@@ -74,6 +75,7 @@ ubiquity
 Uganda
 Ugandan
 ukase
+Ukrainian
 ukulele
 ululated
 ululation
@@ -139,6 +141,7 @@ uniter
 uniting
 unitless
 unity
+univalent
 univariate
 universal
 universally
@@ -155,6 +158,7 @@ universality
 universe
 university
 univocal
+univocalic
 uranium
 Uranus
 uranyl
@@ -213,3 +217,6 @@ uterus
 unanimous
 uvula
 uvular
+Uyghur
+*USB
+*VIP

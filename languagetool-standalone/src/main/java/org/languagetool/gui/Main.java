@@ -42,6 +42,8 @@ import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
 import javax.swing.text.DefaultEditorKit;
+import javax.swing.text.JTextComponent;
+import javax.swing.text.TextAction;
 
 /**
  * A simple GUI to check texts with.
@@ -60,23 +62,22 @@ public final class Main {
   private static final String TRAY_SMALL_ICON = "/TrayIconSmall.png";
   private static final String TRAY_SMALL_SERVER_ICON = "/TrayIconSmallWithServer.png";
   private static final String TRAY_TOOLTIP = "LanguageTool";
+  private static final String TAG_COLOR = "#888888";
 
-  private static final String CONFIG_FILE = ".languagetool.cfg";
   private static final int WINDOW_WIDTH = 600;
   private static final int WINDOW_HEIGHT = 550;
 
   private final ResourceBundle messages;
 
   private JFrame frame;
+  private JDialog taggerDialog;
+  private JTextPane taggerArea;
   private JTextArea textArea;
   private JTextPane resultArea;
   private ResultArea resultAreaHelper;
   private LanguageComboBox languageBox;
-  private JCheckBox autoDetectBox;
   private CheckboxMenuItem enableHttpServerItem;
-
   private HTTPServer httpServer;
-
 
   private TrayIcon trayIcon;
   private boolean closeHidesToTray;
@@ -92,7 +93,9 @@ public final class Main {
   private File currentFile;
   private UndoRedoSupport undoRedo;
   private long startTime;
-  
+  private final JLabel statusLabel = new JLabel(" ", null, SwingConstants.RIGHT);
+  private FontChooser fontChooserDialog;
+
   private Main() {
     LanguageIdentifierTools.addLtProfiles();
     messages = JLanguageTool.getMessageBundle();
@@ -105,14 +108,11 @@ public final class Main {
       return;
     }
     try {
-      final FileInputStream inputStream = new FileInputStream(file);
-      try {
-        final String fileContents = StringTools.readFile(inputStream);
+      try (FileInputStream inputStream = new FileInputStream(file)) {
+        final String fileContents = StringTools.readStream(inputStream, null);
         textArea.setText(fileContents);
         currentFile = file;
         updateTitle();
-      } finally {
-        inputStream.close();
       }
     } catch (IOException e) {
       Tools.showError(e);
@@ -150,7 +150,7 @@ public final class Main {
     }
   }
 
-  private void addLanguage() {
+  private void addLanguage() throws InstantiationException, IllegalAccessException {
     final LanguageManagerDialog lmd = new LanguageManagerDialog(frame, Language.getExternalLanguages());
     lmd.show();
     try {
@@ -159,7 +159,7 @@ public final class Main {
       Tools.showErrorMessage(e, frame);
     }
     languageBox.populateLanguageBox();
-    languageBox.selectLanguage(ltSupport.getLanguageTool().getLanguage());
+    languageBox.selectLanguage(ltSupport.getLanguage());
   }
 
   private void showOptions() {
@@ -168,33 +168,48 @@ public final class Main {
     final ConfigurationDialog configDialog = ltSupport.getCurrentConfigDialog();
     configDialog.show(rules); // this blocks until OK/Cancel is clicked in the dialog
     Configuration config = ltSupport.getConfig();
-    config.setDisabledRuleIds(configDialog.getDisabledRuleIds());
-    config.setEnabledRuleIds(configDialog.getEnabledRuleIds());
-    config.setDisabledCategoryNames(configDialog.getDisabledCategoryNames());
-    config.setMotherTongue(configDialog.getMotherTongue());
-    config.setRunServer(configDialog.getRunServer());
-    config.setUseGUIConfig(configDialog.getUseGUIConfig());
-    config.setServerPort(configDialog.getServerPort());
     try { //save config - needed for the server
       config.saveConfiguration(langTool.getLanguage());
     } catch (IOException e) {
       Tools.showError(e);
     }
+    ltSupport.reloadConfig();
     // Stop server, start new server if requested:
     stopServer();
     maybeStartServer();
+  }
+
+  private void showSelectFontDialog() {
+    Configuration config = ltSupport.getConfig();
+    if (fontChooserDialog == null) {
+      fontChooserDialog = new FontChooser(frame, true);
+      Tools.centerDialog(fontChooserDialog);
+    }
+    fontChooserDialog.setSelectedFont(this.textArea.getFont());
+    fontChooserDialog.setVisible(true);
+    if (fontChooserDialog.getSelectedFont() != null) {
+      this.textArea.setFont(fontChooserDialog.getSelectedFont());
+      config.setFontName(fontChooserDialog.getSelectedFont().getFamily());
+      config.setFontStyle(fontChooserDialog.getSelectedFont().getStyle());
+      config.setFontSize(fontChooserDialog.getSelectedFont().getSize());
+      try {
+        config.saveConfiguration(ltSupport.getLanguage());
+      } catch (IOException e) {
+        Tools.showError(e);
+      }
+    }
   }
 
   private Component getFrame() {
     return frame;
   }
 
-  private void updateTitle()
-  {
-    if(currentFile == null)
+  private void updateTitle() {
+    if (currentFile == null) {
       frame.setTitle("LanguageTool " + JLanguageTool.VERSION);
-    else
-      frame.setTitle(currentFile.getName() +" - LanguageTool " + JLanguageTool.VERSION);
+    } else {
+      frame.setTitle(currentFile.getName() + " - LanguageTool " + JLanguageTool.VERSION);
+    }
   }
 
   private void createGUI() {
@@ -218,39 +233,41 @@ public final class Main {
     textArea.setWrapStyleWord(true);
     textArea.addKeyListener(new ControlReturnTextCheckingListener());
     resultArea = new JTextPane();
-    undoRedo = new UndoRedoSupport(this.textArea);
+    undoRedo = new UndoRedoSupport(this.textArea, messages);
     frame.setJMenuBar(createMenuBar());
 
-    final JPanel panel = new JPanel();
-    panel.setOpaque(false);    // to get rid of the gray background
-    panel.setLayout(new GridBagLayout());
     final GridBagConstraints buttonCons = new GridBagConstraints();
+
     final JPanel insidePanel = new JPanel();
     insidePanel.setOpaque(false);
     insidePanel.setLayout(new GridBagLayout());
+
     buttonCons.gridx = 0;
     buttonCons.gridy = 0;
-    buttonCons.anchor = GridBagConstraints.WEST;
-    insidePanel.add(new JLabel(" " + messages.getString("textLanguage") + " "), buttonCons);
+    buttonCons.anchor = GridBagConstraints.LINE_START;
+    insidePanel.add(new JLabel(messages.getString("textLanguage") + " "), buttonCons);
+
     languageBox = new LanguageComboBox(messages, EXTERNAL_LANGUAGE_SUFFIX);
     languageBox.setRenderer(new LanguageComboBoxRenderer(messages, EXTERNAL_LANGUAGE_SUFFIX));
-
     buttonCons.gridx = 1;
     buttonCons.gridy = 0;
+    buttonCons.anchor = GridBagConstraints.LINE_START;
     insidePanel.add(languageBox, buttonCons);
-    buttonCons.gridx = 0;
-    buttonCons.gridy = 0;
-    panel.add(insidePanel);
+
+    final JCheckBox autoDetectBox = new JCheckBox(messages.getString("atd"));
     buttonCons.gridx = 2;
     buttonCons.gridy = 0;
-
-    autoDetectBox = new JCheckBox(messages.getString("atd"));
-
-    buttonCons.gridx = 1;
-    buttonCons.gridy = 1;
-    buttonCons.gridwidth = 2;
-    buttonCons.anchor = GridBagConstraints.WEST;
+    buttonCons.gridwidth = GridBagConstraints.REMAINDER;
+    buttonCons.anchor = GridBagConstraints.LINE_START;
     insidePanel.add(autoDetectBox, buttonCons);
+
+    buttonCons.gridx = 0;
+    buttonCons.gridy = 1;
+    buttonCons.gridwidth = GridBagConstraints.REMAINDER;
+    buttonCons.fill = GridBagConstraints.HORIZONTAL;
+    buttonCons.anchor = GridBagConstraints.LINE_END;
+    buttonCons.weightx = 1.0;
+    insidePanel.add(statusLabel, buttonCons);
 
     final Container contentPane = frame.getContentPane();
     final GridBagLayout gridLayout = new GridBagLayout();
@@ -265,30 +282,35 @@ public final class Main {
     toolbar.setFloatable(false);
     contentPane.add(toolbar,cons);
 
-    JButton openbutton = new JButton(openAction);
-    openbutton.setHideActionText(true);
-    openbutton.setFocusable(false);
-    toolbar.add(openbutton);
+    JButton openButton = new JButton(openAction);
+    openButton.setHideActionText(true);
+    openButton.setFocusable(false);
+    toolbar.add(openButton);
 
-    JButton savebutton = new JButton(saveAction);
-    savebutton.setHideActionText(true);
-    savebutton.setFocusable(false);
-    toolbar.add(savebutton);
+    JButton saveButton = new JButton(saveAction);
+    saveButton.setHideActionText(true);
+    saveButton.setFocusable(false);
+    toolbar.add(saveButton);
 
-    JButton saveasbutton = new JButton(saveAsAction);
-    saveasbutton.setHideActionText(true);
-    saveasbutton.setFocusable(false);
-    toolbar.add(saveasbutton);
+    JButton saveAsButton = new JButton(saveAsAction);
+    saveAsButton.setHideActionText(true);
+    saveAsButton.setFocusable(false);
+    toolbar.add(saveAsButton);
 
-    JButton spellbutton = new JButton(this.checkAction);
-    spellbutton.setHideActionText(true);
-    spellbutton.setFocusable(false);
-    toolbar.add(spellbutton);
+    JButton spellButton = new JButton(this.checkAction);
+    spellButton.setHideActionText(true);
+    spellButton.setFocusable(false);
+    toolbar.add(spellButton);
 
-    JToggleButton autospellbutton = new JToggleButton(autoCheckAction);
-    autospellbutton.setHideActionText(true);
-    autospellbutton.setFocusable(false);
-    toolbar.add(autospellbutton);
+    JToggleButton autoSpellButton = new JToggleButton(autoCheckAction);
+    autoSpellButton.setHideActionText(true);
+    autoSpellButton.setFocusable(false);
+    toolbar.add(autoSpellButton);
+
+    JButton clearTextButton = new JButton(new ClearTextAction());
+    clearTextButton.setHideActionText(true);
+    clearTextButton.setFocusable(false);
+    toolbar.add(clearTextButton);
 
     cons.insets = new Insets(5, 5, 5, 5);
     cons.fill = GridBagConstraints.BOTH;
@@ -302,25 +324,24 @@ public final class Main {
     splitPane.setDividerLocation(200);
     contentPane.add(splitPane, cons);
 
-    cons.fill = GridBagConstraints.NONE;
+    cons.fill = GridBagConstraints.HORIZONTAL;
     cons.gridx = 0;
-    cons.gridy = 2;
-    cons.weighty = 0.0f;
-    cons.insets = new Insets(1, 10, 10, 1);
     cons.gridy = 3;
-    contentPane.add(panel, cons);
+    cons.weightx = 1.0f;
+    cons.weighty = 0.0f;
+    cons.insets = new Insets(4, 12, 4, 12);
+    contentPane.add(insidePanel, cons);
 
     ltSupport = new LanguageToolSupport(this.frame, this.textArea);
     resultAreaHelper = new ResultArea(messages, ltSupport, resultArea);
-    languageBox.selectLanguage(ltSupport.getLanguageTool().getLanguage());
+    languageBox.selectLanguage(ltSupport.getLanguage());
     languageBox.setEnabled(!ltSupport.getConfig().getAutoDetect());
     autoDetectBox.setSelected(ltSupport.getConfig().getAutoDetect());
 
     languageBox.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
-        if(e.getStateChange() == ItemEvent.SELECTED)
-        {
+        if (e.getStateChange() == ItemEvent.SELECTED) {
           // we cannot re-use the existing LT object anymore
           ltSupport.setLanguage((Language) languageBox.getSelectedItem());
         }
@@ -340,27 +361,52 @@ public final class Main {
     });    
     ltSupport.addLanguageToolListener(new LanguageToolListener() {
       @Override
-      public void languageToolEventOccured(LanguageToolEvent event) {
+      public void languageToolEventOccurred(LanguageToolEvent event) {
         if (event.getType() == LanguageToolEvent.Type.CHECKING_STARTED) {
-          if(event.getCaller() == getFrame()) {
+          final String msg = Tools.makeTexti18n(messages, "checkStart");
+          statusLabel.setText(msg);
+          if (event.getCaller() == getFrame()) {
             startTime = System.currentTimeMillis();
             setWaitCursor();
             checkAction.setEnabled(false);
           }
         } else if (event.getType() == LanguageToolEvent.Type.CHECKING_FINISHED) {
-          if(event.getCaller() == getFrame()) {
+          if (event.getCaller() == getFrame()) {
             checkAction.setEnabled(true);
             unsetWaitCursor();
             resultAreaHelper.setRunTime(System.currentTimeMillis() - startTime);
             resultAreaHelper.displayResult();
+            final String msg = Tools.makeTexti18n(messages, "checkDone", event.getSource().getMatches().size(), System.currentTimeMillis() - startTime);
+            statusLabel.setText(msg);
+          } else {
+            final String msg = Tools.makeTexti18n(messages, "checkDoneNoTime", event.getSource().getMatches().size());
+            statusLabel.setText(msg);              
           }
         }
         else if (event.getType() == LanguageToolEvent.Type.LANGUAGE_CHANGED) {
-          languageBox.selectLanguage(ltSupport.getLanguageTool().getLanguage());
+          languageBox.selectLanguage(ltSupport.getLanguage());
         }
       }
     });
-    textArea.setText(messages.getString("guiDemoText"));
+    ResourceBundle textLanguageMessageBundle = JLanguageTool.getMessageBundle(ltSupport.getLanguage());
+    textArea.setText(textLanguageMessageBundle.getString("guiDemoText"));
+
+    Configuration config = ltSupport.getConfig();
+    if (config.getFontName() != null
+            || config.getFontStyle() != Configuration.FONT_STYLE_INVALID
+            || config.getFontSize() != Configuration.FONT_SIZE_INVALID) {
+      String fontName = config.getFontName();
+      if (fontName == null) {
+        fontName = textArea.getFont().getFamily();
+      }
+      int fontSize = config.getFontSize();
+      if (fontSize == Configuration.FONT_SIZE_INVALID) {
+        fontSize = textArea.getFont().getSize();
+      }
+      Font font = new Font(fontName, config.getFontStyle(), fontSize);
+      textArea.setFont(font);
+    }
+
     frame.pack();
     frame.setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
     frame.setLocationByPlatform(true);
@@ -368,11 +414,11 @@ public final class Main {
   }
 
   private String getLabel(String key) {
-    return StringTools.getLabel(messages.getString(key));
+    return Tools.getLabel(messages.getString(key));
   }
 
   private int getMnemonic(String key) {
-    return StringTools.getMnemonic(messages.getString(key));
+    return Tools.getMnemonic(messages.getString(key));
   }
   
   private KeyStroke getMenuKeyStroke(int keyEvent) {
@@ -405,6 +451,23 @@ public final class Main {
     grammarMenu.add(new TagTextAction());
     grammarMenu.add(new AddRulesAction());
     grammarMenu.add(new OptionsAction());
+    grammarMenu.add(new SelectFontAction());
+    JMenu lafMenu = new JMenu(messages.getString("guiLookAndFeelMenu"));
+    UIManager.LookAndFeelInfo[] lafInfo = UIManager.getInstalledLookAndFeels();
+    ButtonGroup buttonGroup = new ButtonGroup();
+    for(UIManager.LookAndFeelInfo laf : lafInfo) {
+      if(!"Nimbus".equals(laf.getName())) {
+        continue;
+      }
+      addLookAndFeelMenuItem(lafMenu, laf, buttonGroup);
+    }
+    for(UIManager.LookAndFeelInfo laf : lafInfo) {
+      if("Nimbus".equals(laf.getName())) {
+        continue;
+      }
+      addLookAndFeelMenuItem(lafMenu, laf, buttonGroup);
+    }    
+    grammarMenu.add(lafMenu);
     
     helpMenu.add(new AboutAction());
 
@@ -417,48 +480,30 @@ public final class Main {
     editMenu.add(undoRedo.redoAction);
     editMenu.addSeparator();
     
-    Action a;
-    Image img;
+    Action cutAction = new DefaultEditorKit.CutAction();
+    cutAction.putValue(Action.SMALL_ICON, getImageIcon("sc_cut.png"));
+    cutAction.putValue(Action.LARGE_ICON_KEY, getImageIcon("lc_cut.png"));
+    cutAction.putValue(Action.NAME, getLabel("guiMenuCut"));
+    cutAction.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_T);
+    editMenu.add(cutAction);
 
-    a = this.textArea.getActionMap().get(DefaultEditorKit.cutAction);
-    img = Toolkit.getDefaultToolkit().getImage(
-            JLanguageTool.getDataBroker().getFromResourceDirAsUrl("sc_cut.png"));
-    a.putValue(Action.SMALL_ICON, new ImageIcon(img));
-    img = Toolkit.getDefaultToolkit().getImage(
-            JLanguageTool.getDataBroker().getFromResourceDirAsUrl("lc_cut.png"));
-    a.putValue(Action.LARGE_ICON_KEY, new ImageIcon(img));
-    a.putValue(Action.NAME, getLabel("guiMenuCut"));
-    a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_T);
-    editMenu.add(a);
+    Action copyAction = new DefaultEditorKit.CopyAction();
+    copyAction.putValue(Action.SMALL_ICON, getImageIcon("sc_copy.png"));
+    copyAction.putValue(Action.LARGE_ICON_KEY, getImageIcon("lc_copy.png"));
+    copyAction.putValue(Action.NAME, getLabel("guiMenuCopy"));
+    copyAction.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_C);
+    editMenu.add(copyAction);
 
-    a = textArea.getActionMap().get(DefaultEditorKit.copyAction);
-    img = Toolkit.getDefaultToolkit().getImage(
-            JLanguageTool.getDataBroker().getFromResourceDirAsUrl("sc_copy.png"));
-    a.putValue(Action.SMALL_ICON, new ImageIcon(img));
-    img = Toolkit.getDefaultToolkit().getImage(
-            JLanguageTool.getDataBroker().getFromResourceDirAsUrl("lc_copy.png"));
-    a.putValue(Action.LARGE_ICON_KEY, new ImageIcon(img));
-    a.putValue(Action.NAME, getLabel("guiMenuCopy"));
-    a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_C);
-    editMenu.add(a);
-
-    a = textArea.getActionMap().get(DefaultEditorKit.pasteAction);
-    img = Toolkit.getDefaultToolkit().getImage(
-            JLanguageTool.getDataBroker().getFromResourceDirAsUrl("sc_paste.png"));
-    a.putValue(Action.SMALL_ICON, new ImageIcon(img));
-    img = Toolkit.getDefaultToolkit().getImage(
-            JLanguageTool.getDataBroker().getFromResourceDirAsUrl("lc_paste.png"));
-    a.putValue(Action.LARGE_ICON_KEY, new ImageIcon(img));
-    a.putValue(Action.NAME, getLabel("guiMenuPaste"));
-    a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_P);
-    editMenu.add(a);
+    Action pasteAction = new DefaultEditorKit.PasteAction();
+    pasteAction.putValue(Action.SMALL_ICON, getImageIcon("sc_paste.png"));
+    pasteAction.putValue(Action.LARGE_ICON_KEY, getImageIcon("lc_paste.png"));
+    pasteAction.putValue(Action.NAME, getLabel("guiMenuPaste"));
+    pasteAction.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_P);
+    editMenu.add(pasteAction);
 
     editMenu.addSeparator();
 
-    a = textArea.getActionMap().get(DefaultEditorKit.selectAllAction);
-    a.putValue(Action.NAME, getLabel("guiMenuSelectAll"));
-    a.putValue(Action.MNEMONIC_KEY, KeyEvent.VK_A);
-    editMenu.add(a);
+    editMenu.add(new SelectAllAction());
 
     menuBar.add(fileMenu);
     menuBar.add(editMenu);
@@ -466,17 +511,44 @@ public final class Main {
     menuBar.add(helpMenu);
     return menuBar;
   }
-  
+
+  private void addLookAndFeelMenuItem(JMenu lafMenu, 
+        UIManager.LookAndFeelInfo laf, ButtonGroup buttonGroup)  
+  {
+    JRadioButtonMenuItem lfItem = new JRadioButtonMenuItem(new SelectLFAction(laf));
+    lafMenu.add(lfItem);
+    buttonGroup.add(lfItem);
+    if(laf.getName().equals(UIManager.getLookAndFeel().getName())) {
+      buttonGroup.setSelected(lfItem.getModel(), true);
+    }
+  }
+
   private void setLookAndFeel() {
+    String lookAndFeelName = null;
+    String className = null;
     try {
-      for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-        if ("Nimbus".equals(info.getName())) {
-          UIManager.setLookAndFeel(info.getClassName());
-          break;
-        }
+      Configuration config = new Configuration(new File(System.getProperty("user.home")), LanguageToolSupport.CONFIG_FILE, null);
+      if (config.getLookAndFeelName() != null) {
+        lookAndFeelName = config.getLookAndFeelName();
       }
-    } catch (Exception ignored) {
-      // Well, what can we do...
+    } catch (IOException ex) {
+      // ignore
+    }
+    if (lookAndFeelName == null) {
+      lookAndFeelName = "Nimbus";
+    }
+    for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+      if (lookAndFeelName.equals(info.getName())) {
+        className = info.getClassName();
+        break;
+      }
+    }
+    if (className != null) {
+      try {
+        UIManager.setLookAndFeel(className);
+      } catch (Exception ignored) {
+        // Well, what can we do...
+      }
     }
   }
 
@@ -484,21 +556,21 @@ public final class Main {
     final PopupMenu popup = new PopupMenu();
     final ActionListener rmbListener = new TrayActionRMBListener();
     // Enable or disable embedded HTTP server:
-    enableHttpServerItem = new CheckboxMenuItem(StringTools.getLabel(messages.getString("tray_menu_enable_server")));
+    enableHttpServerItem = new CheckboxMenuItem(Tools.getLabel(messages.getString("tray_menu_enable_server")));
     enableHttpServerItem.setState(httpServer != null && httpServer.isRunning());
     enableHttpServerItem.addItemListener(new TrayActionItemListener());
     popup.add(enableHttpServerItem);
     // Check clipboard text:
     final MenuItem checkClipboardItem =
-            new MenuItem(StringTools.getLabel(messages.getString("guiMenuCheckClipboard")));
+            new MenuItem(Tools.getLabel(messages.getString("guiMenuCheckClipboard")));
     checkClipboardItem.addActionListener(rmbListener);
     popup.add(checkClipboardItem);
     // Open main window:
-    final MenuItem restoreItem = new MenuItem(StringTools.getLabel(messages.getString("guiMenuShowMainWindow")));
+    final MenuItem restoreItem = new MenuItem(Tools.getLabel(messages.getString("guiMenuShowMainWindow")));
     restoreItem.addActionListener(rmbListener);
     popup.add(restoreItem);
     // Exit:
-    final MenuItem exitItem = new MenuItem(StringTools.getLabel(messages.getString("guiMenuQuit")));
+    final MenuItem exitItem = new MenuItem(Tools.getLabel(messages.getString("guiMenuQuit")));
     exitItem.addActionListener(rmbListener);
     popup.add(exitItem);
     return popup;
@@ -564,8 +636,8 @@ public final class Main {
     stopServer();
     try {
       Configuration config = ltSupport.getConfig();
-      config.setLanguage(ltSupport.getLanguageTool().getLanguage());
-      config.saveConfiguration(ltSupport.getLanguageTool().getLanguage());
+      config.setLanguage(ltSupport.getLanguage());
+      config.saveConfiguration(ltSupport.getLanguage());
     } catch (IOException e) {
       Tools.showError(e);
     }
@@ -700,15 +772,63 @@ public final class Main {
     try {
       for (String sent : sentences) {
         final AnalyzedSentence analyzedText = langTool.getAnalyzedSentence(sent);
-        final String analyzedTextString = StringTools.escapeHTML(analyzedText.toString(", ")).
-                replace("[", "<font color='#888888'>[").replace("]", "]</font>");
-        sb.append(analyzedTextString).append("\n");
+        final String analyzedTextString = StringTools.escapeHTML(analyzedText.toString(",")).
+                replace("&lt;S&gt;", "&lt;S&gt;<br>").
+                replace("[", "<font color='" + TAG_COLOR + "'>[").
+                replace("]", "]</font><br>");
+        sb.append(analyzedTextString).append('\n');
       }
     } catch (Exception e) {
       sb.append(getStackTraceAsHtml(e));
     }
-    // This method is thread safe
-    resultArea.setText(HTML_FONT_START + sb.toString() + HTML_FONT_END);
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        if (taggerDialog == null) {
+          taggerDialog = new JDialog(frame);
+          taggerDialog.setTitle(messages.getString("taggerWindowTitle"));
+          taggerDialog.setDefaultCloseOperation(JDialog.HIDE_ON_CLOSE);
+          taggerDialog.setResizable(true);
+          taggerDialog.setSize(640, 480);
+          taggerDialog.setLocationRelativeTo(frame);
+          KeyStroke stroke = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
+          ActionListener actionListener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+              taggerDialog.setVisible(false);
+            }
+          };
+          taggerDialog.getRootPane().registerKeyboardAction(actionListener,
+                  stroke, JComponent.WHEN_IN_FOCUSED_WINDOW);
+          JPanel panel = new JPanel(new GridBagLayout());
+          taggerDialog.add(panel);
+          taggerArea = new JTextPane();
+          taggerArea.setContentType("text/html");
+          taggerArea.setEditable(false);
+          GridBagConstraints c = new GridBagConstraints();
+          c.gridx = 0;
+          c.gridy = 0;
+          c.weightx = 1.0;
+          c.weighty = 1.0;
+          c.insets = new Insets(8,8,4,8);
+          c.fill = GridBagConstraints.BOTH;
+          panel.add(new JScrollPane(taggerArea),c);
+          c.gridx = 0;
+          c.gridy = 1;
+          c.weightx = 0.0;
+          c.weighty = 0.0;
+          c.insets = new Insets(4,8,8,8);
+          c.fill = GridBagConstraints.NONE;
+          c.anchor = GridBagConstraints.EAST;
+          JButton closeButton = new JButton(
+                  messages.getString("guiCloseButton"));
+          closeButton.addActionListener(actionListener);
+          panel.add(closeButton,c);
+        }
+        taggerDialog.setVisible(true);
+        taggerArea.setText(HTML_FONT_START + sb.toString() + HTML_FONT_END);
+      }
+    });
   }
 
   private void setTrayMode(boolean trayMode) {
@@ -716,7 +836,9 @@ public final class Main {
   }
   
   public static void main(final String[] args) {
-    JnaTools.setBugWorkaroundProperty();
+    if (System.getSecurityManager() == null) {
+      JnaTools.setBugWorkaroundProperty();
+    }
     final Main prg = new Main();
     if (args.length == 1 && (args[0].equals("-t") || args[0].equals("--tray"))) {
       // dock to systray on startup
@@ -777,23 +899,16 @@ public final class Main {
     @Override
     public void itemStateChanged(ItemEvent e) {
       try {
-        final ConfigurationDialog configDialog = ltSupport.getCurrentConfigDialog();
         final Configuration config = ltSupport.getConfig();
         if (e.getStateChange() == ItemEvent.SELECTED) {
           config.setRunServer(true);
           final boolean serverStarted = maybeStartServer();
           enableHttpServerItem.setState(serverStarted);
           config.setRunServer(serverStarted);
-          config.saveConfiguration(ltSupport.getLanguageTool().getLanguage());
-          if (configDialog != null) {
-            configDialog.setRunServer(true);
-          }
+          config.saveConfiguration(ltSupport.getLanguage());
         } else if (e.getStateChange() == ItemEvent.DESELECTED) {
           config.setRunServer(false);
-          config.saveConfiguration(ltSupport.getLanguageTool().getLanguage());
-          if (configDialog != null) {
-            configDialog.setRunServer(false);
-          }
+          config.saveConfiguration(ltSupport.getLanguage());
           stopServer();
         }
       } catch (IOException ex) {
@@ -819,7 +934,7 @@ public final class Main {
     }
 
     private boolean isCommand(ActionEvent e, String label) {
-      return e.getActionCommand().equalsIgnoreCase(StringTools.getLabel(messages.getString(label)));
+      return e.getActionCommand().equalsIgnoreCase(Tools.getLabel(messages.getString(label)));
     }
 
   }
@@ -875,8 +990,8 @@ public final class Main {
 
     @Override
     public boolean accept(final File f) {
-        final boolean isTextFile = f.getName().toLowerCase().endsWith(".txt");
-        return isTextFile || f.isDirectory();
+      final boolean isTextFile = f.getName().toLowerCase().endsWith(".txt");
+      return isTextFile || f.isDirectory();
     }
 
     @Override
@@ -894,13 +1009,8 @@ public final class Main {
       putValue(Action.LONG_DESCRIPTION, messages.getString("guiMenuOpenLongDesc"));
       putValue(Action.MNEMONIC_KEY, getMnemonic("guiMenuOpen"));
       putValue(Action.ACCELERATOR_KEY, getMenuKeyStroke(KeyEvent.VK_O));
-      Image img;
-      img = Toolkit.getDefaultToolkit().getImage(
-              JLanguageTool.getDataBroker().getFromResourceDirAsUrl("sc_open.png"));
-      putValue(Action.SMALL_ICON, new ImageIcon(img));
-      img = Toolkit.getDefaultToolkit().getImage(
-              JLanguageTool.getDataBroker().getFromResourceDirAsUrl("lc_open.png"));
-      putValue(Action.LARGE_ICON_KEY, new ImageIcon(img));
+      putValue(Action.SMALL_ICON, getImageIcon("sc_open.png"));
+      putValue(Action.LARGE_ICON_KEY, getImageIcon("lc_open.png"));
     }
 
     @Override
@@ -917,13 +1027,8 @@ public final class Main {
       putValue(Action.LONG_DESCRIPTION, messages.getString("guiMenuSaveLongDesc"));
       putValue(Action.MNEMONIC_KEY, getMnemonic("guiMenuSave"));
       putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
-      Image img;
-      img = Toolkit.getDefaultToolkit().getImage(
-              JLanguageTool.getDataBroker().getFromResourceDirAsUrl("sc_save.png"));
-      putValue(Action.SMALL_ICON, new ImageIcon(img));
-      img = Toolkit.getDefaultToolkit().getImage(
-              JLanguageTool.getDataBroker().getFromResourceDirAsUrl("lc_save.png"));
-      putValue(Action.LARGE_ICON_KEY, new ImageIcon(img));
+      putValue(Action.SMALL_ICON, getImageIcon("sc_save.png"));
+      putValue(Action.LARGE_ICON_KEY, getImageIcon("lc_save.png"));
     }
 
     @Override
@@ -939,13 +1044,8 @@ public final class Main {
       putValue(Action.SHORT_DESCRIPTION, messages.getString("guiMenuSaveAsShortDesc"));
       putValue(Action.LONG_DESCRIPTION, messages.getString("guiMenuSaveAsLongDesc"));
       putValue(Action.MNEMONIC_KEY, getMnemonic("guiMenuSaveAs"));
-      Image img;
-      img = Toolkit.getDefaultToolkit().getImage(
-              JLanguageTool.getDataBroker().getFromResourceDirAsUrl("sc_saveas.png"));
-      putValue(Action.SMALL_ICON, new ImageIcon(img));
-      img = Toolkit.getDefaultToolkit().getImage(
-              JLanguageTool.getDataBroker().getFromResourceDirAsUrl("lc_saveas.png"));
-      putValue(Action.LARGE_ICON_KEY, new ImageIcon(img));
+      putValue(Action.SMALL_ICON, getImageIcon("sc_saveas.png"));
+      putValue(Action.LARGE_ICON_KEY, getImageIcon("lc_saveas.png"));
     }
 
     @Override
@@ -991,7 +1091,13 @@ public final class Main {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      addLanguage();
+      try {
+        addLanguage();
+      } catch (InstantiationException e1) {
+        throw new RuntimeException(e1);
+      } catch (IllegalAccessException e1) {
+        throw new RuntimeException(e1);
+      }
     }
   }
 
@@ -1006,6 +1112,41 @@ public final class Main {
     @Override
     public void actionPerformed(ActionEvent e) {
       showOptions();
+    }
+  }
+  
+  class SelectFontAction extends AbstractAction {
+
+    public SelectFontAction() {
+      super(getLabel("guiSelectFont"));
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      showSelectFontDialog();
+    }
+  }
+
+  class SelectLFAction extends AbstractAction {
+
+    private final UIManager.LookAndFeelInfo lf;
+    
+    public SelectLFAction(UIManager.LookAndFeelInfo lf) {
+      super(lf.getName());
+      this.lf = lf;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      try {
+        UIManager.setLookAndFeel(lf.getClassName());
+        SwingUtilities.updateComponentTreeUI(frame);
+        frame.pack();
+        ltSupport.getConfig().setLookAndFeelName(lf.getName());
+      } catch (ClassNotFoundException | InstantiationException
+              | IllegalAccessException | UnsupportedLookAndFeelException ex) {
+        Tools.showError(ex);
+      }
     }
   }
 
@@ -1058,13 +1199,8 @@ public final class Main {
       putValue(Action.SHORT_DESCRIPTION, messages.getString("checkTextShortDesc"));
       putValue(Action.LONG_DESCRIPTION, messages.getString("checkTextLongDesc"));
       putValue(Action.MNEMONIC_KEY, getMnemonic("checkText"));
-      Image img;
-      img = Toolkit.getDefaultToolkit().getImage(
-              JLanguageTool.getDataBroker().getFromResourceDirAsUrl("sc_spelldialog.png"));
-      putValue(Action.SMALL_ICON, new ImageIcon(img));
-      img = Toolkit.getDefaultToolkit().getImage(
-              JLanguageTool.getDataBroker().getFromResourceDirAsUrl("lc_spelldialog.png"));
-      putValue(Action.LARGE_ICON_KEY, new ImageIcon(img));
+      putValue(Action.SMALL_ICON, getImageIcon("sc_spelldialog.png"));
+      putValue(Action.LARGE_ICON_KEY, getImageIcon("lc_spelldialog.png"));
     }
 
     @Override
@@ -1082,13 +1218,8 @@ public final class Main {
       putValue(Action.SHORT_DESCRIPTION, messages.getString("autoCheckTextShortDesc"));
       putValue(Action.LONG_DESCRIPTION, messages.getString("autoCheckTextLongDesc"));
       putValue(Action.MNEMONIC_KEY, getMnemonic("autoCheckText"));
-      Image img;
-      img = Toolkit.getDefaultToolkit().getImage(
-              JLanguageTool.getDataBroker().getFromResourceDirAsUrl("sc_spellonline.png"));
-      putValue(Action.SMALL_ICON, new ImageIcon(img));
-      img = Toolkit.getDefaultToolkit().getImage(
-              JLanguageTool.getDataBroker().getFromResourceDirAsUrl("lc_spellonline.png"));
-      putValue(Action.LARGE_ICON_KEY, new ImageIcon(img));
+      putValue(Action.SMALL_ICON, getImageIcon("sc_spellonline.png"));
+      putValue(Action.LARGE_ICON_KEY, getImageIcon("lc_spellonline.png"));
       enable = initial;
       putValue(Action.SELECTED_KEY, enable);
     }
@@ -1100,4 +1231,40 @@ public final class Main {
       ltSupport.setBackgroundCheckEnabled(enable);
     }
   }
+
+  class ClearTextAction extends AbstractAction {
+
+    public ClearTextAction() {
+      super(getLabel("clearText"));
+      putValue(Action.SHORT_DESCRIPTION, messages.getString("clearText"));
+      putValue(Action.SMALL_ICON, getImageIcon("sc_closedoc.png"));
+      putValue(Action.LARGE_ICON_KEY, getImageIcon("lc_closedoc.png"));
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      ltSupport.getTextComponent().setText("");
+    }
+  }
+
+  private class SelectAllAction extends TextAction {
+
+    private SelectAllAction() {
+      super(getLabel("guiMenuSelectAll"));
+      putValue(Action.MNEMONIC_KEY, KeyEvent.VK_A);
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      JTextComponent component = getFocusedComponent();
+      component.selectAll();
+    }
+  }
+
+  private ImageIcon getImageIcon(String filename) {
+    Image image = Toolkit.getDefaultToolkit().getImage(
+            JLanguageTool.getDataBroker().getFromResourceDirAsUrl(filename));
+    return new ImageIcon(image);
+  }
+
 }

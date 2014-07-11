@@ -28,7 +28,7 @@ import org.languagetool.rules.en.MorfologikAmericanSpellerRule;
 public class AmericanEnglish extends English {
 
   @Override
-  public final String[] getCountryVariants() {
+  public final String[] getCountries() {
     return new String[]{"US"};
   }
 
@@ -36,11 +36,7 @@ public class AmericanEnglish extends English {
   public final String getName() {
     return "English (US)";
   }
-  
-  public final String getId() {
-      return "MORFOLOGIK_RULE_EN_US";
-  }
-  
+
   @Override
   public List<Class<? extends Rule>> getRelevantRules() {
     final List<Class<? extends Rule>> rules = new ArrayList<>();

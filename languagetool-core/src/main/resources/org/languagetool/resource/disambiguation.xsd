@@ -105,6 +105,7 @@
 						<xs:enumeration value="replace" />
 						<xs:enumeration value="unify" />
 						<xs:enumeration value="immunize" />
+                        <xs:enumeration value="ignore_spelling"/>
 						<xs:enumeration value="filterall" />
 					</xs:restriction>
 				</xs:simpleType>
@@ -123,7 +124,13 @@
 	<xs:element name="example" xml:space="preserve">
     <xs:complexType mixed="true">
       <xs:choice minOccurs="0" maxOccurs="unbounded">
-        <xs:element ref="marker" />
+        <xs:element name="marker" >
+            <xs:complexType>
+                <xs:simpleContent>
+                    <xs:extension base="xs:string"/>
+                </xs:simpleContent>
+            </xs:complexType>
+        </xs:element>
       </xs:choice>
       <xs:attribute name="inputform" type="xs:string"
 		use="optional" />

@@ -1,4 +1,4 @@
-/* LanguageTool, a natural language style checker 
+/* LanguageTool, a natural language style checker
  * Copyright (C) 2005 Daniel Naber (http://www.danielnaber.de)
  * 
  * This library is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@ import org.languagetool.synthesis.Synthesizer;
 import org.languagetool.tools.StringTools;
 
 /**
- * A part of a pattern, represents the 'token' element of the grammar.xml.
+ * A part of a pattern, represents the 'token' element of the {@code grammar.xml}.
  * 
  * @author Daniel Naber
  */
@@ -100,12 +100,16 @@ public class Element implements Cloneable {
   private boolean testString;
   /** Tells if the element is inside the unification, so that {@link Unifier} tests it.  */
   private boolean unified;
+
+  /** Determines whether the element should be ignored when doing unification **/
+  private boolean unificationNeutral;
+
   private boolean uniNegation;
   private Map<String, List<String>> unificationFeatures;
   private boolean posUnknown;
 
   /**
-   * Set to true on tokens that close the unification block. 
+   * Set to true on tokens that close the unification block.
    */
   private boolean isLastUnified;
 
@@ -128,7 +132,7 @@ public class Element implements Cloneable {
   public Object clone() throws CloneNotSupportedException {
     return super.clone();
   }
-  
+
   /**
    * Checks whether the rule element matches the token given as a parameter.
    * @param token AnalyzedToken to check matching against
@@ -140,11 +144,11 @@ public class Element implements Cloneable {
     }
     final boolean matched;
     if (testString) {
-      matched = (isStringTokenMatched(token) ^ negation)
-          && (isPosTokenMatched(token) ^ posNegation);
+      matched = isStringTokenMatched(token) ^ negation
+          && isPosTokenMatched(token) ^ posNegation;
     } else {
-      matched = (!negation)
-          && (isPosTokenMatched(token) ^ posNegation);
+      matched = !negation
+          && isPosTokenMatched(token) ^ posNegation;
     }
     return matched;
   }
@@ -254,11 +258,11 @@ public class Element implements Cloneable {
   public final List<Element> getOrGroup() {
     return orGroupList;
   }
-  
+
   /**
    * Checks whether a previously set exception matches (in case the exception had scope == "next").
    * 
-   * @param token AnalyzedToken to check matching against.
+   * @param token {@link AnalyzedToken} to check matching against.
    * @return True if any of the exceptions matches.
    */
   public final boolean isMatchedByScopeNextException(final AnalyzedToken token) {
@@ -311,13 +315,6 @@ public class Element implements Cloneable {
   }
 
   /**
-   * @deprecated use {@link #isSentenceStart()} - deprecated since 2.3
-   */
-  public final boolean isSentStart() {
-    return JLanguageTool.SENTENCE_START_TAGNAME.equals(posToken) && !posNegation;
-  }
-
-  /**
    * Checks if the token is a sentence start.
    * @return True if the element starts the sentence and the element hasn't been set to have negated POS token.
    */
@@ -333,9 +330,9 @@ public class Element implements Cloneable {
     if (posRegExp) {
       pPos = Pattern.compile(posToken);
       final Matcher mPos = pPos.matcher(UNKNOWN_TAG);
-      posUnknown = mPos.matches();        
+      posUnknown = mPos.matches();
     } else {
-      posUnknown = UNKNOWN_TAG.equals(posToken); 
+      posUnknown = UNKNOWN_TAG.equals(posToken);
     }
   }
 
@@ -351,7 +348,11 @@ public class Element implements Cloneable {
   }
 
   public final void setStringElement(final String token) {
-    stringToken = token;
+    if (token != null) {
+      stringToken = StringTools.trimWhitespace(token);
+    } else {
+      stringToken = null;
+    }
     testString = !StringTools.isEmpty(stringToken);
     if (testString && stringRegExp) {
       String regToken = stringToken;
@@ -365,7 +366,7 @@ public class Element implements Cloneable {
   }
 
   /**
-   * Sets a string and/or pos exception for matching string tokens.
+   * Sets a string and/or pos exception for matching tokens.
    * 
    * @param token The string in the exception.
    * @param regExp True if the string is specified as a regular expression.
@@ -383,6 +384,33 @@ public class Element implements Cloneable {
       final String posToken, final boolean posRegExp, final boolean posNegation) {
 
     final Element exception = new Element(token, caseSensitive, regExp, inflected);
+    exception.setNegation(negation);
+    exception.setPosElement(posToken, posRegExp, posNegation);
+    exception.exceptionValidNext = scopeNext;
+    setException(exception, scopePrevious);
+  }
+
+  /**
+   * Sets a string and/or pos exception for matching tokens.
+   *
+   * @param token The string in the exception.
+   * @param regExp True if the string is specified as a regular expression.
+   * @param inflected True if the string is a base form (lemma).
+   * @param negation True if the exception is negated.
+   * @param scopeNext True if the exception scope is next tokens.
+   * @param scopePrevious True if the exception should match only a single previous token.
+   * @param posToken The part of the speech tag in the exception.
+   * @param posRegExp True if the POS is specified as a regular expression.
+   * @param posNegation True if the POS exception is negated.
+   * @param caseSensitivity True if exception is case sensitive (in a different way than the whole token).
+   * @since 2.6
+   */
+  public final void setStringPosException(
+      final String token, final boolean regExp, final boolean inflected,
+      final boolean negation, final boolean scopeNext, final boolean scopePrevious,
+      final String posToken, final boolean posRegExp, final boolean posNegation, final boolean caseSensitivity) {
+
+    final Element exception = new Element(token, caseSensitivity, regExp, inflected);
     exception.setNegation(negation);
     exception.setPosElement(posToken, posRegExp, posNegation);
     exception.exceptionValidNext = scopeNext;
@@ -409,6 +437,29 @@ public class Element implements Cloneable {
   }
 
   /**
+   * Sets an exception for matching Optional tokens.
+   * 
+   * @param token The string in the exception.
+   * @param regExp True if the string is specified as a regular expression.
+   * @param inflected True if the string is a base form (lemma).
+   * @param negation True if the exception is negated.
+   * @param posToken The part of the speech tag in the exception.
+   * @param posRegExp True if the POS is specified as a regular expression.
+   * @param posNegation True if the POS exception is negated.
+   * @since 2.5
+   */
+  public final void setOptionalException(
+      final String token, final boolean regExp, final boolean inflected,
+      final boolean negation, final String posToken,
+      final boolean posRegExp, final boolean posNegation) {
+
+    final Element exception = new Element(token, caseSensitive, regExp, inflected);
+    exception.setNegation(negation);
+    exception.setPosElement(posToken, posRegExp, posNegation);
+    setException(exception, false);
+  }
+
+  /**
    * Tests if part of speech matches a given string.
    * Special value UNKNOWN_TAG matches null POS tags.
    * @param token Token to test.
@@ -419,11 +470,8 @@ public class Element implements Cloneable {
       // if no POS set defaulting to true
       return true;
     }
-    if (token.getPOSTag() == null) {      
-      if (posUnknown) {
-        return token.hasNoTag();
-      }
-      return false;
+    if (token.getPOSTag() == null) {
+      return posUnknown && token.hasNoTag();
     }
     boolean match;
     if (posRegExp) {
@@ -433,7 +481,7 @@ public class Element implements Cloneable {
       match = posToken.equals(token.getPOSTag());
     }
     if (!match && posUnknown) { // ignore helper tags
-      match = token.hasNoTag();      
+      match = token.hasNoTag();
     }
     return match;
   }
@@ -575,7 +623,7 @@ public class Element implements Cloneable {
    * @param synth the language synthesizer ({@link Synthesizer})
    */
   public final Element compile(final AnalyzedTokenReadings token, final Synthesizer synth)
-          throws IOException {
+      throws IOException {
     final Element compiledElement;
     try {
       compiledElement = (Element) clone();
@@ -620,15 +668,6 @@ public class Element implements Cloneable {
    */
   public final boolean isPartOfPhrase() {
     return phraseName != null;
-  }
-
-  /**
-   * Whether the element matches case sensitively.
-   * @deprecated use {@link #isCaseSensitive()} instead (deprecated since 2.3)
-   * @since 0.9.3
-   */
-  public final boolean getCaseSensitive() {
-    return caseSensitive;
   }
 
   /**
@@ -698,6 +737,8 @@ public class Element implements Cloneable {
     return unified;
   }
 
+
+
   public final void setUnification(final Map<String, List<String>> uniFeatures) {
     unificationFeatures = uniFeatures;
     unified = true;
@@ -727,7 +768,26 @@ public class Element implements Cloneable {
   public final void setLastInUnification() {
     isLastUnified = true;
   }
-  
+
+  /**
+   * Determines whether the element should be silently ignored during unification,
+   * and simply added.
+   * @return True when the element is not included in unifying.
+   * @since 2.5
+   **/
+  public boolean isUnificationNeutral() {
+    return unificationNeutral;
+  }
+
+  /**
+   * Sets the element as ignored during unification.
+   * @since 2.5
+   */
+  public void setUnificationNeutral() {
+    this.unificationNeutral = true;
+  }
+
+
   public final void setWhitespaceBefore(final boolean isWhite) {
     whitespaceBefore = isWhite;
     testWhitespace = true;
@@ -770,7 +830,7 @@ public class Element implements Cloneable {
   public final List<Element> getExceptionList() {
     return exceptionList;
   }
-  
+
   /**
    * @return List of previous exceptions. Used for testing.
    */

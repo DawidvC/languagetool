@@ -18,25 +18,27 @@
  */
 package org.languagetool.rules.de;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.ResourceBundle;
+import java.util.*;
 
 import org.languagetool.AnalyzedSentence;
 import org.languagetool.AnalyzedTokenReadings;
 import org.languagetool.rules.Category;
+import org.languagetool.rules.Example;
 import org.languagetool.rules.RuleMatch;
 
 /**
- * Pr&uuml;ft, dass in Bindestrich-Komposita kein Leerzeichen eingef&uuml;gt wird (wie z.B. in 'Di&auml;ten- Erh&ouml;hung').
+ * Prüft, dass in Bindestrich-Komposita kein Leerzeichen eingefügt wird (wie z.B. in 'Diäten- Erhöhung').
  *   
  * @author Daniel Naber
  */
 public class DashRule extends GermanRule {
 
   public DashRule(final ResourceBundle messages) {
-    if (messages != null)
+    if (messages != null) {
       super.setCategory(new Category(messages.getString("category_misc")));
+    }
+    addExamplePair(Example.wrong("Bundestag beschließt <marker>Diäten- Erhöhung</marker>"),
+                   Example.fixed("Bundestag beschließt <marker>Diäten-Erhöhung</marker>"));
   }
 
   @Override
@@ -50,9 +52,9 @@ public class DashRule extends GermanRule {
   }
 
   @Override
-  public RuleMatch[] match(final AnalyzedSentence text) {
+  public RuleMatch[] match(final AnalyzedSentence sentence) {
     final List<RuleMatch> ruleMatches = new ArrayList<>();
-    final AnalyzedTokenReadings[] tokens = text.getTokensWithoutWhitespace();
+    final AnalyzedTokenReadings[] tokens = sentence.getTokensWithoutWhitespace();
     String prevToken = null;
     for (int i = 0; i < tokens.length; i++) {
       final String token = tokens[i].getToken();
@@ -60,8 +62,8 @@ public class DashRule extends GermanRule {
         // ignore
         continue;
       } 
-      if (prevToken != null && !prevToken.equals("-") && prevToken.indexOf("--") == -1 
-          && prevToken.indexOf("–-") == -1    // first char is some special kind of dash, found in Wikipedia
+      if (prevToken != null && !prevToken.equals("-") && !prevToken.contains("--") 
+          && !prevToken.contains("–-")    // first char is some special kind of dash, found in Wikipedia
           && prevToken.endsWith("-")) {
         final char firstChar = token.charAt(0);
         if (Character.isUpperCase(firstChar)) {
@@ -69,7 +71,8 @@ public class DashRule extends GermanRule {
           "ein überflüssiges Leerzeichen eingefügt. Eventuell haben Sie auch versehentlich einen Bindestrich statt eines Punktes eingefügt.";
           final RuleMatch ruleMatch = new RuleMatch(this, tokens[i-1].getStartPos(),
               tokens[i-1].getStartPos()+prevToken.length()+1, msg);
-          ruleMatch.setSuggestedReplacement(tokens[i-1].getToken());
+          String prevTokenStr = tokens[i-1].getToken();
+          ruleMatch.setSuggestedReplacements(Arrays.asList(prevTokenStr, prevTokenStr + ", "));
           ruleMatches.add(ruleMatch);
         }
       }      

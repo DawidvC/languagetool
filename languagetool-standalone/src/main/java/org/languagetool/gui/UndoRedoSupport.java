@@ -22,6 +22,7 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.util.ResourceBundle;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
@@ -45,8 +46,10 @@ class UndoRedoSupport {
   final UndoAction undoAction;
   final RedoAction redoAction;
   private final UndoManager undoManager;
+  private final ResourceBundle messages;
 
-  UndoRedoSupport(JTextComponent textComponent) {
+  UndoRedoSupport(JTextComponent textComponent, ResourceBundle messages) {
+    this.messages = messages;
     undoManager = new UndoManager();
     undoAction = new UndoAction();
     redoAction = new RedoAction();
@@ -72,7 +75,7 @@ class UndoRedoSupport {
   class UndoAction extends AbstractAction {
 
     private UndoAction() {
-      super("Undo");
+      super(messages.getString("guiUndo"));
       Image img;
       img = Toolkit.getDefaultToolkit().getImage(
               JLanguageTool.getDataBroker().getFromResourceDirAsUrl("sc_undo.png"));
@@ -101,10 +104,8 @@ class UndoRedoSupport {
     private void updateUndoState() {
       if (undoManager.canUndo()) {
         setEnabled(true);
-        putValue(Action.NAME, undoManager.getUndoPresentationName());
       } else {
         setEnabled(false);
-        putValue(Action.NAME, "Undo");
       }
     }
   }
@@ -112,7 +113,7 @@ class UndoRedoSupport {
   class RedoAction extends AbstractAction {
 
     private RedoAction() {
-      super("Redo");
+      super(messages.getString("guiRedo"));
       Image img;
       img = Toolkit.getDefaultToolkit().getImage(
               JLanguageTool.getDataBroker().getFromResourceDirAsUrl("sc_redo.png"));
@@ -141,10 +142,8 @@ class UndoRedoSupport {
     private void updateRedoState() {
       if (undoManager.canRedo()) {
         setEnabled(true);
-        putValue(Action.NAME, undoManager.getRedoPresentationName());
       } else {
         setEnabled(false);
-        putValue(Action.NAME, "Redo");
       }
     }
   }

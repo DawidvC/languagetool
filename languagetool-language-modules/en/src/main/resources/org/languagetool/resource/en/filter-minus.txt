@@ -9990,3 +9990,13 @@ eulogia N?:
 emboli N?:
 enwind N?:
 en N:
+or N:
+Im	N
+prof N:
+half-century	pN
+livestock N:
+livestock	N
+read V:
+paris N?:
+Paris	NA
+sometime N?:

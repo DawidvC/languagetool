@@ -23,13 +23,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.languagetool.Language;
-import org.languagetool.rules.CommaWhitespaceRule;
-import org.languagetool.rules.DoublePunctuationRule;
-import org.languagetool.rules.GenericUnpairedBracketsRule;
-import org.languagetool.rules.Rule;
-import org.languagetool.rules.UppercaseSentenceStartRule;
-import org.languagetool.rules.WhitespaceRule;
-import org.languagetool.rules.WordRepeatRule;
+import org.languagetool.rules.*;
 import org.languagetool.rules.spelling.hunspell.HunspellNoSuggestionRule;
 import org.languagetool.tagging.Tagger;
 import org.languagetool.tagging.xx.DemoTagger;
@@ -43,10 +37,16 @@ public class Icelandic extends Language {
 
   private Tagger tagger;
   private SentenceTokenizer sentenceTokenizer;
+  private String name = "Icelandic";
 
   @Override
   public String getName() {
-    return "Icelandic";
+    return name;
+  }
+
+  @Override
+  public void setName(final String name) {
+    this.name = name;
   }
 
   @Override
@@ -55,7 +55,7 @@ public class Icelandic extends Language {
   }
 
   @Override
-  public String[] getCountryVariants() {
+  public String[] getCountries() {
     return new String[]{"IS"};
   }
 
@@ -89,7 +89,7 @@ public class Icelandic extends Language {
             HunspellNoSuggestionRule.class,
             UppercaseSentenceStartRule.class,
             WordRepeatRule.class,
-            WhitespaceRule.class
+            MultipleWhitespaceRule.class
     );
   }
 

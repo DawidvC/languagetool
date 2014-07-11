@@ -22,6 +22,8 @@ import java.io.IOException;
 
 import org.languagetool.TestTools;
 import org.languagetool.language.Ukrainian;
+import org.languagetool.tagging.disambiguation.Disambiguator;
+import org.languagetool.tagging.disambiguation.MultiWordChunker;
 import org.languagetool.tagging.disambiguation.rules.DisambiguationRuleTest;
 import org.languagetool.tagging.disambiguation.uk.UkrainianHybridDisambiguator;
 import org.languagetool.tagging.disambiguation.xx.DemoDisambiguator;
@@ -36,14 +38,16 @@ public class UkrainianRuleDisambiguatorTest extends DisambiguationRuleTest {
   private SRXSentenceTokenizer sentenceTokenizer;
   private UkrainianHybridDisambiguator disambiguator;
   private DemoDisambiguator demoDisambiguator;
-  
+  private Disambiguator chunker;
+
   @Override
   public void setUp() {
     tagger = new UkrainianTagger();
     tokenizer = new UkrainianWordTokenizer();
     sentenceTokenizer = new SRXSentenceTokenizer(new Ukrainian());
     disambiguator = new UkrainianHybridDisambiguator();
-    demoDisambiguator = new DemoDisambiguator(); 
+    demoDisambiguator = new DemoDisambiguator();
+    chunker = new MultiWordChunker("/uk/multiwords.txt");
   }
 
   public void testRules() throws Exception {
@@ -53,8 +57,8 @@ public class UkrainianRuleDisambiguatorTest extends DisambiguationRuleTest {
   public void testChunker() throws IOException {
 
     TestTools.myAssert("Танцювати до впаду", 
-    	"/[null]SENT_START Танцювати/[танцювати]verb:inf  /[null]null до/[до впаду]<adv>|до/[до]noun:n:nv|до/[до]pryim:rv_rod  /[null]null " +
-    	"впаду/[впасти]verb:pres:s:1|впаду/[до впаду]</adv>",
+      "/[null]SENT_START Танцювати/[танцювати]verb:inf:nontran:tran  /[null]null до/[до впаду]<adv>|до/[до]noun:n:nv|до/[до]pryim:rv_rod  /[null]null " +
+      "впаду/[впасти]verb:futr:s:1:perf|впаду/[до впаду]</adv>",
       tokenizer, sentenceTokenizer, tagger, disambiguator);
     
     TestTools.myAssert("Прийшла Люба додому.", 

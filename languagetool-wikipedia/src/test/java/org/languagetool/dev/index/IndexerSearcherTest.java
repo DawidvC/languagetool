@@ -1,4 +1,4 @@
-/* LanguageTool, a natural language style checker 
+/* LanguageTool, a natural language style checker
  * Copyright (C) 2005 Daniel Naber (http://www.danielnaber.de)
  * 
  * This library is free software; you can redistribute it and/or
@@ -18,11 +18,20 @@
  */
 package org.languagetool.dev.index;
 
+import static org.languagetool.dev.index.PatternRuleQueryBuilder.FIELD_NAME;
+import static org.languagetool.dev.index.PatternRuleQueryBuilder.FIELD_NAME_LOWERCASE;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
-import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.LuceneTestCase;
 import org.junit.Ignore;
@@ -36,19 +45,10 @@ import org.languagetool.rules.RuleMatch;
 import org.languagetool.rules.patterns.Element;
 import org.languagetool.rules.patterns.PatternRule;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import static org.languagetool.dev.index.PatternRuleQueryBuilder.FIELD_NAME;
-import static org.languagetool.dev.index.PatternRuleQueryBuilder.FIELD_NAME_LOWERCASE;
-
 public class IndexerSearcherTest extends LuceneTestCase {
 
   private final File ruleFile = new File("../languagetool-language-modules/en/src/main/resources/org/languagetool/rules/en/grammar.xml");
-  
+
   private Searcher errorSearcher;
   private Directory directory;
 
@@ -70,19 +70,19 @@ public class IndexerSearcherTest extends LuceneTestCase {
   @Ignore("ignored as long as it doesn't work 100%")
   public void testAllRules() throws Exception {
     final long startTime = System.currentTimeMillis();
-    // comment in to test with external index: 
+    // comment in to test with external index:
     //directory = new SimpleFSDirectory(new File("/media/external-disk/corpus/languagetool/fast-rule-evaluation-de/"));
     //errorSearcher = new Searcher(directory);
-    
+
     // TODO: make this work for all languages
     final Language language = new English();
     //final Language language = new French();
     //final Language language = new Spanish();
-    //final Language language = new Polish(); // TODO: still "Clauses must have same field"
+    //final Language language = new Polish();
     //final Language language = new German();
     final JLanguageTool lt = new JLanguageTool(language);
     lt.activateDefaultPatternRules();
-    
+
     System.out.println("Creating index for " + language + "...");
     final int ruleCount = createIndex(lt);
     System.out.println("Index created with " + ruleCount + " rules");
@@ -91,49 +91,46 @@ public class IndexerSearcherTest extends LuceneTestCase {
     int ruleProblems = 0;
     int exceptionCount = 0;
 
-    final DirectoryReader reader = DirectoryReader.open(directory);
-    try {
-      final List<Rule> rules = lt.getAllActiveRules();
-      for (Rule rule : rules) {
-        if (rule instanceof PatternRule && !rule.isDefaultOff()) {
-          final PatternRule patternRule = (PatternRule) rule;
-          try {
-            ruleCounter++;
-            final SearcherResult searcherResult = errorSearcher.findRuleMatchesOnIndex(patternRule, language);
-            final List<MatchingSentence> matchingSentences = searcherResult.getMatchingSentences();
-            boolean foundExpectedMatch = false;
-            for (MatchingSentence matchingSentence : matchingSentences) {
-              final List<RuleMatch> ruleMatches = matchingSentence.getRuleMatches();
-              final List<String> ruleMatchIds = getRuleMatchIds(ruleMatches);
-              if (ruleMatchIds.contains(getFullId(patternRule))) {
-                // TODO: there can be more than one expected match, can't it?
-                foundExpectedMatch = true;
-                break;
-              }
+    final List<Rule> rules = lt.getAllActiveRules();
+    for (Rule rule : rules) {
+      if (rule instanceof PatternRule && !rule.isDefaultOff()) {
+        final PatternRule patternRule = (PatternRule) rule;
+        try {
+          ruleCounter++;
+          final SearcherResult searcherResult = errorSearcher.findRuleMatchesOnIndex(patternRule, language);
+          final List<MatchingSentence> matchingSentences = searcherResult.getMatchingSentences();
+          boolean foundExpectedMatch = false;
+          for (MatchingSentence matchingSentence : matchingSentences) {
+            final List<RuleMatch> ruleMatches = matchingSentence.getRuleMatches();
+            final List<String> ruleMatchIds = getRuleMatchIds(ruleMatches);
+            if (ruleMatchIds.contains(getFullId(patternRule))) {
+              // TODO: there can be more than one expected match, can't it?
+              foundExpectedMatch = true;
+              break;
             }
-            if (!foundExpectedMatch) {
-              System.out.println("Error: No match found for " + patternRule);
-              System.out.println("Query   : " + searcherResult.getRelaxedQuery().toString(FIELD_NAME_LOWERCASE));
-              System.out.println("Matches : " + matchingSentences);
-              System.out.println("Examples: " + rule.getIncorrectExamples());
-              System.out.println();
-              ruleProblems++;
-            } else {
-              //final long time = System.currentTimeMillis() - startTime;
-              //System.out.println("Tested " + matchingSentences.size() + " sentences in " + time + "ms for rule " + patternRule);
-            }
-          } catch (UnsupportedPatternRuleException e) {
-            System.out.println("UnsupportedPatternRuleException searching for rule " + getFullId(patternRule) + ": " + e.getMessage());
-            ruleProblems++;
-          } catch (Exception e) {
-            System.out.println("Exception searching for rule " + getFullId(patternRule) + ": " + e.getMessage());
-            e.printStackTrace(System.out);
-            exceptionCount++;
           }
+          if (!foundExpectedMatch) {
+            System.out.println("Error: No match found for " + patternRule);
+            System.out.println("Query      : " + searcherResult.getRelaxedQuery().toString(FIELD_NAME_LOWERCASE)); 
+            System.out.println("Default field: " + FIELD_NAME_LOWERCASE);
+            System.out.println("Lucene Hits: " + searcherResult.getLuceneMatchCount());
+            System.out.println("Matches    : " + matchingSentences);
+            System.out.println("Examples   : " + rule.getIncorrectExamples());
+            System.out.println();
+            ruleProblems++;
+          } else {
+            //final long time = System.currentTimeMillis() - startTime;
+            //System.out.println("Tested " + matchingSentences.size() + " sentences in " + time + "ms for rule " + patternRule);
+          }
+        } catch (UnsupportedPatternRuleException e) {
+          System.out.println("UnsupportedPatternRuleException searching for rule " + getFullId(patternRule) + ": " + e.getMessage());
+          ruleProblems++;
+        } catch (Exception e) {
+          System.out.println("Exception searching for rule " + getFullId(patternRule) + ": " + e.getMessage());
+          e.printStackTrace(System.out);
+          exceptionCount++;
         }
       }
-    } finally {
-      reader.close();
     }
     System.out.println(language + ": problems: " + ruleProblems + ", total rules: " + ruleCounter);
     System.out.println(language + ": exceptions: " + exceptionCount + " (including timeouts)");
@@ -156,9 +153,8 @@ public class IndexerSearcherTest extends LuceneTestCase {
   }
 
   private int createIndex(JLanguageTool lt) throws IOException {
-    final Indexer indexer = new Indexer(directory, lt.getLanguage());
     int ruleCount = 0;
-    try {
+    try (Indexer indexer = new Indexer(directory, lt.getLanguage())) {
       final List<Rule> rules = lt.getAllActiveRules();
       for (Rule rule : rules) {
         if (rule instanceof PatternRule && !rule.isDefaultOff()) {
@@ -183,62 +179,60 @@ public class IndexerSearcherTest extends LuceneTestCase {
           ruleCount++;
         }
       }
-    } finally {
-      indexer.close();
     }
     errorSearcher = new Searcher(directory);
     return ruleCount;
   }
 
-  /** for manual debugging only */
-  public void IGNOREtestForDebugging() throws Exception {
+  @Ignore("manual debugging only")
+  public void testForDebugging() throws Exception {
     // Note that the second sentence ends with "lid" instead of "lids" (the inflated one)
-    createIndex("I thin so");
-    final PatternRule rule = getRule("I_THIN", ruleFile);
+    //createIndex("I thin so");
+    useRealIndex();
+    final PatternRule rule = getRule("I_THIN", ruleFile).get(0);
     final SearcherResult searcherResult = errorSearcher.findRuleMatchesOnIndex(rule, new German());
     System.out.println("Matches: " + searcherResult.getMatchingSentences());
-    assertEquals(1, searcherResult.getMatchingSentences().size());
   }
 
   public void testIndexerSearcherWithEnglish() throws Exception {
     // Note that the second sentence ends with "lid" instead of "lids" (the inflated one)
     createIndex("How to move back and fourth from linux to xmb? Calcium deposits on eye lid.");
     SearcherResult searcherResult =
-            errorSearcher.findRuleMatchesOnIndex(getRule("BACK_AND_FOURTH"), new English());
+        errorSearcher.findRuleMatchesOnIndex(getRule("BACK_AND_FOURTH").get(0), new English());
     assertEquals(2, searcherResult.getCheckedSentences());
     assertEquals(false, searcherResult.isResultIsTimeLimited());
     assertEquals(1, searcherResult.getMatchingSentences().size());
 
-    searcherResult = errorSearcher.findRuleMatchesOnIndex(getRule("EYE_BROW"), new English());
+    searcherResult = errorSearcher.findRuleMatchesOnIndex(getRule("EYE_BROW").get(0), new English());
     assertEquals(2, searcherResult.getCheckedSentences());
     assertEquals(false, searcherResult.isResultIsTimeLimited());
     assertEquals(1, searcherResult.getMatchingSentences().size());
 
-    searcherResult = errorSearcher.findRuleMatchesOnIndex(getRule("ALL_OVER_THE_WORD"), new English());
+    searcherResult = errorSearcher.findRuleMatchesOnIndex(getRule("ALL_OVER_THE_WORD").get(0), new English());
     assertEquals(2, searcherResult.getCheckedSentences());
     assertEquals(false, searcherResult.isResultIsTimeLimited());
     assertEquals(0, searcherResult.getMatchingSentences().size());
 
     try {
-      errorSearcher.findRuleMatchesOnIndex(getRule("Invalid Rule Id"), new English());
+      errorSearcher.findRuleMatchesOnIndex(getRule("Invalid Rule Id").get(0), new English());
       fail("Exception should be thrown for invalid rule id.");
     } catch (PatternRuleNotFoundException expected) {}
   }
 
-  private PatternRule getRule(String ruleId) throws IOException {
+  private List<PatternRule> getRule(String ruleId) throws IOException {
     return errorSearcher.getRuleById(ruleId, ruleFile);
   }
 
-  private PatternRule getRule(String ruleId, File grammarFile) throws IOException {
+  private List<PatternRule> getRule(String ruleId, File grammarFile) throws IOException {
     return errorSearcher.getRuleById(ruleId, grammarFile);
   }
 
   public void testWithNewRule() throws Exception {
     createIndex("How to move back and fourth from linux to xmb?");
     final List<Element> elements = Arrays.asList(
-            new Element("move", false, false, false),
-            new Element("back", false, false, false)
-    );
+        new Element("move", false, false, false),
+        new Element("back", false, false, false)
+        );
     final PatternRule rule1 = new PatternRule("RULE1", new English(), elements, "desc", "msg", "shortMsg");
     final Searcher errorSearcher = new Searcher(directory);
     final SearcherResult searcherResult = errorSearcher.findRuleMatchesOnIndex(rule1, new English());
@@ -253,9 +247,9 @@ public class IndexerSearcherTest extends LuceneTestCase {
   public void testWithRegexRule() throws Exception {
     createIndex("How to move back and fourth from linux to xmb?");
     final List<Element> elements = Arrays.asList(
-            new Element("move", false, false, false),
-            new Element("forth|back", false, true, false)
-    );
+        new Element("move", false, false, false),
+        new Element("forth|back", false, true, false)
+        );
     final PatternRule rule1 = new PatternRule("RULE1", new English(), elements, "desc", "msg", "shortMsg");
     final Searcher errorSearcher = new Searcher(directory);
     final SearcherResult searcherResult = errorSearcher.findRuleMatchesOnIndex(rule1, new English());
@@ -270,17 +264,17 @@ public class IndexerSearcherTest extends LuceneTestCase {
   public void testApostropheElement() throws Exception {
     createIndex("Daily Bleed's Anarchist Encyclopedia");
     final List<Element> elements1 = Arrays.asList(
-            new Element("Bleed", false, false, false),
-            new Element("'", false, false, false),
-            new Element("s", false, false, false)
-    );
+        new Element("Bleed", false, false, false),
+        new Element("'", false, false, false),
+        new Element("s", false, false, false)
+        );
     final PatternRule rule1 = new PatternRule("RULE1", new English(), elements1, "desc", "msg", "shortMsg");
 
     final List<Element> elements2 = Arrays.asList(
-            new Element("Bleed", false, false, false),
-            new Element("'", false, false, false),
-            new Element("x", false, false, false)
-    );
+        new Element("Bleed", false, false, false),
+        new Element("'", false, false, false),
+        new Element("x", false, false, false)
+        );
     final PatternRule rule2 = new PatternRule("RULE", new English(), elements2, "desc", "msg", "shortMsg");
 
     final SearcherResult searcherResult1 = errorSearcher.findRuleMatchesOnIndex(rule1, new English());
@@ -299,9 +293,9 @@ public class IndexerSearcherTest extends LuceneTestCase {
     final Element exceptionElem = new Element("forth|back", false, true, false);
     exceptionElem.setStringPosException("exception", false, false, false, false, false, "POS", false, false);
     final List<Element> elements = Arrays.asList(
-            new Element("move", false, false, false),
-            exceptionElem
-    );
+        new Element("move", false, false, false),
+        exceptionElem
+        );
     final PatternRule rule1 = new PatternRule("RULE1", new English(), elements, "desc", "msg", "shortMsg");
     final Searcher errorSearcher = new Searcher(directory);
     final SearcherResult searcherResult = errorSearcher.findRuleMatchesOnIndex(rule1, new English());
@@ -318,9 +312,9 @@ public class IndexerSearcherTest extends LuceneTestCase {
     final Element negatedElement = new Element("Negated", false, false, false);
     negatedElement.setNegation(true);
     final List<Element> elements = Arrays.asList(
-            negatedElement,
-            new Element("How", false, false, false)
-    );
+        negatedElement,
+        new Element("How", false, false, false)
+        );
     final Searcher errorSearcher = new Searcher(directory);
     final PatternRule rule1 = new PatternRule("RULE1", new English(), elements, "desc", "msg", "shortMsg");
     final SearcherResult searcherResult = errorSearcher.findRuleMatchesOnIndex(rule1, new English());
@@ -337,8 +331,8 @@ public class IndexerSearcherTest extends LuceneTestCase {
     final Element exceptionElem = new Element("", false, true, false);
     exceptionElem.setStringPosException("exception", false, false, false, false, false, "POS", false, false);
     final List<Element> elements = Arrays.asList(
-            exceptionElem
-    );
+        exceptionElem
+        );
     final PatternRule rule1 = new PatternRule("RULE1", new English(), elements, "desc", "msg", "shortMsg");
     final Searcher errorSearcher = new Searcher(directory);
     try {
@@ -352,6 +346,11 @@ public class IndexerSearcherTest extends LuceneTestCase {
     directory = new RAMDirectory();
     //directory = FSDirectory.open(new File("/tmp/lucenetest"));  // for debugging
     Indexer.run(content, directory, new English(), false);
+    errorSearcher = new Searcher(directory);
+  }
+
+  private void useRealIndex() throws IOException {
+    directory = FSDirectory.open(new File("/home/languagetool/corpus/en/"));  // for debugging with more data
     errorSearcher = new Searcher(directory);
   }
 

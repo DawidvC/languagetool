@@ -33,6 +33,7 @@ import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -90,6 +91,16 @@ class Main {
     Tools.selectRules(lt, disabledRules, enabledRules);
   }
 
+  boolean isSpellCheckingActive() {
+    List<Rule> rules = lt.getAllActiveRules();
+    for (Rule rule : rules) {
+      if (rule.isDictionaryBasedSpellingRule()) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
   JLanguageTool getJLanguageTool() {
     return lt;
   }
@@ -102,7 +113,6 @@ class Main {
     JLanguageTool.removeTemporaryFiles();
   }
   
-
   private void setProfilingMode() {
     profileRules = true;
   }
@@ -168,23 +178,22 @@ class Main {
 
   private void runOnFileInOneGo(String filename, String encoding, boolean listUnknownWords, boolean xmlFiltering) throws IOException {
     if (bitextMode) {
-      //TODO: add parameter to set different readers
       final TabBitextReader reader = new TabBitextReader(filename, encoding);
       if (applySuggestions) {
-        Tools.correctBitext(reader, srcLt, lt, bRules);
+        CommandLineTools.correctBitext(reader, srcLt, lt, bRules);
       } else {
-        Tools.checkBitext(reader, srcLt, lt, bRules, apiFormat);
+        CommandLineTools.checkBitext(reader, srcLt, lt, bRules, apiFormat);
       }
     } else {
       final String text = getFilteredText(filename, encoding, xmlFiltering);
       if (applySuggestions) {
         System.out.print(Tools.correctText(text, lt));
       } else if (profileRules) {
-        Tools.profileRulesOnText(text, lt);
+        CommandLineTools.profileRulesOnText(text, lt);
       } else if (!taggerOnly) {
-        Tools.checkText(text, lt, apiFormat, 0);
+        CommandLineTools.checkText(text, lt, apiFormat, 0);
       } else {
-        Tools.tagText(text, lt);
+        CommandLineTools.tagText(text, lt);
       }
       if (listUnknownWords) {
         System.out.println("Unknown words: " + lt.getUnknownWords());
@@ -253,10 +262,11 @@ class Main {
               sentences += lt.sentenceTokenize(sb.toString()).size();
             }
             if (listUnknownWords && !taggerOnly) {
-              for (String word : lt.getUnknownWords())
+              for (String word : lt.getUnknownWords()) {
                 if (!unknownWords.contains(word)) {
                   unknownWords.add(word);
                 }
+              }
             }
             sb = new StringBuilder();
             lineOffset = tmpLineOffset;
@@ -268,10 +278,11 @@ class Main {
                 sentences += lt.sentenceTokenize(sb.toString()).size();
               }
               if (listUnknownWords && !taggerOnly) {
-                for (String word : lt.getUnknownWords())
+                for (String word : lt.getUnknownWords()) {
                   if (!unknownWords.contains(word)) {
                     unknownWords.add(word);
                   }
+                }
               }
               sb = new StringBuilder();
               lineOffset = tmpLineOffset;
@@ -376,32 +387,36 @@ class Main {
           lt, currentRule);
     } else if (!taggerOnly) {
       if (matches == 0) {
-        matches += Tools.checkText(StringTools.filterXML(sb.toString()), lt,
+        matches += CommandLineTools.checkText(StringTools.filterXML(sb.toString()), lt,
             apiFormat, -1, lineOffset, matches,
             StringTools.XmlPrintMode.START_XML);
       } else {
-        matches += Tools.checkText(StringTools.filterXML(sb.toString()), lt,
+        matches += CommandLineTools.checkText(StringTools.filterXML(sb.toString()), lt,
             apiFormat, -1, lineOffset, matches,
             StringTools.XmlPrintMode.CONTINUE_XML);
       }
     } else {
-      Tools.tagText(StringTools.filterXML(sb.toString()), lt);
+      CommandLineTools.tagText(StringTools.filterXML(sb.toString()), lt);
     }
     return matches;
   }
 
   private void runRecursive(final String filename, final String encoding,
-      final boolean listUnknown, final boolean xmlFiltering) throws IOException, ParserConfigurationException, SAXException {
+      final boolean listUnknown, final boolean xmlFiltering) {
     final File dir = new File(filename);
-    if (!dir.isDirectory()) {
+    final File[] files = dir.listFiles();
+    if (files == null) {
       throw new IllegalArgumentException(dir.getAbsolutePath() + " is not a directory, cannot use recursion");
     }
-    final File[] files = dir.listFiles();
     for (final File file : files) {
-      if (file.isDirectory()) {
-        runRecursive(file.getAbsolutePath(), encoding, listUnknown, xmlFiltering);
-      } else {
-        runOnFile(file.getAbsolutePath(), encoding, listUnknown, xmlFiltering);
+      try {
+        if (file.isDirectory()) {
+          runRecursive(file.getAbsolutePath(), encoding, listUnknown, xmlFiltering);
+        } else {
+          runOnFile(file.getAbsolutePath(), encoding, listUnknown, xmlFiltering);
+        }
+      } catch (Exception e) {
+        throw new RuntimeException("Could not check text in file " + file, e);
       }
     }    
   }
@@ -417,7 +432,8 @@ class Main {
     if (!apiFormat && !applySuggestions) {
       System.out.println("Working on " + filename + "...");
     }
-    final String fileContents = StringTools.readFile(new FileInputStream(filename), encoding);
+    // don't use StringTools.readStream() as that might add newlines which aren't there:
+    final String fileContents = StringTools.streamToString(new FileInputStream(filename), encoding != null ? encoding : Charset.defaultCharset().name());
     if (xmlFiltering) {
       return StringTools.filterXML(fileContents);
     } else {
@@ -481,13 +497,14 @@ class Main {
       options.setFilename("-");
     }
 
+    String languageHint = null;
     if (options.getLanguage() == null) {
       if (!options.isApiFormat() && !options.isAutoDetect()) {
         System.err.println("No language specified, using English");
       }
       options.setLanguage(new English());
     } else if (!options.isApiFormat() && !options.isApplySuggestions()) {
-      System.out.println("Expected text language: " + options.getLanguage().getName());
+      languageHint = "Expected text language: " + options.getLanguage().getName();
     }
 
     options.getLanguage().getSentenceTokenizer().setSingleLineBreaksMarksParagraph(
@@ -495,6 +512,10 @@ class Main {
     final Main prg = new Main(options.isVerbose(), options.isTaggerOnly(), options.getLanguage(), options.getMotherTongue(),
             options.getDisabledRules(), options.getEnabledRules(), options.isApiFormat(), options.isApplySuggestions(),
             options.isAutoDetect(), options.isSingleLineBreakMarksParagraph());
+    if (languageHint != null) {
+      String spellHint = prg.isSpellCheckingActive() ? "" : " (no spell checking active, specify a language variant if available)";
+      System.out.println(languageHint + spellHint);
+    }
     prg.setListUnknownWords(options.isListUnknown());
     if (options.isProfile()) {
       prg.setProfilingMode();
@@ -516,7 +537,7 @@ class Main {
   private static void printLanguages() {
     final List<String> languages = new ArrayList<>();
     for (Language language : Language.REAL_LANGUAGES) {
-      languages.add(language.getShortNameWithVariant() + " " + language.getName());
+      languages.add(language.getShortNameWithCountryAndVariant() + " " + language.getName());
     }
     Collections.sort(languages);
     for (String s : languages) {
@@ -525,9 +546,8 @@ class Main {
   }
 
   // for language auto detect
-  // TODO: alter tika's language profiles so they are in line with LT's supported languages
   private static Language detectLanguageOfFile(final String filename, final String encoding) throws IOException {
-    final String text = StringTools.readFile(new FileInputStream(filename), encoding);
+    final String text = StringTools.readStream(new FileInputStream(filename), encoding);
     return detectLanguageOfString(text);
   }
 

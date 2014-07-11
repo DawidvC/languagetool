@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.languagetool</groupId>
         <artifactId>languagetool-parent</artifactId>
-        <version>2.3-SNAPSHOT</version>
+        <version>2.7-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     
@@ -39,9 +39,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
-                <configuration>
-                  <tagBase>https://svn.code.sf.net/p/languagetool/code/tags/</tagBase>
-                </configuration>
             </plugin>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -86,38 +83,34 @@
         <dependency>
             <groupId>net.java.dev.jna</groupId>
             <artifactId>jna</artifactId>
-            <version>4.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>de.abelssoft</groupId>
-            <artifactId>jwordsplitter</artifactId>
-            <version>3.4</version>
+            <version>4.1.0</version>
         </dependency>
         <dependency>
             <groupId>org.carrot2</groupId>
             <artifactId>morfologik-fsa</artifactId>
-            <version>1.7.1</version>
+            <version>${morfologik.version}</version>
         </dependency>
         <dependency>
+            <!-- Note: if you update morfologik here, remember to also update morfologik-tools in languagetool-standalone -->
             <groupId>org.carrot2</groupId>
             <artifactId>morfologik-speller</artifactId>
-            <version>1.7.1</version>
+            <version>${morfologik.version}</version>
         </dependency>
         <dependency>
             <groupId>org.carrot2</groupId>
             <artifactId>morfologik-stemming</artifactId>
-            <version>1.7.1</version>
+            <version>${morfologik.version}</version>
         </dependency>
         <dependency>
             <groupId>net.sourceforge.segment</groupId>
             <artifactId>segment</artifactId>
-            <version>1.4.1</version>
+            <version>1.4.2</version>
         </dependency>
         <dependency>
             <!-- used for language detection -->
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-core</artifactId>
-            <version>1.4</version>
+            <version>1.5</version>
         </dependency>
 
         <dependency>

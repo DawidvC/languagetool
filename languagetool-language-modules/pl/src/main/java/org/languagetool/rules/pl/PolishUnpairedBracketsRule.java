@@ -16,12 +16,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301
  * USA
  */
-
 package org.languagetool.rules.pl;
 
 import java.util.ResourceBundle;
 
 import org.languagetool.Language;
+import org.languagetool.rules.Example;
 import org.languagetool.rules.GenericUnpairedBracketsRule;
 
 public class PolishUnpairedBracketsRule extends GenericUnpairedBracketsRule {
@@ -35,6 +35,8 @@ public class PolishUnpairedBracketsRule extends GenericUnpairedBracketsRule {
     startSymbols = PL_START_SYMBOLS;
     endSymbols = PL_END_SYMBOLS;
     uniqueMapInit();
+    addExamplePair(Example.wrong("To jest zdanie z <marker>„</marker>cudzysłowem."),
+                   Example.fixed("To jest zdanie z <marker>„</marker>cudzysłowem”."));
   }
 
   @Override

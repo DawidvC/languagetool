@@ -40,7 +40,7 @@ public class WordRepeatBeginningRule extends Rule {
   public WordRepeatBeginningRule(final ResourceBundle messages, final Language language) {
     super(messages);
     super.setCategory(new Category(messages.getString("category_misc")));
-    setLocQualityIssueType("style");
+    setLocQualityIssueType(ITSIssueType.Style);
   }
 
   @Override
@@ -59,18 +59,15 @@ public class WordRepeatBeginningRule extends Rule {
   
   public boolean isException(String token) {
     // avoid warning when having lists like "2007: ..." or the like
-    if (token.equals(":") || token.equals("–") || token.equals("-")) {
-        return true;
-    }
-    return false;
+    return token.equals(":") || token.equals("–") || token.equals("-");
   }
 
   @Override
-  public RuleMatch[] match(final AnalyzedSentence text) {
+  public RuleMatch[] match(final AnalyzedSentence sentence) {
     final List<RuleMatch> ruleMatches = new ArrayList<>();
-    final AnalyzedTokenReadings[] tokens = text.getTokensWithoutWhitespace();
+    final AnalyzedTokenReadings[] tokens = sentence.getTokensWithoutWhitespace();
     
-    if (tokens.length>3) {
+    if (tokens.length > 3) {
       final AnalyzedTokenReadings analyzedToken = tokens[1];
       final String token = analyzedToken.getToken();
       // avoid "..." etc. to be matched:

@@ -4,7 +4,7 @@
     title="Easy editing stylesheet" ?>
 <!--
 Breton Grammar and Typo Rules for LanguageTool
-Copyright (C) 2011-2013 Dominique Pellé <dominique.pelle@gmail.com>
+Copyright (C) 2011-2014 Dominique Pellé <dominique.pelle@gmail.com>
 http://www.languagetool.org/br
 
 With suggestions and corrections from:
@@ -21,7 +21,7 @@ Some grammatical resources used:
 * [MKKER] Le guide du bretonnant (Mark KERRAIN).
 
 Useful links:
-* http://br.wikipedia.org/wiki/Wikipedia:Fazio%C3%B9_stanka%C3%B1
+* https://br.wikipedia.org/wiki/Wikipedia:Fazio%C3%B9_stanka%C3%B1
 * http://www.kervarker.org/tmp/NEVEZVREZHONEGERIEN.htm
 
 This library is free software; you can redistribute it and/or
@@ -37,8 +37,6 @@ Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
-
-$Id$
 -->
 <rules lang="br" xsi:noNamespaceSchemaLocation="../../../../../../../../../languagetool-core/src/main/resources/org/languagetool/rules/rules.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema">
 
@@ -206,7 +204,7 @@ $Id$
             <token regexp="yes">dor(-.*)?</token>
           </marker>
         </pattern>
-        <message>Direizh eo kemmadur ar ger «\2». Ha fellout a rae deoc’h skrivañ <suggestion><match no="2" regexp_match="^." regexp_replace="n"/></suggestion>? (CHALM B3.1.1.1)</message>
+        <message>Direizh eo kemmadur ar ger «\2». Ha fellout a rae deoc’h skrivañ <suggestion><match no="2" regexp_match="^." regexp_replace="n"/></suggestion>? (CHALM B3.1.1.1, CHALM B3.5)</message>
         <example type="incorrect" correction="nor">Serr an <marker>dor</marker> ’ta.</example>
         <example type="correct">Serr an nor ’ta.</example>
         <example type="incorrect" correction="nor-dal">Serr an <marker>dor-dal</marker> ’ta.</example>
@@ -219,9 +217,18 @@ $Id$
             <token regexp="yes">norioù(-.*)?</token>
           </marker>
         </pattern>
-        <message>Ha fellout a rae deoc’h skrivañ <suggestion><match no="2" regexp_match="^." regexp_replace="d"/></suggestion>?</message>
+        <message>Ha fellout a rae deoc’h skrivañ <suggestion><match no="2" regexp_match="^." regexp_replace="d"/></suggestion>? (CHALM B3.5)</message>
         <example type="incorrect" correction="dorioù">Serr an <marker>norioù</marker> ’ta.</example>
         <example type="correct">Serr an dorioù ’ta.</example>
+      </rule>
+      <rule>
+        <pattern>
+          <token regexp="yes">div|dre</token>
+          <marker><token>nor</token></marker>
+        </pattern>
+        <message>Ha fellout a rae deoc’h skrivañ <suggestion>zor</suggestion>? (CHALM B3.5)</message>
+        <example type="incorrect">Div <marker>nor</marker>.</example>
+        <example type="correct">Div zor.</example>
       </rule>
       <rule>
         <pattern>
@@ -272,18 +279,19 @@ $Id$
       <pattern>
         <token regexp="yes">[aeu]r</token>
         <marker>
-          <token regexp="yes" postag="UNKNOWN">k.*</token>
+          <token regexp="yes" postag="UNKNOWN">k.*<exception regexp="yes">k[gm]|kPa|kHz</exception></token>
         </marker>
       </pattern>
       <message>Ne c’hall ket bezañ un anv a grog gant «k» goude ar ger-mell «\1». Ha fellout a rae deoc’h skrivañ <suggestion><match no="2" regexp_match="^." regexp_replace="c’h" case_conversion="preserve"/></suggestion> pe <suggestion><match no="2" regexp_match="^." regexp_replace="g" case_conversion="preserve"/></suggestion>?</message>
       <example type="incorrect">Brav eo ar <marker>Kab-Sizun</marker>.</example>
       <example type="correct">Brav eo ar <marker>C’hab-Sizun</marker>.</example>
+      <example type="correct">Ur km, ur kg.</example>
     </rule>
     <rulegroup id="KEMM_DRE_VLOTAAT_GER" name="kemmadur dre vlotaat goude gerioù zo.">
       <rule>
         <pattern>
           <token regexp="yes">2|[ae]|aba|da|[dtz]aou|div|dre|endra|gwall|na|ne|pa|pe|ra|re|seul
-            <exception postag="P.*|L e" postag_regexp="yes">e</exception>
+            <exception postag="P.*|L e|X DA_LAVARET_EO" postag_regexp="yes">e</exception>
             <exception postag="L n" negate_pos="yes">na</exception>
             <exception postag="C coor">pe</exception>
             <exception postag="V.*" postag_regexp="yes" regexp="yes">r?a</exception>
@@ -315,7 +323,7 @@ $Id$
       <rule>
         <pattern>
           <token regexp="yes">2|[ae]|aba|da|[dtz]aou|div|dre|endra|gwall|na|ne|p[ae]|ra|re|seul
-            <exception postag="P|L e" postag_regexp="yes">e</exception>
+            <exception postag="P|L e|X DA_LAVARET_EO" postag_regexp="yes">e</exception>
             <exception postag="L n" negate_pos="yes">na</exception>
             <exception postag="C coor">pe</exception>
             <exception postag="V.*" postag_regexp="yes" regexp="yes">r?a</exception>
@@ -353,20 +361,20 @@ $Id$
         <!-- <example type="incorrect">E <marker>zad</marker> zo kozh.</example> -->
         <!-- <example type="incorrect">E <marker>tad</marker> zo kozh.</example> -->
         <example type="correct">E dad zo kozh.</example>
-        <example type="incorrect">E <marker>zad</marker> ’zo kozh.</example>
-        <example type="incorrect">E <marker>tad</marker> ’zo kozh.</example>
+        <example type="incorrect" correction="dad">E <marker>zad</marker> ’zo kozh.</example>
+        <example type="incorrect" correction="dad">E <marker>tad</marker> ’zo kozh.</example>
         <example type="correct">E dad ’zo kozh.</example>
-        <example type="incorrect">E <marker>zad</marker> a zo kozh.</example>
-        <example type="incorrect">E <marker>tad</marker> a zo kozh.</example>
+        <example type="incorrect" correction="dad">E <marker>zad</marker> a zo kozh.</example>
+        <example type="incorrect" correction="dad">E <marker>tad</marker> a zo kozh.</example>
         <example type="correct">E dad a zo kozh.</example>
-        <example type="incorrect">Pegement a <marker>tud</marker> a zo amañ?</example>
-        <example type="incorrect">Pegement a <marker>zud</marker> a zo amañ?</example>
+        <example type="incorrect" correction="dud">Pegement a <marker>tud</marker> a zo amañ?</example>
+        <example type="incorrect" correction="dud">Pegement a <marker>zud</marker> a zo amañ?</example>
         <example type="correct">Pegement a dud a zo amañ?</example>
       </rule>
       <rule>
         <pattern>
           <token regexp="yes">2|[ae]|aba|da|[dtz]aou|div|dre|endra|gwall|na|ne|pa|pe|ra|re|seul
-            <exception postag="P|L e" postag_regexp="yes">e</exception>
+            <exception postag="P|L e|X DA_LAVARET_EO" postag_regexp="yes">e</exception>
             <exception postag="L n" negate_pos="yes">na</exception>
             <exception scope="previous">ez</exception>
             <exception postag="C coor">pe</exception>
@@ -399,14 +407,14 @@ $Id$
         <example type="incorrect" correction="blij">Un den hag a <marker>flij</marker> dezhañ ar sportoù.</example>
         <example type="incorrect" correction="blij">Un den hag a <marker>plij</marker> dezhañ ar sportoù.</example>
         <example type="correct">Un den hag a <marker>blij</marker> dezhañ ar sportoù.</example>
-        <example type="incorrect">Ur bihan a <marker>paotr</marker>.</example>
-        <example type="incorrect">Ur bihan a <marker>faotr</marker>.</example>
+        <example type="incorrect" correction="baotr">Ur bihan a <marker>paotr</marker>.</example>
+        <example type="incorrect" correction="baotr">Ur bihan a <marker>faotr</marker>.</example>
         <example type="correct">Ur bihan a baotr.</example>
       </rule>
       <rule>
         <pattern>
           <token regexp="yes">2|[ae]|aba|da|[dtz]aou|div|dre|endra|gwall|na|ne|pa|pe|ra|re|seul
-            <exception postag="P|L e" postag_regexp="yes">e</exception>
+            <exception postag="P|L e|X DA_LAVARET_EO" postag_regexp="yes">e</exception>
             <exception postag="L n" negate_pos="yes">na</exception>
             <exception postag="C coor">pe</exception>
             <exception postag="V.*" postag_regexp="yes" regexp="yes">r?a</exception>
@@ -431,7 +439,7 @@ $Id$
       <rule>
         <pattern>
           <token regexp="yes">2|[ae]|aba|da|[dtz]aou|div|dre|endra|gwall|na|ne|pa|pe|ra|re|seul
-            <exception postag="P|L e" postag_regexp="yes">e</exception>
+            <exception postag="P|L e|X DA_LAVARET_EO" postag_regexp="yes">e</exception>
             <exception postag="L n" negate_pos="yes">na</exception>
             <exception postag="C coor">pe</exception>
             <exception postag="V.*" postag_regexp="yes" regexp="yes">r?a</exception>
@@ -456,7 +464,7 @@ $Id$
       <rule>
         <pattern>
           <token regexp="yes">2|[ae]|aba|da|[dtz]aou|div|dre|endra|gwall|na|ne|pa|pe|ra|re|seul
-            <exception postag="P|L e" postag_regexp="yes">e</exception>
+            <exception postag="P|L e|X DA_LAVARET_EO" postag_regexp="yes">e</exception>
             <exception postag="L n" negate_pos="yes">na</exception>
             <exception postag="C coor">pe</exception>
             <exception postag="V.*" postag_regexp="yes" regexp="yes">r?a</exception>
@@ -480,7 +488,7 @@ $Id$
       <rule>
         <pattern>
           <token regexp="yes">2|[ae]|aba|da|[dtz]aou|div|dre|endra|gwall|na|ne|pa|pe|ra|re|seul
-            <exception postag="P|L e" postag_regexp="yes">e</exception>
+            <exception postag="P|L e|X DA_LAVARET_EO" postag_regexp="yes">e</exception>
             <exception postag="L n" negate_pos="yes">na</exception>
             <exception postag="C coor">pe</exception>
             <exception postag="V.*" postag_regexp="yes" regexp="yes">r?a</exception>
@@ -516,7 +524,7 @@ $Id$
       <rule>
         <pattern>
           <token regexp="yes">2|[ae]|aba|da|[dtz]aou|div|dre|endra|gwall|na|ne|pa|pe|ra|re|seul
-            <exception postag="P|L e" postag_regexp="yes">e</exception>
+            <exception postag="P|L e|X DA_LAVARET_EO" postag_regexp="yes">e</exception>
             <exception postag="L n" negate_pos="yes">na</exception>
             <exception postag="C coor">pe</exception>
             <exception postag="V.*" postag_regexp="yes" regexp="yes">r?a</exception>
@@ -547,7 +555,7 @@ $Id$
       <rule>
         <pattern>
           <token regexp="yes">2|[ae]|aba|da|[dtz]aou|div|dre|endra|gwall|na|ne|pa|pe|ra|re|seul
-            <exception postag="P|L e" postag_regexp="yes">e</exception>
+            <exception postag="P|L e|X DA_LAVARET_EO" postag_regexp="yes">e</exception>
             <exception postag="L n" negate_pos="yes">na</exception>
             <exception scope="previous" regexp="yes">e?z|ned</exception>
             <exception postag="C coor">pe</exception>
@@ -556,7 +564,7 @@ $Id$
           <marker>
             <and>
               <token regexp="yes">b.*
-                <exception>bennak</exception>
+                <exception regexp="yes">bennak(et)?</exception>
                 <exception inflected="yes" regexp="yes">p.*</exception>
                 <exception postag="UNKNOWN|Z.*" postag_regexp="yes"/>
               </token>
@@ -576,7 +584,7 @@ $Id$
       <rule>
         <pattern>
           <token regexp="yes">2|[ae]|aba|da|[dtz]aou|div|dre|endra|gwall|na|ne|pa|pe|ra|re|seul
-            <exception postag="P|L e" postag_regexp="yes">e</exception>
+            <exception postag="P|L e|X DA_LAVARET_EO" postag_regexp="yes">e</exception>
             <exception postag="L n" negate_pos="yes">na</exception>
             <exception postag="C coor">pe</exception>
             <exception postag="V.*" postag_regexp="yes" regexp="yes">r?a</exception>
@@ -601,7 +609,7 @@ $Id$
       <rule>
         <pattern>
           <token regexp="yes">2|[ae]|aba|da|[dtz]aou|div|dre|endra|gwall|na|ne|pa|pe|ra|re|seul
-            <exception postag="P|L e" postag_regexp="yes">e</exception>
+            <exception postag="P|L e|X DA_LAVARET_EO" postag_regexp="yes">e</exception>
             <exception postag="L n" negate_pos="yes">na</exception>
             <exception postag="C coor">pe</exception>
             <exception postag="V.*" postag_regexp="yes" regexp="yes">r?a</exception>
@@ -631,7 +639,7 @@ $Id$
       <rule>
         <pattern>
           <token regexp="yes">2|[ae]|aba|da|[dtz]aou|div|dre|endra|gwall|na|ne|pa|pe|ra|re|seul
-            <exception postag="P|L e" postag_regexp="yes">e</exception>
+            <exception postag="P|L e|X DA_LAVARET_EO" postag_regexp="yes">e</exception>
             <exception postag="L n" negate_pos="yes">na</exception>
             <exception postag="C coor">pe</exception>
             <exception postag="V.*" postag_regexp="yes" regexp="yes">r?a</exception>
@@ -1485,8 +1493,8 @@ $Id$
           </marker>
         </pattern>
         <message>Ur c’hemmadur dre galetaat a zlefe bezañ goude ar ger «\1». Ha fellout a rae deoc’h skrivañ <suggestion>k\2</suggestion>? (CHALM B3.3)</message>
-        <example type="incorrect" correction="kwazh">Ho <marker>wazh</marker>.</example>
-        <example type="correct">Ho kwazh.</example>
+        <example type="incorrect" correction="kwaz">Ho <marker>waz</marker>.</example>
+        <example type="correct">Ho kwaz.</example>
       </rule>
       <rule>
         <pattern>
@@ -1780,6 +1788,9 @@ $Id$
         <example type="correct">Teir <marker>dimezell</marker></example>
         <example type="correct">Gant o zud</example>
         <example type="correct">Tri zu</example>
+        <example type="incorrect" correction="desevel">Klask a ran o <marker>tesevel</marker> e brezhoneg.</example>
+        <example type="incorrect" correction="desevel">Klask a ran o <marker>zesevel</marker> e brezhoneg.</example>
+        <example type="correct">Klask a ran o <marker>desevel</marker> e brezhoneg.</example>
       </rule>
       <rule>
         <pattern>
@@ -1940,6 +1951,7 @@ $Id$
           <token postag="[^M]+M[^M]*:[23]:.*" postag_regexp="yes">
             <exception postag="[^M]+M[^M]*:[14]:.*" postag_regexp="yes"/>
             <exception postag="[^V][^M]*" postag_regexp="yes"/>
+            <exception inflected="yes" regexp="yes" postag="V[^M]*" postag_regexp="yes">[ktp].*</exception>
           </token>
         </marker>
       </pattern>
@@ -1948,6 +1960,7 @@ $Id$
       <example type="correct">E dad.</example>
       <example type="correct">Pet eur bennak e <marker>c’hell</marker> bezañ bremañ?</example>
       <example type="correct">Pegement e koust ur gambr?</example>
+      <example type="correct">Abalamour e karan ac’hanout.</example>
     </rule>
     <rulegroup id="FAZ_KEMM_DRE_VLOTAAT_AR" name="kemmadur dre vlotaat en anv goude ar ger-mell.">
       <rule>
@@ -2045,6 +2058,7 @@ $Id$
             <token postag="(N m s|N f p) M.*:1:.*" postag_regexp="yes" regexp="yes">g.*
               <exception postag="N m s|N f p" postag_regexp="yes" regexp="yes">g.*</exception>
               <exception postag="(N m p t|N f s) M.*:1:.*" postag_regexp="yes" regexp="yes">g.*</exception>
+              <exception>gar</exception>
             </token>
           </marker>
         </pattern>
@@ -2061,6 +2075,7 @@ $Id$
         <example type="correct">Krouin ur gont</example>
         <example type="incorrect" correction="c’harr">Er <marker>garr</marker>.</example>
         <example type="correct">Er <marker>c’harr</marker>.</example>
+        <example type="correct">Ar gar.</example>
       </rule>
       <rule>
         <pattern>
@@ -2300,14 +2315,14 @@ $Id$
     <rulegroup id="FAZ_KEMM" name="kemmadur faziet">
       <rule>
         <pattern>
-          <token postag="SENT_START|V.*|X KAOUT2|J sup .*" postag_regexp="yes">
+          <token postag="SENT_START|V.*|X KAOUT2|J sup .*|X DA_LAVARET_EO" postag_regexp="yes">
             <exception>eme</exception>
-            <exception negate_pos="yes" postag="SENT_START|V.*|X KAOUT2|J sup .*" postag_regexp="yes"/>
+            <exception negate_pos="yes" postag="SENT_START|V.*|X KAOUT2|J sup .*|X DA_LAVARET_EO" postag_regexp="yes"/>
           </token>
           <marker>
             <token postag="[^M]*M.*" postag_regexp="yes">
               <exception negate_pos="yes" postag="[^M]*M:.*|SENT_END" postag_regexp="yes"/>
-              <exception regexp="yes">dal|va[dt]|vloaz</exception>
+              <exception regexp="yes">dal|va[dt]|vloaz|(?-i)Zeus</exception>
             </token>
           </marker>
         </pattern>
@@ -2331,6 +2346,9 @@ $Id$
         <example type="correct">Div, unan vihan, hag unan vras.</example>
         <example type="correct"><marker>Dal</marker> ma niverenn bellgomz.</example>
         <example type="correct">Naig a rae <marker>van</marker> nompas kompren.</example>
+        <example type="incorrect">D.l.e <marker>tesket</marker> a-walc’h war ar brezhoneg.</example>
+        <example type="correct">D.l.e desket a-walc’h war ar brezhoneg.</example>
+        <example type="correct">Zeus a zo ur roue.</example>
       </rule>
       <rule>
         <pattern>
@@ -2352,6 +2370,7 @@ $Id$
         <example type="correct">Tri <marker>c’hi</marker>.</example>
         <example type="correct">Daou <marker>gi</marker>.</example>
         <example type="correct">Div, unan <marker>vihan</marker>, hag unan <marker>vras</marker>.</example>
+        <example type="correct">Ni ivez hon eus mil <marker>boan</marker> war an dachenn-se.</example>
       </rule>
     </rulegroup>
     <rulegroup id="KEMM_MESKET_MA" name="kemmadur mesket goude ar stagell ma">
@@ -2590,6 +2609,7 @@ $Id$
         <example type="incorrect" correction="tebrimp">Pelec’h e <marker>zebrimp</marker>?</example>
         <example type="correct">Pelec’h e tebrimp?</example>
         <example type="correct">Evit e enoriñ pe e ziduiñ.</example>
+        <example type="correct">Klask a ran o <marker>desevel</marker> e brezhoneg.</example>
       </rule>
       <rule>
         <pattern>
@@ -2666,7 +2686,7 @@ $Id$
         <example type="correct">Ur c’hrouadur a dri bloaz</example>
       </rule>
     </rulegroup>
-    <rule id="TI_BIV" name="ti piv -> ti biv">
+    <rule id="TI_BIV" name="ti piv → ti biv">
       <pattern>
         <token>ti</token>
         <marker>
@@ -2759,7 +2779,7 @@ $Id$
     <rulegroup id="GER_KEMM" name="kemmadur ebet goude gerioù">
       <rule>
         <pattern>
-          <token regexp="yes">abaoe|ahont|amañ|arabat|aze|a-(benn|berzh|dal|dreñv|dreuz|drugarez|enep|hed|raok|us|walc’h|wechoù|wezhioù|ziwar)|bep|bet|betek|daoust|diouzh|dirak|diwar-(benn|goust)|eget|ent|etrezek|eus|[e’](vel|vit)(-se)?|e-(barzh|giz|keñver|kerz|kichen(ig)?|get|kreiz|lerc’h|mesk|pad|ser)|gant|goude|hag?|hep|hervez|hevelep|[kg]alz(ig)?|[kg]ement|kenetre|ke[nt]|krenn|lies|mard?|mell(ad)?(où)?|met|nemet|nompa[sz]|manier|memes|mui|na|nebeud(ig)?|nep|ouzh|ouzhpenn|panevet|pas|paourkaezh|pep|pebezh|pegen|peotramant|pere|peseurt|pet|petore|petvet|pezh(iad)?|pezhi(ad)?où|pikol(ioù)?|rak|setu|seurt|war-(bouez|c’horre|dro|du|giz|lerc’h|nes|zu)<exception postag="L n">na</exception><exception postag="X KAOUT2">eus</exception></token>
+          <token regexp="yes">abaoe|ahont|amañ|arabat|aze|a-(benn|berzh|dal|dreñv|dreuz|drugarez|enep|hed|raok|us|walc’h|wechoù|wezhioù|ziwar)|bep|bet|betek|daoust|diouzh|dirak|diwar-(benn|goust)|eget|evel|ent|etre|etrezek|eus|[e’](vel|vit)(-se)?|e-(barzh|giz|keñver|kerz|kichen(ig)?|get|kreiz|lerc’h|mesk|pad|ser|touez)|gant|goude|hag?|hep|hervez|hevelep|[kg]alz(ig)?|[kg]ement|kenetre|ke[nt]|krenn|lies|mard?|mell(ad)?(où)?|met|nemet|nompa[sz]|manier|memes|mui|na|nebeud(ig)?|nep|ouzh|ouzhpenn|panevet|pas|paourkaezh|pep|pebezh|pegen|peotramant|pere|peseurt|pet|petore|petvet|pezh(iad)?|pezhi(ad)?où|pikol(ioù)?|rak|setu|seurt|war-(bouez|c’horre|dro|du|giz|lerc’h|nes|zu)<exception postag="L n">na</exception><exception postag="X KAOUT2">eus</exception></token>
           <marker>
             <token postag="[^M]*M:.*" postag_regexp="yes">
               <exception negate_pos="yes" postag="[^M]*M:.*" postag_regexp="yes"/>
@@ -3162,6 +3182,51 @@ $Id$
       <example type="correct">Lakaet e brezhoneg.</example>
       <example type="correct">Lenn a ra evit gwellaat e vrezhoneg.</example>
     </rule>
+    <rulegroup id="KEMM_NEVEZ" name="kemmadur goude nevez">
+      <rule>
+        <pattern>
+          <marker><token>nevez-ganet</token></marker>
+        </pattern>
+        <message>Ur c’hemmadur dre vlotaat a zlefe bezañ goude «nevez». Ha fellout a rae deoc’h skrivañ <suggestion>nevez-c’hanet</suggestion>? (CHALM B3.1.2.6)</message>
+        <example type="incorrect"><marker>Nevez-ganet</marker>.</example>
+        <example type="correct"><marker>Nevez-c’hanet</marker>.</example>
+      </rule>
+      <rule>
+        <pattern>
+          <marker><token regexp="yes">nevez-(bet|marvet)</token></marker>
+        </pattern>
+        <message>Ur c’hemmadur dre vlotaat a zlefe bezañ goude «nevez». Ha fellout a rae deoc’h skrivañ <suggestion><match no="1" regexp_match="-." regexp_replace="-v"/></suggestion>? (CHALM B3.1.2.6)</message>
+        <example type="incorrect" correction="Nevez-vet"><marker>Nevez-bet</marker>.</example>
+        <example type="correct"><marker>Nevez-vet</marker>.</example>
+      </rule>
+    </rulegroup>
+    <rulegroup id="NA_J" name="Na glañv on! → Na klañv on!">
+      <rule>
+        <pattern>
+          <token postag="SENT_START"/>
+          <token>Na</token>
+          <marker><token postag="J M.*" postag_regexp="yes"><exception postag="J"/></token></marker>
+          <token regexp="yes">on|out|eo|omp|oc’h|int|eur</token>
+        </pattern>
+        <message>Ne zlefe ket bezañ ur c’hemmadur er ger «\2». (CHALM G2)</message>
+        <example type="incorrect">Na <marker>c’hlañv</marker> on!</example>
+        <example type="incorrect">Na <marker>glañv</marker> on!</example>
+        <example type="correct">Na klañv on!</example>
+      </rule>
+      <rule>
+        <pattern>
+          <token postag="SENT_START"/>
+          <token>Na</token>
+          <marker><token postag="J M.*" postag_regexp="yes"><exception postag="J"/></token></marker>
+          <token>e</token>
+          <token postag="V.*" postag_regexp="yes"/>
+        </pattern>
+        <message>Ne zlefe ket bezañ ur c’hemmadur er ger «\2». (CHALM G2)</message>
+        <example type="incorrect">Na <marker>c’hlañv</marker> e oan!</example>
+        <example type="incorrect">Na <marker>glañv</marker> e oan!</example>
+        <example type="correct">Na klañv e oan!</example>
+      </rule>
+    </rulegroup>
   </category>
 
   <category name="Ger-mell">
@@ -3212,13 +3277,14 @@ $Id$
             <token regexp="yes">[aeu]l|hol</token>
           </marker>
           <token regexp="yes">[bcfgjkmprsvwyz].*
-            <exception regexp="yes">[flmns]|(?-i)Bundy|Capone|Davis|Gore|Green|Jolson|Lazo|Levine|McCoy|Pacino|Roker|Rozen|Sapienza|Singer|Smith|Yankovic</exception>
+            <exception regexp="yes">[flmns]|(?-i)Bundy|Capone|Gore|Green|Jazeera|Jolson|McCoy|Pacino|Roker|Rozen|Sapienza|Singer|Smith|Yankovic</exception>
           </token>
         </pattern>
-        <message>Ar ger «\1» a zlefe bezañ <suggestion><match no="1" regexp_match=".$" regexp_replace="r"/></suggestion> dirak ur ger na grog ket gant al lizherennoù «n, d, t, h» per ur vogalenn.</message>
+        <message>Ar ger «\1» a zlefe bezañ <suggestion><match no="1" regexp_match=".$" regexp_replace="r"/></suggestion> dirak ur ger na grog ket gant al lizherennoù «n, d, t, h» pe ur vogalenn.</message>
         <example type="incorrect" correction="Ar"><marker>Al</marker> vell-droad a blij din.</example>
         <example type="correct">Ar vell-droad a blij din.</example>
         <example type="correct"><marker>Al</marker> Gore a zo ur politikour.</example>
+        <example type="correct">O deus lavaret din ’n ur dremen da dec’hout kuit diouzhtu.</example>
       </rule>
       <rule>
         <pattern>
@@ -3231,7 +3297,7 @@ $Id$
             <exception regexp="yes">[FLMNRS]\d*</exception>
           </token>
         </pattern>
-        <message>Ar ger «\1» a zlefe bezañ <suggestion><match no="1" regexp_match=".$" regexp_replace="r"/></suggestion> dirak ur ger na grog ket gant al lizherennoù «n, d, t, h» per ur vogalenn.</message>
+        <message>Ar ger «\1» a zlefe bezañ <suggestion><match no="1" regexp_match=".$" regexp_replace="r"/></suggestion> dirak ur ger na grog ket gant al lizherennoù «n, d, t, h» pe ur vogalenn.</message>
         <example type="incorrect" correction="Ar"><marker>An</marker> vell-droad a blij din.</example>
         <example type="correct">Ar vell-droad a blij din.</example>
         <example type="correct">Etre ar VIIvet hag an XIIvet kantved</example>
@@ -3299,12 +3365,12 @@ $Id$
       <example type="correct">Hag a zo</example>
     </rule>
 
-    <rulegroup id="PEOGWIR" name="peogwin + e">
+    <rulegroup id="PEOGWIR" name="peogwir + e">
       <rule>
         <pattern>
           <marker>
             <token>peogwir</token>
-            <token negate="yes">e<exception inflected="yes" regexp="yes">bezañ|ne</exception></token>
+            <token negate="yes" regexp="yes">ez?<exception inflected="yes" regexp="yes">bezañ|ne</exception></token>
           </marker>
           <token negate="yes" inflected="yes" regexp="yes">bezañ|kaout
             <exception regexp="yes">[pd]?eus|[bpd](oa|eze?|efe|ije)</exception>
@@ -3317,6 +3383,7 @@ $Id$
         <example type="correct">Peogwir en deus labour.</example>
         <example type="correct">Peogwir out trist.</example>
         <example type="correct">Peogwir n’hon eus ket arc’hant.</example>
+        <example type="correct">Peogwir ez ae an dud war-raok.</example>
       </rule>
       <rule>
         <pattern>
@@ -3449,7 +3516,7 @@ $Id$
             <token regexp="yes">[dtz]aou</token>
           </marker>
           <token postag_regexp="yes" postag="N f.*">
-            <exception postag_regexp="yes" postag="N [em][^M]*(:1:.*)?"/>
+            <exception postag_regexp="yes" postag="N [em][^M]*(M:1:.*)?"/>
             <exception>a</exception>
           </token>
         </pattern>
@@ -3466,7 +3533,7 @@ $Id$
           </marker>
           <token>a</token>
           <token postag_regexp="yes" postag="N f.*">
-            <exception postag_regexp="yes" postag="N [em][^M]*(:1:.*)?"/>
+            <exception postag_regexp="yes" postag="N [em][^M]*(M:1:.*)?"/>
           </token>
         </pattern>
         <message>Implijit <suggestion><match no="1" regexp_match="aou" regexp_replace="iv"/></suggestion> dirak ar ger benel «\3». (CHALM P1.3)</message>
@@ -3481,7 +3548,7 @@ $Id$
             <token regexp="yes">[dzt]iv</token>
           </marker>
           <token postag_regexp="yes" postag="N m.*">
-            <exception postag_regexp="yes" postag="N [ef][^M]*(:1:.*)?"/>
+            <exception postag_regexp="yes" postag="N [ef][^M]*(M:1:.*)?"/>
             <exception>a</exception>
           </token>
         </pattern>
@@ -3489,6 +3556,7 @@ $Id$
         <example type="incorrect" correction="Daou"><marker>Div</marker> paotr.</example>
         <example type="correct">Daou baotr.</example>
         <example type="correct">Div c’hoar.</example>
+        <example type="correct">Div zor.</example>
       </rule>
       <rule>
         <pattern>
@@ -3497,7 +3565,7 @@ $Id$
           </marker>
           <token>a</token>
           <token postag_regexp="yes" postag="N m.*">
-            <exception postag_regexp="yes" postag="N [ef][^M]*(:1:.*)?"/>
+            <exception postag_regexp="yes" postag="N [ef][^M]*(M:1:.*)?"/>
             <exception>a</exception>
           </token>
         </pattern>
@@ -3513,7 +3581,7 @@ $Id$
           <token regexp="yes">[tdz]ri</token>
         </marker>
         <token postag_regexp="yes" postag="N f.*">
-          <exception postag_regexp="yes" postag="N [em][^M]*(.*:2:.*)?"/>
+          <exception postag_regexp="yes" postag="N [em][^M]*(M.*:2:.*)?"/>
         </token>
       </pattern>
       <message>Implijit <suggestion><match no="1" regexp_match="..$" regexp_replace="eir"/></suggestion> dirak ar ger benel «\2». (CHALM P1.3)</message>
@@ -3528,7 +3596,7 @@ $Id$
           <token>teir</token>
         </marker>
         <token postag_regexp="yes" postag="N m.*">
-          <exception postag_regexp="yes" postag="N [ef][^M]*(.*:2:.*)?"/>
+          <exception postag_regexp="yes" postag="N [ef][^M]*(M.*:2:.*)?"/>
           <exception>a</exception>
         </token>
       </pattern>
@@ -3543,7 +3611,7 @@ $Id$
           <token regexp="yes">[pbf]evar</token>
         </marker>
         <token postag_regexp="yes" postag="N f.*">
-          <exception postag_regexp="yes" postag="N [em][^M]*(.*:2:.*)?"/>
+          <exception postag_regexp="yes" postag="N [em][^M]*(M.*:2:.*)?"/>
         </token>
       </pattern>
       <message>Implijit <suggestion><match no="1" regexp_match="var" regexp_replace="der"/></suggestion> dirak ar ger benel «\2». (CHALM P1.3)</message>
@@ -3558,7 +3626,7 @@ $Id$
           <token regexp="yes">[pbf]eder</token>
         </marker>
         <token postag_regexp="yes" postag="N m.*">
-          <exception postag_regexp="yes" postag="N [ef][^M]*(.*:2:.*)?"/>
+          <exception postag_regexp="yes" postag="N [ef][^M]*(M.*:2:.*)?"/>
         </token>
       </pattern>
       <message>Implijit <suggestion><match no="1" regexp_match="...$" regexp_replace="var"/></suggestion> dirak ar ger gourel «\2». (CHALM P1.3)</message>
@@ -3759,7 +3827,7 @@ $Id$
         <token postag="V ppa"/>
         <token regexp="yes">u[lnr]</token>
       </pattern>
-      <message>Stag eo ar furm « eo » ouzh ar resis (an, ar, al) p’eo stag ar furm « ez eus » ouzh an amresis (un, ur, ul). Ret eo skrivañ <suggestion>eus</suggestion>.</message>
+      <message>Stag eo ar furm «eo» ouzh ar resis (an, ar, al) p’eo stag ar furm «ez eus» ouzh an amresis (un, ur, ul). Ret eo skrivañ <suggestion>eus</suggestion>.</message>
       <example type="incorrect">N’<marker>eo</marker> ket bet kavet ur skouer.</example>
       <example type="correct">N’eus ket bet kavet ur skouer.</example>
     </rule>
@@ -3924,6 +3992,7 @@ $Id$
           <token postag="SENT_START"/>
           <token postag="[AJ]|V ppa" postag_regexp="yes">
             <exception postag="[NZ].*" postag_regexp="yes"/>
+            <exception>mall</exception>
           </token>
           <marker>
             <token regexp="yes">’?zo</token>
@@ -3933,6 +4002,7 @@ $Id$
         <example type="incorrect">Hir <marker>zo</marker> an hent.</example>
         <example type="correct">Hir <marker>eo</marker> an hent.</example>
         <example type="correct">Alan <marker>’zo</marker> fur.</example>
+        <example type="correct">Mall ’zo warnon lenn an eil levrenn.</example>
       </rule>
     </rulegroup>
 
@@ -4435,7 +4505,7 @@ $Id$
         <token regexp="yes">se|mañ|hont</token>
       </pattern>
       <message>Implijit <suggestion>\1-\2</suggestion>.</message>
-      <example type="incorrect">Koant eo ar <marker>plac’h mañ</marker>.</example>
+      <example type="incorrect" correction="plac’h-mañ">Koant eo ar <marker>plac’h mañ</marker>.</example>
       <example type="correct">Koant eo ar plac’h-mañ.</example>
       <example type="correct">Echu gant se.</example>
       <example type="correct">Ne c’hallan ket ober se.</example>
@@ -4446,7 +4516,7 @@ $Id$
         <token regexp="yes">.*-man</token>
       </pattern>
       <message>Ha fellout a rae deoc’h skrivañ <suggestion><match no="1" regexp_match=".$" regexp_replace="ñ"/></suggestion>?</message>
-      <example type="incorrect">A <marker>levr-man</marker> a blij din.</example>
+      <example type="incorrect" correction="levr-mañ">A <marker>levr-man</marker> a blij din.</example>
       <example type="correct">A levr-mañ a blij din.</example>
     </rule>
     <rule id="BED_HOLL_MAN" name="Ar bed-holl-mañ → ar bed-mañ-holl">
@@ -4463,9 +4533,9 @@ $Id$
         <token regexp="yes">kenañ|mat|meurbet|tre</token>
       </pattern>
       <message>Implijit <suggestion>\1-\2</suggestion>.</message>
-      <example type="incorrect"><marker>Fentus tre</marker> eo.</example>
+      <example type="incorrect" correction="Fentus-tre"><marker>Fentus tre</marker> eo.</example>
       <example type="correct">Fentus-tre eo.</example>
-      <example type="incorrect"><marker>Brudet mat</marker> eo.</example>
+      <example type="incorrect" correction="Brudet-mat"><marker>Brudet mat</marker> eo.</example>
       <example type="correct"><marker>Brudet-mat</marker> eo.</example>
       <example type="correct">Pe mat pe fall e oa.</example>
       <example type="correct">Gouzout a <marker>rez mat</marker> n’omp ket pinvidik.</example>
@@ -4476,8 +4546,8 @@ $Id$
         <token>ha</token>
         <token><match no="0"/></token>
       </pattern>
-      <message>Ha fellout a rae deoc’h skrivañ <suggestion>\1-\2-\3</suggestion>?</message>
-      <example type="incorrect"><marker>Tamm ha tamm</marker> e vez graet e vragoù da Yann.</example>
+      <message>Ha fellout a rae deoc’h skrivañ <suggestion>\1-\2-\3</suggestion>? (CHALM Sa)</message>
+      <example type="incorrect" correction="Tamm-ha-tamm"><marker>Tamm ha tamm</marker> e vez graet e vragoù da Yann.</example>
       <example type="correct">Tamm-ha-tamm e vez graet e vragoù da Yann.</example>
     </rule>
     <rule id="A_WALCH" name="just-a-walc’h → just a-walc’h (hag all)">
@@ -4494,7 +4564,7 @@ $Id$
         <token regexp="yes">me|te|eñ|hi|ni|c’hwi|int|i</token>
       </pattern>
       <message>Implijit <suggestion>\1-\2</suggestion>. (CHALM M1.3.3)</message>
-      <example type="incorrect"><marker>Setu me</marker> o komz brezhoneg.</example>
+      <example type="incorrect" correction="Setu-me"><marker>Setu me</marker> o komz brezhoneg.</example>
       <example type="correct">Setu-me o komz brezhoneg.</example>
     </rule>
     <rulegroup id="GANIN_ME" name="ganin me → ganin-me (hag all)">
@@ -4504,7 +4574,7 @@ $Id$
           <token>me</token>
         </pattern>
         <message>Implijit <suggestion>\1-\2</suggestion>. (CHALM M1.3.5)</message>
-        <example type="incorrect"><marker>Ganin me</marker></example>
+        <example type="incorrect" correction="Ganin-me"><marker>Ganin me</marker></example>
         <example type="correct"><marker>Ganin-me</marker></example>
       </rule>
       <rule>
@@ -4513,7 +4583,7 @@ $Id$
           <token>te</token>
         </pattern>
         <message>Implijit <suggestion>\1-\2</suggestion> (CHALM M1.3.5).</message>
-        <example type="incorrect"><marker>Ganit te</marker></example>
+        <example type="incorrect" correction="Ganit-te"><marker>Ganit te</marker></example>
         <example type="correct"><marker>Ganit-te</marker></example>
       </rule>
       <rule>
@@ -4522,7 +4592,7 @@ $Id$
           <token>eñ</token>
         </pattern>
         <message>Ne vez ket implijet «\1 \2». Ha fellout a rae deoc’h skrivañ <suggestion>\1</suggestion>? (CHALM M1.3.5).</message>
-        <example type="incorrect"><marker>Gantañ eñ</marker></example>
+        <example type="incorrect" correction="Gantañ"><marker>Gantañ eñ</marker></example>
         <example type="correct"><marker>Gantañ</marker></example>
       </rule>
       <rule>
@@ -4531,7 +4601,7 @@ $Id$
           <token>hi</token>
         </pattern>
         <message>Ne vez ket implijet «\1 \2». Ha fellout a rae deoc’h skrivañ <suggestion>\1</suggestion>? (CHALM M1.3.5).</message>
-        <example type="incorrect"><marker>Ganti hi</marker></example>
+        <example type="incorrect" correction="Ganti"><marker>Ganti hi</marker></example>
         <example type="correct"><marker>Ganti</marker></example>
       </rule>
       <rule>
@@ -4540,7 +4610,7 @@ $Id$
           <token>ni</token>
         </pattern>
         <message>Implijit <suggestion>\1-\2</suggestion> (CHALM M1.3.5).</message>
-        <example type="incorrect"><marker>Ganimp ni</marker></example>
+        <example type="incorrect" correction="Ganimp-ni"><marker>Ganimp ni</marker></example>
         <example type="correct"><marker>Ganimp-ni</marker></example>
       </rule>
       <rule>
@@ -4549,7 +4619,7 @@ $Id$
           <token>c’hwi</token>
         </pattern>
         <message>Implijit <suggestion>\1-\2</suggestion> (CHALM M1.3.5).</message>
-        <example type="incorrect"><marker>Ganeoc’h c’hwi</marker></example>
+        <example type="incorrect" correction="Ganeoc’h-c’hwi"><marker>Ganeoc’h c’hwi</marker></example>
         <example type="correct"><marker>Ganeoc’h-c’hwi</marker></example>
       </rule>
       <rule>
@@ -4558,8 +4628,8 @@ $Id$
           <token regexp="yes">i|int</token>
         </pattern>
         <message>Ne vez ket implijet «\1 \2». Ha fellout a rae deoc’h skrivañ <suggestion>\1</suggestion>? (CHALM M1.3.5).</message>
-        <example type="incorrect"><marker>Ganto i</marker></example>
-        <example type="incorrect"><marker>Gante i</marker></example>
+        <example type="incorrect" correction="Ganto"><marker>Ganto i</marker></example>
+        <example type="incorrect" correction="Gante"><marker>Gante i</marker></example>
         <example type="correct"><marker>Ganto</marker></example>
         <example type="correct"><marker>Gante</marker></example>
       </rule>
@@ -4578,7 +4648,7 @@ $Id$
         <token>stagañ</token>
       </pattern>
       <message>Implijit <suggestion>\1-\2</suggestion>.</message>
-      <example type="incorrect">Ar <marker>varrennig stagañ</marker></example>
+      <example type="incorrect" correction="varrennig-stagañ">Ar <marker>varrennig stagañ</marker></example>
       <example type="correct">Ar <marker>varrennig-stagañ</marker></example>
     </rule>
     <rule id="DREIST_HOLL" name="dreist holl → dreist-holl">
@@ -4587,7 +4657,7 @@ $Id$
         <token regexp="yes">holl|kemm|penn</token>
       </pattern>
       <message>Implijit <suggestion>\1-\2</suggestion>.</message>
-      <example type="incorrect">Kalz tud a oa, ha <marker>dreist holl</marker> kalz a douristed.</example>
+      <example type="incorrect" correction="dreist-holl">Kalz tud a oa, ha <marker>dreist holl</marker> kalz a douristed.</example>
       <example type="correct">Kalz tud a oa, ha dreist-holl kalz a douristed.</example>
     </rule>
     <rule id="ASKEL_GROCHEN" name="askell groc’hen → askell-groc’hen">
@@ -4596,7 +4666,7 @@ $Id$
         <token regexp="yes">[gk]roc’hen</token>
       </pattern>
       <message>Implijit <suggestion>\1-\2</suggestion>.</message>
-      <example type="incorrect">Un <marker>askell groc’hen</marker></example>
+      <example type="incorrect" correction="askell-groc’hen">Un <marker>askell groc’hen</marker></example>
       <example type="correct">Un askell-groc’hen</example>
     </rule>
     <rule id="HENT_HOUARN" name="hent houarn → hent-houarn (hag all)">
@@ -4605,7 +4675,7 @@ $Id$
         <token regexp="yes">(bleiz|bras|dall|don|gwenn|houarn|karr|kirri|kroaz|meur|sant-(Jakez|Jalm)|treuz|tro|troad)(-(mañ|se|hont))?</token>
       </pattern>
       <message>Implijit <suggestion>\1-\2</suggestion>.</message>
-      <example type="incorrect">Labourat a ra en <marker>hent houarn</marker></example>
+      <example type="incorrect" correction="hent-houarn">Labourat a ra en <marker>hent houarn</marker></example>
       <example type="correct">Labourat a ra en <marker>hent-houarn</marker></example>
     </rule>
     <rule id="SKUIZH" name="skuizh marv → skuizh-marv (hag all)">
@@ -4614,7 +4684,7 @@ $Id$
         <token regexp="yes">abominapl|bras|brein|daonet|divi|kaer|lip|marv|naet|spontus</token>
       </pattern>
       <message>Ha fellout a rae deoc’h skrivañ <suggestion>\1-\2</suggestion>?</message>
-      <example type="incorrect"><marker>Skuizh marv</marker> on.</example>
+      <example type="incorrect" correction="Skuizh-marv"><marker>Skuizh marv</marker> on.</example>
       <example type="correct"><marker>Skuizh-marv</marker> on.</example>
     </rule>
     <rule id="TOUR_TAN" name="tour tan → tour-tan">
@@ -4623,7 +4693,7 @@ $Id$
         <token regexp="yes">(dour|iliz|meur|tan)(-(mañ|se|hont))?</token>
       </pattern>
       <message>Implijit <suggestion>\1-\2</suggestion>.</message>
-      <example type="incorrect">Uhel eo an <marker>tour tan</marker>.</example>
+      <example type="incorrect" correction="tour-tan">Uhel eo an <marker>tour tan</marker>.</example>
       <example type="correct">Uhel eo an <marker>tour-tan</marker>.</example>
     </rule>
     <rule id="DOR_DAL" name="dor dal → dor-dal (hag all)">
@@ -4632,7 +4702,7 @@ $Id$
         <token regexp="yes">(dal|volz)?(-(mañ|se|hont))?</token>
       </pattern>
       <message>Implijit <suggestion>\1-\2</suggestion>.</message>
-      <example type="incorrect">Serr an <marker>nor dal</marker>.</example>
+      <example type="incorrect" correction="nor-dal">Serr an <marker>nor dal</marker>.</example>
       <example type="correct">Serr an <marker>nor-dal</marker>.</example>
     </rule>
     <rule id="BLEIZ_MOR" name="bleiz mor → bleiz-mor">
@@ -4641,7 +4711,7 @@ $Id$
         <token regexp="yes">(bouzel|broc’h(ed)?|garv|koad|mor|noz|piz|teil|yod)(-(mañ|se|hont))?</token>
       </pattern>
       <message>Implijit <suggestion>\1-\2</suggestion>.</message>
-      <example type="incorrect">Ur <marker>bleiz mor</marker> am eus gwelet.</example>
+      <example type="incorrect" correction="bleiz-mor">Ur <marker>bleiz mor</marker> am eus gwelet.</example>
       <example type="correct">Ur bleiz-mor am eus gwelet.</example>
     </rule>
     <rule id="GRILH_MOR" name="grilh mor → grilh-mor">
@@ -4650,7 +4720,7 @@ $Id$
         <token regexp="yes">(douar|dour|koad|maen|mor|oaled|prad|saoz|traezh)(-(mañ|se|hont))?</token>
       </pattern>
       <message>Implijit <suggestion>\1-\2</suggestion>.</message>
-      <example type="incorrect">Ur <marker>grilh mor</marker> am eus tapet.</example>
+      <example type="incorrect" correction="grilh-mor">Ur <marker>grilh mor</marker> am eus tapet.</example>
       <example type="correct">Ur grilh-mor am eus tapet.</example>
     </rule>
     <rule id="ANV_BIHAN" name="anv bihan → anv-bihan (hag all)">
@@ -4659,7 +4729,7 @@ $Id$
         <token regexp="yes">(badez|bihan|familh|gwan|kadarn|pluenn|stroll|stiegezh|verb)(-(mañ|se|hont))?</token>
       </pattern>
       <message>Implijit <suggestion>\1-\2</suggestion>.</message>
-      <example type="incorrect">Petra zo da <marker>anv bihan</marker>?</example>
+      <example type="incorrect" correction="anv-bihan">Petra zo da <marker>anv bihan</marker>?</example>
       <example type="correct">Petra zo da <marker>anv-bihan</marker>?</example>
     </rule>
     <rule id="HOCH_GOUEZ" name="hoc’h gouez → hoc’h-gouez (hag all)">
@@ -4668,7 +4738,7 @@ $Id$
         <token>gouez</token>
       </pattern>
       <message>Implijit <suggestion>\1-\2</suggestion>.</message>
-      <example type="incorrect">An <marker>hoc’h gouez</marker></example>
+      <example type="incorrect" correction="hoc’h-gouez">An <marker>hoc’h gouez</marker></example>
       <example type="correct">An <marker>hoc’h-gouez</marker></example>
     </rule>
     <rule id="GER_MELL" name="ger mell → ger-mell (hag all)">
@@ -4677,7 +4747,7 @@ $Id$
         <token regexp="yes">mell|rener|stur|tremen</token>
       </pattern>
       <message>Implijit <suggestion>\1-\2</suggestion>.</message>
-      <example type="incorrect">Ar <marker>ger mell</marker>.</example>
+      <example type="incorrect" correction="ger-mell">Ar <marker>ger mell</marker>.</example>
       <example type="correct">Ar <marker>ger-mell</marker>.</example>
     </rule>
     <rule id="EVEL_JUST" name="evel just → evel-just">
@@ -4861,6 +4931,11 @@ $Id$
       </rule>
     </rulegroup>
     <rule id="A_DREUZ" name="a dreuz → a-dreuz (hag all)">
+      <antipattern>
+        <token>a</token>
+        <token>bouez</token>
+        <token regexp="yes">\d+|muioc’h|kalz</token>
+      </antipattern>
       <pattern>
         <token>a<exception scope="previous" regexp="yes">kement|meur|nag</exception></token>
         <token regexp="yes">barzh|beban|belec’h|benn(adoù|-kaer)?|bik|bil|blad|blaen|blom|boan|bouez(-penn)?|boullad|c’houde(vezh)?|c’hwenn|dal|dammoù|denn-askell|dizh|douez|doulladoù|drak|dreist|drek|dreñv|dreuz|drugarez|du|enep|feson|fet|feur|flav|fourch|fuilh|geñver|gevret|gleiz|grenn|hed(-all)?|herr|hervez|hevelep|istribilh|led|leizh|nevez|ouez|raok|ratozh|skouer|stlabez|viskoazh|vremañ|walc’h|wechoù|wezhioù|zehou|zevri|ziabarzh|ziabell|ziadreñv|ziagent|ziaraok|ziavaez|zindan(on|out|nañ|ni|nomp|noc’h|nor?)?|zioc’h|ziouzh|zivout|ziwar(non|nout|nañ|nezhañ|ni|nezhi|nomp|noc’h|nezho|nor?|-(c’horre|dro|laez|lerc’h))?|zoare</token>
@@ -4874,21 +4949,36 @@ $Id$
       <example type="correct">A-du emaon.</example>
       <example type="correct">Kemer perzh enno e meur a du.</example>
       <example type="correct">Meur a zoare a zo da gemer perzh</example>
+      <example type="correct">An oto-mañ a bouez 900 kg.</example>
     </rule>
     <rulegroup id="MA_UNAN" name="ma unan → ma-unan (hag all)">
       <rule>
         <pattern>
-          <token regexp="yes">ma|da|e|he|hec’h|hon|hoc’h|o</token>
-          <token regexp="yes">unan(i[gk])?(-penn)?
-            <exception postag="X A_UNAN_DA_UNAN"/>
-          </token>
+          <token regexp="yes">ma|e|he|hec’h|hon|hoc’h|o</token>
+          <token regexp="yes">unan(i[gk])?(-penn)?</token>
         </pattern>
         <message>Implijit <suggestion>\1-\2</suggestion>. (CHALM M1.4.2.1)</message>
-        <example type="incorrect">Desket em eus <marker>ma unan</marker>.</example>
-        <example type="incorrect">Desket em eus <marker>ma unan-penn</marker>.</example>
+        <example type="incorrect" correction="ma-unan">Desket em eus <marker>ma unan</marker>.</example>
+        <example type="incorrect" correction="ma-unan-penn">Desket em eus <marker>ma unan-penn</marker>.</example>
         <example type="correct">Desket em eus <marker>ma-unan</marker>.</example>
         <example type="correct">Desket em eus <marker>ma-unan-penn</marker>.</example>
+      </rule>
+      <rule>
+        <pattern>
+          <marker>
+            <token>da</token>
+            <token regexp="yes">unan(i[gk])?(-penn)?
+              <exception postag="X A_UNAN_DA_UNAN"/>
+            </token>
+          </marker>
+          <token><exception regexp="yes">bennak(et)?</exception></token>
+        </pattern>
+        <message>Implijit <suggestion>\1-\2</suggestion>. (CHALM M1.4.2.1)</message>
+        <example type="incorrect" correction="da-unan">Gra an traoù <marker>da unan</marker>.</example>
+        <example type="correct">Gra an traoù da-unan.</example>
+        <example type="correct">Roit da unan bennak.</example>
         <example type="correct">A unan da unan.</example>
+        <example type="correct">Stad zo ennon en dije talvezet da unan bennak.</example>
       </rule>
       <rule>
         <pattern>
@@ -4896,8 +4986,8 @@ $Id$
           <token regexp="yes">unan(i[gk])?</token>
           <token>penn</token>
         </pattern>
-        <message>Implijit <suggestion>\1-\2\-3</suggestion>.</message>
-        <example type="incorrect">Desket em eus <marker>ma unan penn</marker>.</example>
+        <message>Implijit <suggestion>\1-\2-\3</suggestion>.</message>
+        <example type="incorrect" correction="ma-unan-penn">Desket em eus <marker>ma unan penn</marker>.</example>
         <example type="correct">Desket em eus <marker>ma-unan-penn</marker>.</example>
       </rule>
       <rule>
@@ -4905,32 +4995,75 @@ $Id$
           <token regexp="yes">(ma|da|e|he|hec’h|hon|hoc’h|o)-unan(ik)?</token>
           <token>penn</token>
         </pattern>
-        <message>Implijit <suggestion>\1\-3</suggestion>.</message>
-        <example type="incorrect">Desket em eus <marker>ma-unan penn</marker>.</example>
+        <message>Implijit <suggestion>\1-\2</suggestion>.</message>
+        <example type="incorrect" correction="ma-unan-penn">Desket em eus <marker>ma-unan penn</marker>.</example>
         <example type="correct">Desket em eus <marker>ma-unan-penn</marker>.</example>
       </rule>
     </rulegroup>
     <rule id="E_KREIZ" name="e kreiz → e-kreiz (hag all)">
       <pattern>
         <token>e</token>
-        <token regexp="yes">barzh|douare|giz(-(all|mañ|se|hon))?|harz|hunan|keit(-se)?|kerz|kichen|krec’h|kreiz|leizh|maez|sell|ser|tailh|tal|touez|tro</token>
+        <token regexp="yes">barzh|douare|giz(-(all|mañ|se|hon))?|harz|hunan|keit(-se)?|kerz|kichen|krec’h|kreiz|leizh|maez|ser|tailh|tal|touez|tro</token>
       </pattern>
       <message>Implijit <suggestion>\1-\2</suggestion>.</message>
-      <example type="incorrect"><marker>E kichen</marker> Gwitalmeze emañ o chom.</example>
+      <example type="incorrect" correction="E-kichen"><marker>E kichen</marker> Gwitalmeze emañ o chom.</example>
       <example type="correct">E-kichen Gwitalmeze emañ o chom.</example>
-      <example type="incorrect">Rwanda zo ur vro <marker>e kreiz</marker> Afrika.</example>
+      <example type="incorrect" correction="e-kreiz">Rwanda zo ur vro <marker>e kreiz</marker> Afrika.</example>
       <example type="correct">Rwanda zo ur vro e-kreiz Afrika.</example>
       <example type="correct">E breizh hag <marker>e lec’h</marker> all.</example>
       <example type="correct">Pegeit <marker>e pad</marker>?</example>
     </rule>
-
+    <rulegroup id="E_SELL" name="e sell → e-sell">
+      <rule>
+        <pattern>
+          <marker>
+            <token>e</token>
+            <token>sell</token>
+          </marker>
+          <token regexp="yes">d[a’']</token>
+        </pattern>
+        <message>Implijit <suggestion>\1-\2</suggestion>.</message>
+        <example type="incorrect" correction="e-sell">Peseurt micher emaout <marker>e sell</marker> da ober?</example>
+        <example type="incorrect" correction="e-sell">Peseurt micher emaout <marker>e sell</marker> d’ober?</example>
+        <example type="correct">Peseurt micher emaout e-sell da ober?</example>
+        <example type="correct">Peseurt micher emaout e-sell d’ober?</example>
+        <example type="correct">Atav e sell ouzh antalvoudoù uelañ.</example>
+      </rule>
+      <rule>
+        <pattern>
+          <marker>
+            <token>e</token>
+            <token>sell</token>
+          </marker>
+          <token regexp="yes">on|out|eo|omp|oc’h|int|eur</token>
+          <token regexp="yes">d[a’']</token>
+        </pattern>
+        <message>Implijit <suggestion>\1-\2</suggestion>.</message>
+        <example type="incorrect" correction="E-sell"><marker>E sell</marker> on da vont kuit.</example>
+        <example type="correct">E-sell on da vont kuit.</example>
+      </rule>
+      <rule>
+        <pattern>
+          <marker>
+            <token>e</token>
+            <token>sell</token>
+          </marker>
+          <token>e</token>
+          <token regexp="yes">oan|oas|oa|oamp|oac’h|oant|oad|vin|vi|vo|vimp|viot|vioc’h|vint|vior|vezan|vezez|vez|vezomp|vezit|vezont|vezer|vezen|vezes|veze|vezemp|vezec’h|vezent|vezed|vezin|vezi|vezo|vezimp|vezoc’h|vezint|vezor|vefen|vefes|vefemp|vefec’h|vefent|vefed|vijen|vijes|vije|vijemp|vijec’h|vijent|vijed</token>
+          <token regexp="yes">d[a’']</token>
+        </pattern>
+        <message>Implijit <suggestion>\1-\2</suggestion>.</message>
+        <example type="incorrect" correction="E-sell"><marker>E sell</marker> e oan da vont kuit.</example>
+        <example type="correct">E-sell e oan da vont kuit.</example>
+      </rule>
+    </rulegroup>
     <rule id="DIWAR_BENN" name="diwar benn → diwar-benn (hag all)">
       <pattern>
         <token>diwar</token>
         <token regexp="yes">benn|bouez|c’horre|dro|goust|laez|lerc’h</token>
       </pattern>
       <message>Implijit <suggestion>\1-\2</suggestion>.</message>
-      <example type="incorrect">Ul levr <marker>diwar benn</marker> ar brezel.</example>
+      <example type="incorrect" correction="diwar-benn">Ul levr <marker>diwar benn</marker> ar brezel.</example>
       <example type="correct">Ul levr <marker>diwar-benn</marker> ar brezel.</example>
     </rule>
 
@@ -4940,7 +5073,7 @@ $Id$
         <token regexp="yes">bouez|c’hed|c’horre|draoñ|dreñv|dro|du|eeun|gil|giz|hed|laez|lein|lerc’h|nes|raok|sav|souz|zu|wazh</token>
       </pattern>
       <message>Implijit <suggestion>\1-\2</suggestion>.</message>
-      <example type="incorrect">Ober a ra <marker>war dro</marker> ar saout.</example>
+      <example type="incorrect" correction="war-dro">Ober a ra <marker>war dro</marker> ar saout.</example>
       <example type="correct">Ober a ra war-dro ar saout.</example>
     </rule>
 
@@ -5032,7 +5165,7 @@ $Id$
         <token regexp="yes">berver|lastez(où)?|kambr|te</token>
       </pattern>
       <message>Implijit <suggestion>\1-\2</suggestion>.</message>
-      <example type="incorrect">Sell e-barzh er <marker>pod lastez</marker>.</example>
+      <example type="incorrect" correction="pod-lastez">Sell e-barzh er <marker>pod lastez</marker>.</example>
       <example type="correct">Sell e-barzh er <marker>pod-lastez</marker>.</example>
     </rule>
     <rule id="TAN_GWALL" name="tan gwall → tan-gwall">
@@ -5041,7 +5174,7 @@ $Id$
         <token regexp="yes">arvest|gwall|noz</token>
       </pattern>
       <message>Implijit <suggestion>\1-\2</suggestion>.</message>
-      <example type="incorrect">Un <marker>tan gwall</marker></example>
+      <example type="incorrect" correction="tan-gwall">Un <marker>tan gwall</marker></example>
       <example type="correct">Un tan-gwall</example>
     </rule>
     <rule id="HARZ_LABOUR" name="harz labour → harz-labour">
@@ -5050,7 +5183,7 @@ $Id$
         <token>labour</token>
       </pattern>
       <message>Implijit <suggestion>\1-\2</suggestion>.</message>
-      <example type="incorrect"><marker>Harz labour</marker> a vo</example>
+      <example type="incorrect" correction="Harz-labour"><marker>Harz labour</marker> a vo</example>
       <example type="correct"><marker>Harz-labour</marker> a vo</example>
     </rule>
     <rule id="SAL_DEBRIN" name="sal debriñ → sal-debriñ">
@@ -5059,7 +5192,7 @@ $Id$
         <token regexp="yes">debriñ|degemer|dour|gibellañ</token>
       </pattern>
       <message>Implijit <suggestion>\1-\2</suggestion>.</message>
-      <example type="incorrect">Er <marker>sal debriñ</marker> emaon.</example>
+      <example type="incorrect" correction="sal-debriñ">Er <marker>sal debriñ</marker> emaon.</example>
       <example type="correct">Er <marker>sal-debriñ</marker> emaon.</example>
     </rule>
     <rule id="SERR_PRIM" name="serr prim → serr-prim">
@@ -5068,7 +5201,7 @@ $Id$
         <token regexp="yes">noz|prim</token>
       </pattern>
       <message>Implijit <suggestion>\1-\2</suggestion>.</message>
-      <example type="incorrect"><marker>Serr prim</marker> ma chupenn</example>
+      <example type="incorrect" correction="Serr-prim"><marker>Serr prim</marker> ma chupenn</example>
       <example type="correct"><marker>Serr-prim</marker> ma chupenn</example>
     </rule>
     <rulegroup id="MARCHAD_MAD" name="marc’had mat → marc’had-mat">
@@ -5078,7 +5211,7 @@ $Id$
           <token>mat</token>
         </pattern>
         <message>Implijit <suggestion>\1-\2</suggestion>.</message>
-        <example type="incorrect"><marker>Marc’had mat</marker> eo.</example>
+        <example type="incorrect" correction="Marc’had-mat"><marker>Marc’had mat</marker> eo.</example>
         <example type="correct"><marker>Marc’had-mat</marker> eo.</example>
       </rule>
       <rule>
@@ -5087,7 +5220,7 @@ $Id$
           <token regexp="yes">mat(oc’h|añ)</token>
         </pattern>
         <message>Implijit <suggestion>\1\2</suggestion>.</message>
-        <example type="incorrect"><marker>Marc’had matoc’h</marker> eo.</example>
+        <example type="incorrect" correction="Marc’hadmatoc’h"><marker>Marc’had matoc’h</marker> eo.</example>
         <example type="correct"><marker>Marc’hadmatoc’h</marker> eo.</example>
       </rule>
       <rule>
@@ -5105,7 +5238,7 @@ $Id$
         <token regexp="yes">avel|blein|dibr|dor|dre-tan|gevier|houarn|kañv|koad|mor|plouz|raden|red|samm|tan|treut</token>
       </pattern>
       <message>Implijit <suggestion>\1-\2</suggestion>.</message>
-      <example type="incorrect">War e <marker>varc’h houarn</marker> ez ae.</example>
+      <example type="incorrect" correction="varc’h-houarn">War e <marker>varc’h houarn</marker> ez ae.</example>
       <example type="correct">War e <marker>varc’h-houarn</marker> ez ae.</example>
     </rule>
     <rule id="PINVIDIK_MOR" name="pinvidik mor → pinvidik-mor">
@@ -5114,7 +5247,7 @@ $Id$
         <token>mor</token>
       </pattern>
       <message>Implijit <suggestion>\1-\2</suggestion>.</message>
-      <example type="incorrect"><marker>Pinvidik mor</marker> eo hemañ.</example>
+      <example type="incorrect" correction="Pinvidik-mor"><marker>Pinvidik mor</marker> eo hemañ.</example>
       <example type="correct"><marker>Pinvidik-mor</marker> eo hemañ.</example>
     </rule>
     <rule id="POUEZ_MOUEZH" name="pouez mouezh → pouez-mouezh">
@@ -5123,7 +5256,7 @@ $Id$
         <token>mouezh</token>
       </pattern>
       <message>Implijit <suggestion>\1-\2</suggestion>.</message>
-      <example type="incorrect">Dudius eo da <marker>bouez mouezh</marker></example>
+      <example type="incorrect" correction="bouez-mouezh">Dudius eo da <marker>bouez mouezh</marker></example>
       <example type="correct">Dudius eo da <marker>bouez-mouezh</marker></example>
     </rule>
     <rule id="LEZ_VARN" name="lez varn → lez-varn">
@@ -5132,7 +5265,7 @@ $Id$
         <token regexp="yes">[vb]arn</token>
       </pattern>
       <message>Implijit <suggestion>\1-\2</suggestion>.</message>
-      <example type="incorrect">Al <marker>lez varn</marker></example>
+      <example type="incorrect" correction="lez-varn">Al <marker>lez varn</marker></example>
       <example type="correct">Al <marker>lez-varn</marker></example>
     </rule>
     <rule id="END_EEUN" name="end eeun → end-eeun">
@@ -5141,7 +5274,7 @@ $Id$
         <token>eeun</token>
       </pattern>
       <message>Implijit <suggestion>\1-\2</suggestion>.</message>
-      <example type="incorrect"><marker>End eeun</marker></example>
+      <example type="incorrect" correction="End-eeun"><marker>End eeun</marker></example>
       <example type="correct"><marker>End-eeun</marker></example>
     </rule>
     <rule id="MONT_DONT" name="mont dont → mont-dont">
@@ -5150,7 +5283,7 @@ $Id$
         <token>dont</token>
       </pattern>
       <message>Implijit <suggestion>\1-\2</suggestion>.</message>
-      <example type="incorrect">Ur bilhed <marker>mont dont</marker> evit Naoned.</example>
+      <example type="incorrect" correction="mont-dont">Ur bilhed <marker>mont dont</marker> evit Naoned.</example>
       <example type="correct">Ur bilhed <marker>mont-dont</marker> evit Naoned.</example>
     </rule>
     <rule id="LABOUR_DOUAR" name="labour douar → labour-douar">
@@ -5159,7 +5292,7 @@ $Id$
         <token>douar</token>
       </pattern>
       <message>Implijit <suggestion>\1-\2</suggestion>.</message>
-      <example type="incorrect">Ul <marker>labourer douar</marker> a oa ma zad.</example>
+      <example type="incorrect" correction="labourer-douar">Ul <marker>labourer douar</marker> a oa ma zad.</example>
       <example type="correct">Ul labourer-douar a oa ma zad.</example>
     </rule>
     <rule id="LAMM_DOUR" name="lamm dour → lamm-dour">
@@ -5168,7 +5301,7 @@ $Id$
         <token>dour</token>
       </pattern>
       <message>Implijit <suggestion>\1-\2</suggestion>.</message>
-      <example type="incorrect">Ul <marker>lamm dour</marker></example>
+      <example type="incorrect" correction="lamm-dour">Ul <marker>lamm dour</marker></example>
       <example type="correct">Ul <marker>lamm-dour</marker></example>
     </rule>
     <rule id="DERCHENT_DECH" name="derc’hent dec’h → derc’hent-dec’h">
@@ -5177,7 +5310,7 @@ $Id$
         <token>dec’h</token>
       </pattern>
       <message>Implijit <suggestion>\1-\2</suggestion>.</message>
-      <example type="incorrect"><marker>Derc’hent dec’h</marker></example>
+      <example type="incorrect" correction="Derc’hent-dec’h"><marker>Derc’hent dec’h</marker></example>
       <example type="correct"><marker>Derc’hent-dec’h</marker></example>
     </rule>
     <rule id="PENN_DA_BENN" name="penn da benn → penn-da-benn">
@@ -5187,7 +5320,7 @@ $Id$
         <token>benn</token>
       </pattern>
       <message>Implijit <suggestion>\1-\2-\3</suggestion>.</message>
-      <example type="incorrect">Troet <marker>penn da benn</marker></example>
+      <example type="incorrect" correction="penn-da-benn">Troet <marker>penn da benn</marker></example>
       <example type="correct">Troet <marker>penn-da-benn</marker></example>
     </rule>
     <rule id="PENN_OUZH_PENN" name="penn ouzh penn → penn-ouzh-penn">
@@ -5197,7 +5330,7 @@ $Id$
         <token>penn</token>
       </pattern>
       <message>Implijit <suggestion>\1-\2-\3</suggestion>.</message>
-      <example type="incorrect">Troet <marker>penn ouzh penn</marker></example>
+      <example type="incorrect" correction="penn-ouzh-penn">Troet <marker>penn ouzh penn</marker></example>
       <example type="correct">Troet <marker>penn-ouzh-penn</marker></example>
     </rule>
     <rule id="PENN_SKANV" name="penn skañv → penn-skañv">
@@ -5206,7 +5339,7 @@ $Id$
         <token>skañv</token>
       </pattern>
       <message>Implijit <suggestion>\1-\2</suggestion>.</message>
-      <example type="incorrect">Hennezh zo ur <marker>penn skañv</marker></example>
+      <example type="incorrect" correction="penn-skañv">Hennezh zo ur <marker>penn skañv</marker></example>
       <example type="correct">Hennezh zo ur <marker>penn-skañv</marker></example>
     </rule>
     <rule id="DISKAR_AMZER" name="diskar amzer → diskar-amzer">
@@ -5215,7 +5348,7 @@ $Id$
         <token>amzer</token>
       </pattern>
       <message>Implijit <suggestion>\1-\2</suggestion>.</message>
-      <example type="incorrect">Deuet eo an <marker>diskar amzer</marker>.</example>
+      <example type="incorrect" correction="diskar-amzer">Deuet eo an <marker>diskar amzer</marker>.</example>
       <example type="correct">Deuet eo an <marker>diskar-amzer</marker>.</example>
     </rule>
     <rule id="DIBENN_SIZHUN" name="dibenn sizhun → dibenn-sizhun">
@@ -5224,7 +5357,7 @@ $Id$
         <token regexp="yes">pred|sizhun</token>
       </pattern>
       <message>Implijit <suggestion>\1-\2</suggestion>.</message>
-      <example type="incorrect">Penaos e oa da <marker>zibenn sizhun</marker>?</example>
+      <example type="incorrect" correction="zibenn-sizhun">Penaos e oa da <marker>zibenn sizhun</marker>?</example>
       <example type="correct">Penaos e oa da <marker>zibenn-sizhun</marker>?</example>
     </rule>
     <rulegroup id="A_BEP_SEURT" name="a bep-seurt → a bep seurt">
@@ -5234,7 +5367,7 @@ $Id$
           <token>bep-seurt</token>
         </pattern>
         <message>Implijit <suggestion>\1 bep seurt</suggestion>.</message>
-        <example type="incorrect"><marker>A bep-seurt</marker></example>
+        <example type="incorrect" correction="A bep seurt"><marker>A bep-seurt</marker></example>
         <example type="correct">A bep seurt</example>
       </rule>
       <rule>
@@ -5379,7 +5512,7 @@ $Id$
           <token>ordinal</token>
         </pattern>
         <message>Implijit <suggestion>\1\2</suggestion>.</message>
-        <example type="incorrect">Un dra <marker>dreist ordinal</marker> zo c’hoarvezet.</example>
+        <example type="incorrect" correction="dreistordinal">Un dra <marker>dreist ordinal</marker> zo c’hoarvezet.</example>
         <example type="correct">Un dra <marker>dreistordinal</marker> zo c’hoarvezet.</example>
       </rule>
       <rule>
@@ -5491,9 +5624,9 @@ $Id$
     </rule>
     <rule id="ALL" name="en tu-all → en tu all (hag all)">
       <pattern>
-        <!-- Exception avoids double error in *a hend-all* already
+        <!-- Exception "hend-all" avoids double error in *a hend-all* already
              detected by rule A_HEND_ALL -->
-        <token regexp="yes" postag="UNKNOWN">.*-(all|bennak(et)?)<exception>hend</exception></token>
+        <token regexp="yes">.*-(all|bennak(et)?)<exception regexp="yes">([kg]emend|c’hemend|a-hend|hend|mod)-all</exception></token>
       </pattern>
       <message>Implijit <suggestion><match no="1" regexp_match="(.*)-([^-]*)" regexp_replace="$1 $2"/></suggestion>.</message>
       <example type="incorrect" correction="tu all">En <marker>tu-all</marker></example>
@@ -5520,7 +5653,7 @@ $Id$
     <rulegroup id="GOULENN_DA" name="Goulenn da → goulenn ouzh/gant/digant">
       <rule>
         <pattern>
-          <token inflected="yes">goulenn</token>
+          <token inflected="yes" postag="V.*" postag_regexp="yes">goulenn</token>
           <marker>
             <token inflected="yes" regexp="yes">da’?</token>
           </marker>
@@ -5528,6 +5661,7 @@ $Id$
         <message>Ne vez ket implijet an araogenn «da» gant ar verb «\1».</message>
         <example type="incorrect">Goulenn <marker>d’</marker>ar mestr-skol.</example>
         <example type="correct">Goulenn ouzh ar mestr-skol.</example>
+        <example type="correct">Kasit ho koulennoù deomp.</example>
       </rule>
       <rule>
         <pattern>
@@ -5701,6 +5835,19 @@ $Id$
         <message>Ha fellout a rae deoc’h skrivañ <suggestion>en</suggestion>?</message>
         <example type="incorrect">Te zo bet <marker>da</marker> Iwerzhon c’hoazh?</example>
         <example type="correct">Te zo bet en Iwerzhon c’hoazh?</example>
+      </rule>
+      <rule>
+        <pattern>
+          <token>bet</token>
+          <token inflected="yes">bezañ</token>
+          <marker>
+            <token>da</token>
+          </marker>
+          <token postag="V inf( M.*:4:.*)?" postag_regexp="yes"/>
+        </pattern>
+        <message>Ha fellout a rae deoc’h skrivañ <suggestion>o</suggestion>?</message>
+        <example type="incorrect">Bet on <marker>da</marker> welout ma zad.</example>
+        <example type="correct">Bet on <marker>o</marker> welout ma zad.</example>
       </rule>
     </rulegroup>
 
@@ -6009,7 +6156,7 @@ $Id$
         <token><exception postag_regexp="yes" postag="N.*"/></token>
       </pattern>
       <message>«\1» a lakaer dirak un anv. Ha fellout a rae deoc’h skrivañ <suggestion><match no="1" regexp_match="(.).*" regexp_replace="$1egen"/></suggestion>? (CHALM G2)</message>
-      <example type="incorrect"><marker>Pebezh</marker> brav!</example>
+      <example type="incorrect" correction="Pegen"><marker>Pebezh</marker> brav!</example>
       <example type="correct">Pebezh paotr!</example>
     </rule>
     <rule id="PEGEN" name="Pegen">
@@ -6020,7 +6167,7 @@ $Id$
         <token><exception postag_regexp="yes" postag="[AJ].*|V ppa"/></token>
       </pattern>
       <message>«\1» a lakaer dirak un anv-gwan pe un adverb. Ha fellout a rae deoc’h skrivañ <suggestion><match no="1" regexp_match="(.).*" regexp_replace="$1ebezh"/></suggestion>? (CHALM G2)</message>
-      <example type="incorrect"><marker>Pegen</marker> paotr!</example>
+      <example type="incorrect" correction="Pebezh"><marker>Pegen</marker> paotr!</example>
       <example type="correct">Pegen brav!</example>
       <example type="correct">Pegen nec’het e oan.</example>
     </rule>
@@ -6044,24 +6191,26 @@ $Id$
         </marker>
       </pattern>
       <message>Lakaet e vez ur bennlizherenn da anvioù ar mizioù. Ha fellout a rae deoc’h skrivañ <suggestion><match no="2" case_conversion="startupper"/></suggestion>? (CHALM A17)</message>
-      <example type="incorrect">E miz <marker>du</marker>, teñval ha du.</example>
+      <example type="incorrect" correction="Du">E miz <marker>du</marker>, teñval ha du.</example>
       <example type="correct">E miz Du, teñval ha du.</example>
     </rule>
     <rulegroup id="PENLIZH_DEIZ" name="Pennlizherennoù d’an deizioù">
       <rule>
         <pattern case_sensitive="yes">
-          <token regexp="yes">lun|merc’her|yaou|gwener|sadorn|sul</token>
+          <token regexp="yes">(?:lun|merc’her|yaou|gwener|sadorn|sul)(?:-(?:mañ|se))?</token>
         </pattern>
         <message>Lakaet e vez ur bennlizherenn da anvioù an deizioù. Ha fellout a rae deoc’h skrivañ <suggestion><match no="1" case_conversion="startupper"/></suggestion>? (CHALM A17)</message>
-        <example type="incorrect">Ar <marker>sul</marker> zo hiziv.</example>
+        <example type="incorrect" correction="Sul">Ar <marker>sul</marker> zo hiziv.</example>
         <example type="correct">Ar Sul zo hiziv.</example>
+        <example type="incorrect" correction="Gwener-se">Petra en doa graet d’ar <marker>gwener-se</marker>?</example>
+        <example type="correct">Petra en doa graet d’ar Gwener-se?</example>
       </rule>
       <rule>
         <pattern case_sensitive="yes">
-          <token>meurzh<exception scope="previous">miz</exception></token>
+          <token regexp="yes">meurzh(?:-(?:mañ|se))?<exception scope="previous">miz</exception></token>
         </pattern>
         <message>Lakaet e vez ur bennlizherenn da anvioù an deizioù. Ha fellout a rae deoc’h skrivañ <suggestion><match no="1" case_conversion="startupper"/></suggestion>? (CHALM A17)</message>
-        <example type="incorrect">Ar <marker>meurzh</marker> zo hiziv.</example>
+        <example type="incorrect" correction="Meurzh">Ar <marker>meurzh</marker> zo hiziv.</example>
         <example type="correct">Ar Meurzh zo hiziv.</example>
       </rule>
       <rule>
@@ -6070,7 +6219,7 @@ $Id$
           <marker><token regexp="yes">(?-i)Dilun|Dimeurzh|Dimerc’her|Diriaou|Digwener|Disadorn|Disul</token></marker>
         </pattern>
         <message>Ne vez ket implijet ur bennlizherenn gant a deizioù a grog gant di. Ha fellout a rae deoc’h skrivañ <suggestion><match no="2" case_conversion="startlower"/></suggestion>? (CHAML A17)</message>
-        <example type="incorrect">Mont a rin <marker>Dilun</marker>.</example>
+        <example type="incorrect" correction="dilun">Mont a rin <marker>Dilun</marker>.</example>
         <example type="correct">Mont a rin <marker>dilun</marker>.</example>
         <example type="correct">Dilun e oa.</example>
       </rule>
@@ -6082,8 +6231,8 @@ $Id$
           <token>a</token>
           <token>zeu</token>
         </pattern>
-        <message>Un adverb eo ar ger «\1» e brezhoneg. Ha fellout a rae deoc’h neuze skrivañ <suggestion><match no="1" case_conversion="startupper" regexp_match="^.." regexp_replace=""/></suggestion> hep «a zeu»?</message>
-        <example type="incorrect">Mont a rin <marker>dilun a zeu</marker>.</example>
+        <message>Un adverb eo ar ger «\1» e brezhoneg. Ha fellout a rae deoc’h neuze skrivañ <suggestion>\1</suggestion> hep «a zeu»?</message>
+        <example type="incorrect" correction="dilun">Mont a rin <marker>dilun a zeu</marker>.</example>
         <example type="correct">Mont a rin <marker>dilun</marker>.</example>
       </rule>
       <rule>
@@ -6091,8 +6240,8 @@ $Id$
           <token regexp="yes">dilun|dimeurzh|dimerc’her|diriaou|digwener|disadorn|disul</token>
           <token>tremenet</token>
         </pattern>
-        <message>Un adverb eo ar ger «\1» e brezhoneg. Ha fellout a rae deoc’h neuze skrivañ <suggestion><match no="1" case_conversion="startupper" regexp_match="..(.*)" regexp_replace="$1"/></suggestion> hep «tremenet»?</message>
-        <example type="incorrect">Deuet eo <marker>dilun tremenet</marker>.</example>
+        <message>Un adverb eo ar ger «\1» e brezhoneg. Ha fellout a rae deoc’h neuze skrivañ <suggestion>\1</suggestion> hep «tremenet»?</message>
+        <example type="incorrect" correction="dilun">Deuet eo <marker>dilun tremenet</marker>.</example>
         <example type="correct">Deuet eo <marker>dilun</marker>.</example>
       </rule>
       <rule>
@@ -6101,7 +6250,7 @@ $Id$
           <token regexp="yes">dimeurzh|dimerc’her|diriaou|digwener|disadorn|disul</token>
         </pattern>
         <message>Ha fellout a rae deoc’h skrivañ <suggestion>ar <match no="2" case_conversion="startupper" regexp_match="..(.*)" regexp_replace="$1"/></suggestion>?</message>
-        <example type="incorrect">Mont a ran d’ar skol d’<marker>an disadorn</marker>.</example>
+        <example type="incorrect" correction="ar Sadorn">Mont a ran d’ar skol d’<marker>an disadorn</marker>.</example>
         <example type="correct">Mont a ran d’ar skol d’ar Sadorn.</example>
       </rule>
       <rule>
@@ -6121,7 +6270,7 @@ $Id$
           </marker>
         </pattern>
         <message>Ha fellout a rae deoc’h skrivañ <suggestion><match no="2" case_conversion="startupper" regexp_match="..(.*)" regexp_replace="$1"/></suggestion>?</message>
-        <example type="incorrect">Bep <marker>disadorn</marker> ez an e kêr.</example>
+        <example type="incorrect" correction="Sadorn">Bep <marker>disadorn</marker> ez an e kêr.</example>
         <example type="correct">Bep Sadorn ez an e kêr.</example>
       </rule>
     </rulegroup>
@@ -6249,26 +6398,27 @@ $Id$
           <marker><token regexp="yes">h[eo]</token></marker>
           <token regexp="yes">[aeiou].*</token>
         </pattern>
-        <message>Gwelloc’h eo skrivañ <suggestion><match no="1" regexp_match="$" regexp_replace="c’h"/></suggestion> dirak ur ger a grog gant ur vogalenn.</message>
+        <message>Gwelloc’h eo skrivañ <suggestion><match no="1" regexp_match="$" regexp_replace="c’h"/></suggestion> dirak ur ger a grog gant ur vogalenn. (CHALM N)</message>
         <example type="incorrect" correction="hec’h">Deuet eo <marker>he</marker> amezeg.</example>
         <example type="correct">Deuet eo hec’h amezeg.</example>
       </rule>
       <rule>
         <pattern>
           <marker><token regexp="yes">h[eo]c’h</token></marker>
-          <token regexp="yes">[^aeiou].*</token>
+          <token regexp="yes">[^aeiouh].*</token>
         </pattern>
         <message>Ret eo skrivañ <suggestion><match no="1" regexp_match="...$" regexp_replace=""/></suggestion> dirak ur ger na grog ket gant ur vogalenn.</message>
         <example type="incorrect" correction="He"><marker>Hec’h</marker> c’hoar.</example>
         <example type="correct">He c’hoar.</example>
         <example type="correct">Hec’h anv.</example>
+        <example type="correct">E fin ar gont e kavo hec’h hent.</example>
       </rule>
       <rule>
         <pattern>
           <marker><token regexp="yes">h[eo]-unan(ik)?(-penn)?</token></marker>
         </pattern>
         <message>Ret eo skrivañ <suggestion><match no="1" regexp_match="^(..)" regexp_replace="$1c’h"/></suggestion>.</message>
-        <example type="incorrect"><marker>He-unan</marker>.</example>
+        <example type="incorrect" correction="Hec’h-unan"><marker>He-unan</marker>.</example>
         <example type="correct"><marker>Hec’h-unan</marker>.</example>
       </rule>
     </rulegroup>
@@ -6289,11 +6439,12 @@ $Id$
           <marker>
             <token>hag</token>
           </marker>
-          <token regexp="yes">[bcdfgjklmnprstvwyz].*</token>
+          <token regexp="yes">[bcdfgjklmnprstvwyz].*<exception regexp="yes">(?-i)Yves</exception></token>
         </pattern>
         <message>Ar ger «\1» a zlefe bezañ <suggestion>ha</suggestion> dirak ur ger a grog gant ur gensonenn.</message>
         <example type="incorrect">Brav <marker>hag</marker> fin eo.</example>
         <example type="correct">Brav ha fin eo.</example>
+        <example type="correct">Naig hag Yves.</example>
       </rule>
     </rulegroup>
     <rule id="DAM" name="da + ma = da’m">
@@ -6693,7 +6844,7 @@ $Id$
         <pattern>
           <token>eus
             <exception scope="previous">ez</exception>
-            <exception postag="X KAOUT2">eus</exception>
+            <exception postag="X KAOUT2"/>
           </token>
           <token>eus</token>
         </pattern>
@@ -6811,7 +6962,7 @@ $Id$
           <token regexp="yes">bloaz|miz</token>
           <token>zo</token>
         </pattern>
-        <message>Ger-mell ebet dirak «\2» pa vez lakaet dirak «\3» da ziskouez pad un amzer aet hebiou. Ha fellout a rae deoc’h skrivañ <suggestion>\2 \3</suggestion>?</message>
+        <message>Ger-mell ebet dirak «\2» pa vez lakaet dirak «\3» da ziskouez pad un amzer aet hebiou. Ha fellout a rae deoc’h skrivañ <suggestion>\2 \3</suggestion>? (CHALM L7)</message>
         <example type="incorrect" correction="Miz zo"><marker>Ur miz zo</marker> e oa aet kuit.</example>
         <example type="correct">Miz zo e oa aet kuit.</example>
       </rule>
@@ -6822,7 +6973,7 @@ $Id$
           <token inflected="yes">a</token>
           <token>zo</token>
         </pattern>
-        <message>Ger-mell ebet dirak «\2» pa vez lakaet dirak «\4» da ziskouez pad un amzer aet hebiou. Ha fellout a rae deoc’h skrivañ <suggestion>\4</suggestion>?</message>
+        <message>Ger-mell ebet dirak «\2» pa vez lakaet dirak «\4» da ziskouez pad un amzer aet hebiou. Ha fellout a rae deoc’h skrivañ <suggestion>\4</suggestion>? (CHALM L7)</message>
         <example type="incorrect"><marker>Ur miz ’zo</marker> e oa aet kuit.</example>
         <example type="correct">Miz zo e oa aet kuit.</example>
       </rule>
@@ -6851,7 +7002,7 @@ $Id$
           <token postag="N.*" postag_regexp="yes"><exception regexp="yes">gwech|mann|tamm</exception></token>
           <token>ebet</token>
         </pattern>
-        <message>Ne vez ket implijet «ket» gant «ebet».</message>
+        <message>Ne vez ket implijet «ket» gant «ebet». (CHALM E4.1)</message>
         <example type="incorrect">Ne welan <marker>ket</marker> den ebet.</example>
         <example type="correct">Ne welan den ebet.</example>
         <example type="incorrect">N’eus <marker>ket</marker> boued ebet.</example>
@@ -6869,7 +7020,7 @@ $Id$
         </pattern>
         <message>Ret eo implijout <suggestion>banne \3 \4</suggestion> gant ur ger hollek «\3» a-raok ar ger «\4».</message>
         <example type="incorrect" correction="banne avel ebet">N’eus <marker>avel ebet</marker>.</example>
-        <example type="correct">N’eus banne avel ebet.</example>
+        <example type="correct">N’eus banne avel ebet. (CHALM R1.7.1)</example>
       </rule>
       <rule>
         <pattern>
@@ -6882,7 +7033,7 @@ $Id$
         </pattern>
         <message>Ret eo implijout <suggestion>tamm \3 \4</suggestion> gant ur ger hollek «\3» a-raok ar ger «\4».</message>
         <example type="incorrect" correction="tamm frouezh ebet">Ne zebran <marker>frouezh ebet</marker>.</example>
-        <example type="correct">Ne zebran tamm frouezh ebet.</example>
+        <example type="correct">Ne zebran tamm frouezh ebet. (CHALM R1.7.1)</example>
       </rule>
     </rulegroup>
     <rulegroup id="KET_NEMEUR" name="ket + nemeur">
@@ -6893,8 +7044,8 @@ $Id$
           <token>nemeur</token>
           <token>a</token>
         </pattern>
-        <message>Ret eo implijout «ket» gant «nemeur». Ha fellout a rae deoc’h skrivañ <suggestion>\1 \2 ket \3 \4</suggestion>?</message>
-        <example type="incorrect"><marker>N’eus nemeur a</marker> girri.</example>
+        <message>Ret eo implijout «ket» gant «nemeur». Ha fellout a rae deoc’h skrivañ <suggestion>\1\2 ket \3 \4</suggestion>? (CHALM E4.4)</message>
+        <example type="incorrect" correction="N’eus ket nemeur a"><marker>N’eus nemeur a</marker> girri.</example>
         <example type="correct">N’eus ket nemeur a girri.</example>
       </rule>
     </rulegroup>
@@ -6906,8 +7057,8 @@ $Id$
         </marker>
         <token postag="N . p.*" postag_regexp="yes"/>
       </pattern>
-      <message>Gallekadur: e brezhoneg e lakaer «\1» etre ar ger-perc’hennañ «\2» hag an dra berc’hennet «\3». Ha fellout a rae deoc’h skrivañ <suggestion>\2 \1</suggestion>?</message>
-      <example type="incorrect"><marker>Holl ma</marker> levrioù</example>
+      <message>Gallekadur: e brezhoneg e lakaer «\1» etre ar ger-perc’hennañ «\2» hag an dra berc’hennet «\3». Ha fellout a rae deoc’h skrivañ <suggestion>\2 holl</suggestion>?</message>
+      <example type="incorrect" correction="Ma holl"><marker>Holl ma</marker> levrioù</example>
       <example type="correct">Ma holl levrioù</example>
     </rule>
     <rulegroup id="KET_EBET" name="n’eus ket kudenn → n’eus ket kudenn ebet.">
@@ -6943,15 +7094,19 @@ $Id$
     <rulegroup id="EVEL_EGET" name="evel → eget">
       <rule>
         <pattern>
-          <token postag="J cmp" skip="2"/>
+          <token postag="J cmp" skip="1"><exception scope="next">,</exception></token>
           <marker>
             <token>evel</token>
           </marker>
+          <token><exception>boaz</exception></token>
         </pattern>
         <message>Ret eo implijout ar stagell <suggestion>eget</suggestion>.</message>
         <example type="incorrect">Brasoc’h eo <marker>evel</marker> ma breur.</example>
         <example type="correct">Brasoc’h eo eget ma breur.</example>
         <example type="correct">Pa vin brasoc’h e vin pomper evel tadig.</example>
+        <example type="correct">Ha rannet eo ar bladenn etre tonioù pop nerzhus ha re all siouloc’h, <marker>evel</marker> m’eo bet graet gant ar strollad abaoe e grouidigezh.</example>
+        <example type="correct">Gwelloc'h eo ober <marker>evel</marker> ma vefe erru gant ar bajenn-se.</example>
+        <example type="correct">Deuet int abretoc’h evel boaz.</example>
       </rule>
       <rule>
         <pattern>
@@ -6959,7 +7114,6 @@ $Id$
           <marker>
             <token inflected="yes">evel
               <exception>evel</exception>
-              <exception inflected="yes">eget</exception>
             </token>
           </marker>
         </pattern>
@@ -7312,10 +7466,10 @@ $Id$
         <example type="correct">N’eo ket ret ober se.</example>
       </rule>
     </rulegroup>
-    <rule id="DOUAGEMENTIN" name="daou gementiñ → daougementiñ">
+    <rule id="DAOUGEMENTIN" name="daou gementiñ → daougementiñ">
       <pattern>
         <token regexp="yes">[dtz]aou|[tdz]ri|[pbf]evar</token>
-        <token regexp="yes">(c’hement|gement)(iñ|et)?|(ilin|gromm)(añ|et)?|roadek|bik|lamm(et)?|dortet</token>
+        <token regexp="yes">(c’hement|gement)(iñ|et)?|(ilin|gromm)(añ|et)?|roadek|bik(où)?|lamm(et)?|dortet</token>
       </pattern>
       <message>Ha fellout a rae deoc’h skrivañ <suggestion>\1\2</suggestion>?</message>
       <example type="incorrect" correction="daouc’hementiñ">Ar pal zo <marker>daou c’hementiñ</marker> an niver a dud o teskiñ brezhoneg.</example>
@@ -7473,7 +7627,7 @@ $Id$
           <token regexp="yes">a-benn|bennak(et)?|(etre)?broadel|mat|laouenn|staj|skolaj|studi</token>
         </pattern>
         <message>«devez» ’zo ur verb. Ha fellout a rae deoc’h implijout an anv <suggestion><match no="1" regexp_match="z" regexp_replace="zh"/></suggestion> kentoc’h?</message>
-        <example type="incorrect">E <marker>devez</marker> etrebroadel</example>
+        <example type="incorrect" correction="devezh">E <marker>devez</marker> etrebroadel</example>
         <example type="correct">E devezh etrebroadel</example>
       </rule>
       <rule>
@@ -7481,7 +7635,7 @@ $Id$
           <token regexp="yes">[dtz]evez-(mañ|se|hont|ara[dt]|studi)</token>
         </pattern>
         <message>«devez» ’zo ur verb. Ha fellout a rae deoc’h implijout an anv <suggestion><match no="1" regexp_match="z" regexp_replace="zh"/></suggestion> kentoc’h?</message>
-        <example type="incorrect">An <marker>devez-se</marker></example>
+        <example type="incorrect" correction="devezh-se">An <marker>devez-se</marker></example>
         <example type="correct">An devezh-se</example>
       </rule>
     </rulegroup>
@@ -7495,8 +7649,8 @@ $Id$
           </marker>
           <token regexp="yes">a[lnr]</token>
         </pattern>
-        <message>Ha fellout a rae deoc’h skrivañ <suggestion>al <match no="2" case_conversion="alllower"/> \3 eus \4</suggestion>?</message>
-        <example type="incorrect"><marker>Lodenn vrasañ</marker> ar boblañ</example>
+        <message>Ha fellout a rae deoc’h skrivañ <suggestion>al <match no="2" case_conversion="alllower"/> \3 eus</suggestion>?</message>
+        <example type="incorrect" correction="Al lodenn vrasañ eus"><marker>Lodenn vrasañ</marker> ar boblañ</example>
         <example type="correct">Al lodenn vrasañ eus ar boblañ</example>
       </rule>
       <rule>
@@ -7606,9 +7760,9 @@ $Id$
     </rule>
     <rule id="PA" name="pa + verb diouzhtu">
       <pattern>
-        <token regexp="yes">pa|mar</token>
+        <token>pa</token>
         <token>
-          <exception postag="V.*|X KAOUT1|UNKNOWN" postag_regexp="yes"/>
+          <exception postag="V.*|X KAOUT1|X EN_EM|UNKNOWN" postag_regexp="yes"/>
           <exception regexp="yes">n?[e’]</exception>
         </token>
       </pattern>
@@ -7619,6 +7773,8 @@ $Id$
       <example type="correct">Pa ’z on skuizh.</example>
       <example type="correct">Mar en deus unan bennak divskouarn da glevout.</example>
       <example type="correct">Pa ho pefe</example>
+      <example type="correct">Pa en em gavent gant ar merc’hed.</example>
+      <example type="correct">Hep mar ebet.</example>
     </rule>
 
     <rulegroup id="HEMAN_HOUMAN" name="hemañ ha houmañ">
@@ -7934,7 +8090,7 @@ $Id$
         <token regexp="yes">((c’h|[kg])arr|[tdz]our|[mv]enez|c’hwil)-tann</token>
       </pattern>
       <message>Ha fellout a rae deoc’h skrivañ <suggestion><match no="1" regexp_match=".$" regexp_replace=""/></suggestion> ?</message>
-      <example type="incorrect">Ur <marker>c’harr-tann</marker> nevez am eus.</example>
+      <example type="incorrect" correction="c’harr-tan">Ur <marker>c’harr-tann</marker> nevez am eus.</example>
       <example type="correct">Ur c’harr-tan nevez am eus.</example>
     </rule>
     <rulegroup id="ENDRO" name="en-dro pe endro">
@@ -8035,7 +8191,7 @@ $Id$
         <message>Ha fellout a rae deoc’h skrivañ <suggestion>oc’h</suggestion>?</message>
         <example type="incorrect">Plijadur am bez <marker>da</marker> ober se.</example>
         <example type="incorrect">Plijadur am bez <marker>d’</marker> ober se.</example>
-        <example type="correct">Plijadur am bez <marker>oc’h</marker> obser se.</example>
+        <example type="correct">Plijadur am bez <marker>oc’h</marker> ober se.</example>
       </rule>
       <rule>
         <pattern>
@@ -8048,8 +8204,8 @@ $Id$
           </marker>
         </pattern>
         <message>Ha fellout a rae deoc’h skrivañ <suggestion>oc’h \5</suggestion>?</message>
-        <example type="incorrect">Plijadur am bez <marker>d’ober</marker> se.</example>
-        <example type="correct">Plijadur am bez <marker>och d’ober</marker> se.</example>
+        <example type="incorrect" correction="oc’h ober">Plijadur am bez <marker>d’ober</marker> se.</example>
+        <example type="correct">Plijadur am bez <marker>oc’h ober</marker> se.</example>
       </rule>
       <rule>
         <pattern>
@@ -8074,7 +8230,7 @@ $Id$
           </marker>
         </pattern>
         <message>Ha fellout a rae deoc’h skrivañ <suggestion>o <match no="5" regexp_match="^." regexp_replace="k"/></suggestion>?</message>
-        <example type="incorrect">Plijadur am eus <marker>da glevout</marker> se.</example>
+        <example type="incorrect" correction="o klevout">Plijadur am eus <marker>da glevout</marker> se.</example>
         <example type="correct">Plijadur am eus o klevout se.</example>
       </rule>
       <rule>
@@ -8509,24 +8665,25 @@ $Id$
           <marker><token regexp="yes">[gk]?waz-(dour|kreiz|rinier|stêr|vor)</token></marker>
         </pattern>
         <message>Ha fellout a rae deoc’h skrivañ <suggestion><match no="1" regexp_match="-" regexp_replace="h-"/></suggestion>?</message>
-        <example type="incorrect"><marker>Gwaz-dour</marker>.</example>
+        <example type="incorrect" correction="Gwazh-dour"><marker>Gwaz-dour</marker>.</example>
         <example type="correct"><marker>Gwazh-dour</marker>.</example>
       </rule>
     </rulegroup>
     <rule id="KOZHOCH" name="kozhoc’h → koshoc’h">
       <pattern>
-        <marker><token regexp="yes">(([kg]|c’h)ozh|nevez|ruz|serzh)(oc’h|añ|a?at)|reizhoc’h</token></marker>
+        <marker><token regexp="yes">(([kg]|c’h)ozh|nevez|pizh|ruz|serzh)(oc’h|añ|a?at)|reizhoc’h</token></marker>
       </pattern>
       <message>«\1» a zo ur verb diasur. Ha fellout a rae deoc’h skrivañ <suggestion><match no="1" regexp_match="z" regexp_replace="s"/></suggestion> kentoc’h? (CHALM Sb4)</message>
       <example type="incorrect" correction="Koshoc’h"><marker>Kozhoc’h</marker> eo ma gwreg egedon.</example>
       <example type="correct">Koshoc’h eo ma gwreg egedon.</example>
       <example type="correct">C’hwi a gozhoc’h.</example>
-      <example type="incorrect"><marker>Ruzoc’h</marker> eo an aval-mañ.</example>
+      <example type="incorrect" correction="Rusoc’h"><marker>Ruzoc’h</marker> eo an aval-mañ.</example>
       <example type="correct">Rusoc’h eo an aval-mañ.</example>
       <example type="correct">C’hwi a ruzoc’c.</example>
       <example type="correct">Kozhañ a ran</example>
       <example type="incorrect" correction="nevesañ">Pellgargit ar stumm <marker>nevezañ</marker>.</example>
       <example type="correct">Pellgargit ar stumm nevesañ.</example>
+      <example type="correct">Gant va daouarn o kozhañ</example>
     </rule>
     <rulegroup id="PELECH" name="pelec’h pe da belec’h">
       <rule>
@@ -8539,19 +8696,20 @@ $Id$
         <message>Ha fellout a rae deoc’h skrivañ <suggestion>da belec’h</suggestion>? (CHALM F3.3)</message>
         <example type="incorrect">Ha <marker>pelec’h</marker> emaout o vont?</example>
         <example type="incorrect"><marker>Pelec’h</marker> emaout o vont?</example>
-        <example type="correct">Ha da belec’h emaout o vont?</example> 
+        <example type="correct">Ha da belec’h emaout o vont?</example>
         <example type="correct">Da belec’h emaout o vont?</example>
         <example type="correct">E pelec’h emaout o chom?</example>
       </rule>
       <rule>
         <pattern>
-          <marker><token>pelec’h<exception scope="previous" regexp="yes">dre|da|e</exception></token></marker>
+          <marker><token>pelec’h<exception scope="previous" regexp="yes">betek|dre|da|e</exception></token></marker>
           <token>ez</token>
           <token inflected="yes">mont</token>
         </pattern>
         <message>Ha fellout a rae deoc’h skrivañ <suggestion>da belec’h</suggestion>? (CHALM F3.3)</message>
         <example type="incorrect"><marker>Pelec’h</marker> ez ez?</example>
         <example type="correct">Da belec’h ez ez?</example>
+        <example type="correct">Betek pelec’h ez a?</example>
       </rule>
       <rule>
         <pattern>
@@ -8617,6 +8775,69 @@ $Id$
         <example type="correct">Da belec’h e oa aet Yann?</example>
       </rule>
     </rulegroup>
+    <rulegroup id="ALAN_STIVELL" name="Alan Stivell">
+      <rule>
+        <pattern>
+          <token>Allan</token>
+          <token regexp="yes">Stivell?</token>
+        </pattern>
+        <message>Skrivit <suggestion>Alan Stivell</suggestion>.</message>
+        <url>https://br.wikipedia.org/wiki/Alan_Stivell</url>
+        <example type="incorrect"><marker>Allan Stivell</marker> a zo ur soner brezhonek.</example>
+        <example type="correct">Alan Stivell a zo ur soner brezhonek.</example>
+      </rule>
+      <rule>
+        <pattern>
+          <token>Alan</token>
+          <token>Stivel</token>
+        </pattern>
+        <message>Skrivit <suggestion>Alan Stivell</suggestion>.</message>
+        <url>https://br.wikipedia.org/wiki/Alan_Stivell</url>
+        <example type="incorrect"><marker>Alan Stivel</marker> a zo ur soner brezhonek.</example>
+        <example type="correct">Alan Stivell a zo ur soner brezhonek.</example>
+      </rule>
+    </rulegroup>
+    <rulegroup id="GLENMOR" name="Glenmor">
+      <rule>
+        <pattern>
+          <token regexp="yes">Glenn?</token>
+          <token>Mor</token>
+        </pattern>
+        <message>Skrivit <suggestion>Glenmor</suggestion>.</message>
+        <url>https://br.wikipedia.org/wiki/Glenmor</url>
+        <example type="incorrect"><marker>Glenn Mor</marker> a oa ur barzh.</example>
+        <example type="correct">GlenMor a oa ur barzh.</example>
+      </rule>
+      <rule>
+        <pattern>
+          <token regexp="yes">Glennmor|Glenn?-mor</token>
+        </pattern>
+        <message>Skrivit <suggestion>Glenmor</suggestion>.</message>
+        <url>https://br.wikipedia.org/wiki/Glenmor</url>
+        <example type="incorrect"><marker>Glennmor</marker> a oa ur barzh.</example>
+        <example type="correct">Glenmor a oa ur barzh.</example>
+      </rule>
+    </rulegroup>
+    <rule id="BERNEZ_TANGI" name="Bernez Tangi">
+      <pattern>
+        <token>Bernez</token>
+        <token regexp="yes">Tangu[iy]|Tangy</token>
+      </pattern>
+      <message>Skrivit <suggestion>Bernez Tangi</suggestion> (Bernard Tanguy war varilh an ti-kêr).</message>
+      <url>https://br.wikipedia.org/wiki/Bernez_Tangi</url>
+      <example type="incorrect"><marker>Bernez Tanguy</marker> a zo ur barzh.</example>
+      <example type="correct">Bernez Tangi a zo ur barzh.</example>
+    </rule>
+    <rule id="YANN_FANCH_KEMENER" name="Yann-Fañch Kemener">
+      <pattern>
+        <token regexp="yes">Yann-Fa[ñn]ch</token>
+        <token regexp="yes">Kemeneur|Quemeneu?r</token>
+      </pattern>
+      <message>Skrivit <suggestion>Yann-Fañch Kemener</suggestion> (Jean-François Quémener war varilh an ti-kêr).</message>
+      <url>https://br.wikipedia.org/wiki/Yann-Fa%C3%B1ch_Kemener</url>
+      <example type="incorrect"><marker>Yann-Fañch Kemeneur</marker> a zo unan eus gwellañ kanerien hengounel a Vreizh.</example>
+      <example type="correct">Yann-Fañch Kemener a zo unan eus gwellañ kanerien hengounel a Vreizh.</example>
+    </rule>
   </category>
   <!-- vim: foldmethod=marker foldmarker=<category,</category:
   -->

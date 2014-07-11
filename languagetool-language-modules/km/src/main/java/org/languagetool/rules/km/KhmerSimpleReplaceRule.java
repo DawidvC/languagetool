@@ -55,14 +55,13 @@ public class KhmerSimpleReplaceRule extends Rule {
 
   private static final String FILE_NAME = "/km/coherency.txt";
   private static final String FILE_ENCODING = "utf-8";
-  // locale used on case-conversion
-  private static final Locale kmLocale = new Locale("km");
+  private static final Locale KM_LOCALE = new Locale("km");  // locale used on case-conversion
   
-  private Khmer kmher = new Khmer();
+  private final Khmer kmher = new Khmer();
 
   // list of maps containing error-corrections pairs.
   // the n-th map contains key strings of (n+1) words 
-  private List<Map<String, String>> wrongWords;
+  private final List<Map<String, String>> wrongWords;
 
   public final String getFileName() {
     return FILE_NAME;
@@ -112,7 +111,7 @@ public class KhmerSimpleReplaceRule extends Rule {
    * locale used on case-conversion
    */
   public Locale getLocale() {
-    return kmLocale;
+    return KM_LOCALE;
   }
 
   public String getEncoding() {
@@ -138,7 +137,6 @@ public class KhmerSimpleReplaceRule extends Rule {
    * Same as {@link AbstractSimpleReplaceRule#loadWords} but allows multiple words.   
    * @param file the file to load.
    * @return the list of maps containing the error-corrections pairs. <br/>The n-th map contains key strings of (n+1) words.
-   * @throws IOException when the file contains errors.
    * @see #getWordTokenizer
    */
   private List<Map<String, String>> loadWords(final InputStream file)
@@ -165,7 +163,7 @@ public class KhmerSimpleReplaceRule extends Rule {
 
         }
 
-        final String[] wrongForms = parts[0].split("\\|"); // multiple incorect forms
+        final String[] wrongForms = parts[0].split("\\|"); // multiple incorrect forms
         for (String wrongForm : wrongForms) {
           int wordCount = 0;
           final List<String> tokens = getWordTokenizer().tokenize(wrongForm);
@@ -208,21 +206,22 @@ public class KhmerSimpleReplaceRule extends Rule {
   }
 
   @Override
-  public RuleMatch[] match(final AnalyzedSentence text) {
+  public RuleMatch[] match(final AnalyzedSentence sentence) {
     final List<RuleMatch> ruleMatches = new ArrayList<>();
-    final AnalyzedTokenReadings[] tokens = text
-            .getTokensWithoutWhitespace();
+    final AnalyzedTokenReadings[] tokens = sentence.getTokensWithoutWhitespace();
 
     final Queue<AnalyzedTokenReadings> prevTokens = new ArrayBlockingQueue<>(wrongWords.size());
 
     for (int i = 1; i < tokens.length; i++) {
       addToQueue(tokens[i], prevTokens);
       final StringBuilder sb = new StringBuilder();
-      final ArrayList<String> variants = new ArrayList<>();
-      final List<AnalyzedTokenReadings> prevTokensList = Arrays.asList(prevTokens.toArray(new AnalyzedTokenReadings[] {}));
+      final List<String> variants = new ArrayList<>();
+      final List<AnalyzedTokenReadings> prevTokensList =
+              Arrays.asList(prevTokens.toArray(new AnalyzedTokenReadings[prevTokens.size()]));
       for (int j = prevTokensList.size() - 1; j >= 0; j--) {
-        if (j != prevTokensList.size() - 1 && prevTokensList.get(j + 1).isWhitespaceBefore())
+        if (j != prevTokensList.size() - 1 && prevTokensList.get(j + 1).isWhitespaceBefore()) {
           sb.insert(0, " ");
+        }
         sb.insert(0, prevTokensList.get(j).getToken());
         variants.add(0, sb.toString());
       }

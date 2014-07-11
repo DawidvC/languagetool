@@ -2,7 +2,7 @@
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
 <!-- 
  * LanguageTool, a natural language style checker 
- * Copyright (c) Marcin Miłkowski, 2009 (http://www.languagetool.org)
+ * Copyright (c) Marcin Miłkowski, 2014 (http://www.languagetool.org)
  * 
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -37,6 +37,14 @@
 				<xs:element ref="category"/>
 			</xs:choice>
 			<xs:attribute name="lang" type="xs:language" use="required" />
+            <xs:attribute name="integrate" use="optional">
+                <xs:simpleType>
+                    <xs:restriction base="xs:NMTOKEN">
+                        <xs:enumeration value="replace"/>
+                        <xs:enumeration value="add"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
 		</xs:complexType>
 	</xs:element>
 
@@ -78,6 +86,8 @@
 	<xs:element name="rulegroup">
 		<xs:complexType>
 			<xs:sequence minOccurs="1">
+                <xs:element ref="url" minOccurs="0" maxOccurs="1" />
+                <xs:element ref="antipattern" minOccurs="0" maxOccurs="unbounded"/>
 				<xs:element ref="rule" maxOccurs="unbounded" />
 			</xs:sequence>
 			<xs:attribute name="default" use="optional">
@@ -136,14 +146,14 @@
 
 	<xs:annotation>
 		<xs:documentation xml:lang="en"> The rule element. The
-			unique ID is
-			required only if the rule is not contained in a rule group.
+			unique ID is required only if the rule is not contained in a rule group.
 			The rule can be switched by default off (using the default attribute).
 		</xs:documentation>
 	</xs:annotation>
 	<xs:element name="rule">
 		<xs:complexType>
 			<xs:sequence>
+                <xs:element ref="antipattern" minOccurs="0" maxOccurs="unbounded"/>
 				<xs:element ref="pattern" />
 				<xs:element ref="message" />
 				<xs:element ref="suggestion" minOccurs="0" maxOccurs="15" />
@@ -173,13 +183,31 @@
 				<xs:element ref="and" />
 				<xs:element ref="or" />
 				<xs:element ref="unify" />
-				<xs:element ref="marker" />
+				<xs:element ref="marker" maxOccurs="1"/>
 			</xs:choice>
 			<xs:attribute name="case_sensitive" type="binaryYesNo"
 				use="optional" />
 		</xs:complexType>
 	</xs:element>
 
+    <xs:annotation>
+        <xs:documentation xml:lang="en">A negative-matching rule used to
+        mark up complex exceptions in rules. Note: it does not support
+            phrases and OR operations for simplicity.
+        </xs:documentation>
+    </xs:annotation>
+    <xs:element name="antipattern">
+        <xs:complexType>
+            <xs:choice minOccurs="1" maxOccurs="unbounded">
+                <xs:element ref="token" />
+                <xs:element ref="and" />
+                <xs:element ref="unify" />
+                <xs:element ref="marker" />
+            </xs:choice>
+            <xs:attribute name="case_sensitive" type="binaryYesNo"
+                          use="optional" />
+        </xs:complexType>
+    </xs:element>
 
 	<xs:annotation>
 		<xs:documentation xml:lang="en"> A short description of
@@ -237,7 +265,13 @@
 	<xs:element name="example" xml:space="preserve">
     <xs:complexType mixed="true">
       <xs:choice minOccurs="0" maxOccurs="unbounded">
-        <xs:element ref="marker" />
+        <xs:element name="marker" >
+            <xs:complexType>
+                <xs:simpleContent>
+                    <xs:extension base="xs:string"/>
+                </xs:simpleContent>
+            </xs:complexType>
+        </xs:element>
       </xs:choice>
       <xs:attribute name="correction" type="xs:string"
 		use="optional" />

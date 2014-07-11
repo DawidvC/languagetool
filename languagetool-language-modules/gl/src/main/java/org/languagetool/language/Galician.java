@@ -22,12 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.languagetool.Language;
-import org.languagetool.rules.CommaWhitespaceRule;
-import org.languagetool.rules.DoublePunctuationRule;
-import org.languagetool.rules.GenericUnpairedBracketsRule;
-import org.languagetool.rules.Rule;
-import org.languagetool.rules.UppercaseSentenceStartRule;
-import org.languagetool.rules.WhitespaceRule;
+import org.languagetool.rules.*;
 import org.languagetool.rules.gl.CastWordsRule;
 import org.languagetool.rules.gl.SimpleReplaceRule;
 import org.languagetool.rules.spelling.hunspell.HunspellRule;
@@ -49,6 +44,7 @@ public class Galician extends Language {
   private SentenceTokenizer sentenceTokenizer;
   private Synthesizer synthesizer;
   private Disambiguator disambiguator;
+  private String name = "Galician";
 
   @Override
   public final SentenceTokenizer getSentenceTokenizer() {
@@ -57,10 +53,14 @@ public class Galician extends Language {
     }
     return sentenceTokenizer;
   }
-  
   @Override
-  public final String getName() {
-    return "Galician";
+  public String getName() {
+    return name;
+  }
+
+  @Override
+  public void setName(final String name) {
+    this.name = name;
   }
 
   @Override
@@ -69,7 +69,7 @@ public class Galician extends Language {
   }
 
   @Override
-  public final String[] getCountryVariants() {
+  public final String[] getCountries() {
     return new String[]{"ES"};
   }
   
@@ -117,9 +117,7 @@ public class Galician extends Language {
 
   @Override
   public Contributor[] getMaintainers() {
-    final Contributor contributor = new Contributor("Susana Sotelo Docío");
-    contributor.setUrl("http://www.linguarum.net/projects/languagetool-gl");
-    return new Contributor[] { contributor };
+    return new Contributor[] { new Contributor("Susana Sotelo Docío") };
   }
 
   @Override
@@ -131,7 +129,7 @@ public class Galician extends Language {
             HunspellRule.class,
             UppercaseSentenceStartRule.class,
             // WordRepeatRule.class,
-            WhitespaceRule.class,
+            MultipleWhitespaceRule.class,
             // Specific to Galician
             SimpleReplaceRule.class,
             CastWordsRule.class

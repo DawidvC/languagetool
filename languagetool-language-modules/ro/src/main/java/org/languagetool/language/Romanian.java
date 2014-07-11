@@ -22,13 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.languagetool.Language;
-import org.languagetool.rules.CommaWhitespaceRule;
-import org.languagetool.rules.DoublePunctuationRule;
-import org.languagetool.rules.GenericUnpairedBracketsRule;
-import org.languagetool.rules.Rule;
-import org.languagetool.rules.UppercaseSentenceStartRule;
-import org.languagetool.rules.WhitespaceRule;
-import org.languagetool.rules.WordRepeatRule;
+import org.languagetool.rules.*;
 import org.languagetool.rules.ro.CompoundRule;
 import org.languagetool.rules.ro.MorfologikRomanianSpellerRule;
 import org.languagetool.rules.ro.RomanianWordRepeatBeginningRule;
@@ -56,10 +50,16 @@ public class Romanian extends Language {
   private Disambiguator disambiguator;
   private Tokenizer wordTokenizer;
   private SentenceTokenizer sentenceTokenizer;
+  private String name = "Romanian";
 
   @Override
   public String getName() {
-    return "Romanian";
+    return name;
+  }
+
+  @Override
+  public void setName(final String name) {
+    this.name = name;
   }
 
   @Override
@@ -68,7 +68,7 @@ public class Romanian extends Language {
   }
 
   @Override
-  public String[] getCountryVariants() {
+  public String[] getCountries() {
     return new String[]{"RO"};
   }
 
@@ -103,7 +103,7 @@ public class Romanian extends Language {
             CommaWhitespaceRule.class,
             DoublePunctuationRule.class,
             UppercaseSentenceStartRule.class,
-            WhitespaceRule.class,
+            MultipleWhitespaceRule.class,
             GenericUnpairedBracketsRule.class,            
             WordRepeatRule.class,
             // specific to Romanian:

@@ -24,6 +24,7 @@ import java.net.URI;
 import java.net.URLDecoder;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.*;
 
 import org.apache.tika.language.LanguageIdentifier;
 import org.languagetool.JLanguageTool;
@@ -31,6 +32,7 @@ import org.languagetool.Language;
 import org.languagetool.gui.Configuration;
 import org.languagetool.rules.RuleMatch;
 import org.languagetool.rules.bitext.BitextRule;
+import org.languagetool.tools.RuleAsXmlSerializer;
 import org.languagetool.tools.StringTools;
 import org.languagetool.tools.Tools;
 
@@ -48,11 +50,16 @@ class LanguageToolHttpHandler implements HttpHandler {
   private final boolean verbose;
   private final boolean internalServer;
   private final RequestLimiter requestLimiter;
+  private final ExecutorService executorService;
 
+  private long maxCheckTimeMillis = -1;
   private int maxTextLength = Integer.MAX_VALUE;
   private String allowOriginUrl;
+  
+  private static int handleCount = 0;
 
   /**
+   * Create an instance. Call {@link #shutdown()} when done.
    * @param verbose print the input text in case of exceptions
    * @param allowedIps set of IPs that may connect or <tt>null</tt> to allow any IP
    * @param requestLimiter may be null
@@ -62,10 +69,25 @@ class LanguageToolHttpHandler implements HttpHandler {
     this.allowedIps = allowedIps;
     this.internalServer = internal;
     this.requestLimiter = requestLimiter;
+    this.executorService = Executors.newCachedThreadPool();
+  }
+
+  /** @since 2.6 */
+  void shutdown() {
+    executorService.shutdownNow();
   }
 
   void setMaxTextLength(int maxTextLength) {
     this.maxTextLength = maxTextLength;
+  }
+
+  /**
+   * Maximum time allowed per check in milliseconds. If the checking takes longer, it will stop with
+   * an exception. Use {@code -1} for no limit.
+   * @since 2.6
+   */
+  void setMaxCheckTimeMillis(long maxCheckTimeMillis) {
+    this.maxCheckTimeMillis = maxCheckTimeMillis;
   }
 
   /**
@@ -79,6 +101,9 @@ class LanguageToolHttpHandler implements HttpHandler {
 
   @Override
   public void handle(HttpExchange httpExchange) throws IOException {
+    synchronized (this) {
+      handleCount++;
+    }
     String text = null;
     try {
       final URI requestedUri = httpExchange.getRequestURI();
@@ -113,13 +138,18 @@ class LanguageToolHttpHandler implements HttpHandler {
         throw new RuntimeException(errorMessage);
       }
     } catch (Exception e) {
+      print("An error has occurred. Stacktrace follows:", System.err);
       if (verbose) {
-        print("Exception was caused by this text: " + text);
+        print("Exception was caused by this text: " + text, System.err);
       }
+      //noinspection CallToPrintStackTrace
       e.printStackTrace();
       final String response = "Error: " + StringTools.escapeXML(Tools.getFullStackTrace(e));
       sendError(httpExchange, HttpURLConnection.HTTP_INTERNAL_ERROR, response);
     } finally {
+      synchronized (this) {
+        handleCount--;
+      }
       httpExchange.close();
     }
   }
@@ -168,18 +198,19 @@ class LanguageToolHttpHandler implements HttpHandler {
       // fall back to English
       lang = Language.getLanguageForLocale(Locale.ENGLISH);
     }
-    if (lang.getDefaultVariant() != null) {
-      lang = lang.getDefaultVariant();
+    if (lang.getDefaultLanguageVariant() != null) {
+      lang = lang.getDefaultLanguageVariant();
     }
     return lang;
   }
 
-  private void checkText(String text, HttpExchange httpExchange, Map<String, String> parameters) throws Exception {
+  private void checkText(final String text, final HttpExchange httpExchange, final Map<String, String> parameters) throws Exception {
     final long timeStart = System.currentTimeMillis();
     if (text.length() > maxTextLength) {
       throw new IllegalArgumentException("Text is " + text.length() + " characters long, exceeding maximum length of " + maxTextLength);
     }
     final String langParam = parameters.get("language");
+    //print("Check start: " + text.length() + " chars, " + langParam);
     final String autodetectParam = parameters.get("autodetect");
     if (langParam == null && (autodetectParam == null || !autodetectParam.equals("1"))) {
       throw new IllegalArgumentException("Missing 'language' parameter. Specify language or use autodetect=1 for auto-detecting the language of the input text.");
@@ -188,27 +219,18 @@ class LanguageToolHttpHandler implements HttpHandler {
     final Language lang;
     if (autodetectParam != null && autodetectParam.equals("1")) {
       lang = detectLanguageOfString(text, langParam);
-      print("Auto-detected language: " + lang.getShortNameWithVariant());
+      print("Auto-detected language: " + lang.getShortNameWithCountryAndVariant());
     } else {
       lang = Language.getLanguageForShortName(langParam);
     }
     
     final String motherTongueParam = parameters.get("motherTongue");
-    Language motherTongue = null;
-    if (motherTongueParam != null) {
-      motherTongue = Language.getLanguageForShortName(motherTongueParam);
-    }
-
+    final Language motherTongue = motherTongueParam != null ? Language.getLanguageForShortName(motherTongueParam) : null;
+    final boolean useEnabledOnly = "yes".equals(parameters.get("enabledOnly"));
     final String enabledParam = parameters.get("enabled");
     final List<String> enabledRules = new ArrayList<>();
     if (enabledParam != null) {
       enabledRules.addAll(Arrays.asList(enabledParam.split(",")));
-    }
-    
-    boolean useEnabledOnly = false;
-    final String enabledOnlyParam = parameters.get("enabledOnly");
-    if (enabledOnlyParam != null) {
-      useEnabledOnly = enabledOnlyParam.equals("yes");
     }
     
     final String disabledParam = parameters.get("disabled");
@@ -224,35 +246,65 @@ class LanguageToolHttpHandler implements HttpHandler {
     final boolean useQuerySettings = enabledRules.size() > 0 || disabledRules.size() > 0;
     final QueryParams params = new QueryParams(enabledRules, disabledRules, useEnabledOnly, useQuerySettings);
     
+    final Future<List<RuleMatch>> future = executorService.submit(new Callable<List<RuleMatch>>() {
+      @Override
+      public List<RuleMatch> call() throws Exception {
+        return getRuleMatches(text, parameters, lang, motherTongue, params);
+      }
+    });
     final List<RuleMatch> matches;
+    if (maxCheckTimeMillis < 0) {
+      matches = future.get();
+    } else {
+      try {
+        matches = future.get(maxCheckTimeMillis, TimeUnit.MILLISECONDS);
+      } catch (TimeoutException e) {
+        throw new RuntimeException("Text checking took longer than allowed maximum of " + maxCheckTimeMillis +
+                " milliseconds (handleCount: " + handleCount + ", language: " + lang.getShortNameWithCountryAndVariant() +
+                ", " + text.length() + " characters of text)", e);
+      }
+    }
+    
+    setCommonHeaders(httpExchange);
+    final RuleAsXmlSerializer serializer = new RuleAsXmlSerializer();
+    final String xmlResponse = serializer.ruleMatchesToXml(matches, text, CONTEXT_SIZE, lang, motherTongue);
+    
+    String messageSent = "sent";
+    String languageMessage = lang.getShortNameWithCountryAndVariant();
+    final String referrer = httpExchange.getRequestHeaders().getFirst("Referer");
+    try {
+      httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, xmlResponse.getBytes(ENCODING).length);
+      httpExchange.getResponseBody().write(xmlResponse.getBytes(ENCODING));
+      if (motherTongue != null) {
+        languageMessage += " (mother tongue: " + motherTongue.getShortNameWithCountryAndVariant() + ")";
+      }
+    } catch (IOException exception) {
+      // the client is disconnected
+      messageSent = "notSent: " + exception.getMessage();
+    }
+    print("Check done: " + text.length() + " chars, " + languageMessage + ", " + referrer + ", "
+            + "handlers:" + handleCount + ", " + matches.size() + " matches, " + (System.currentTimeMillis() - timeStart) + "ms"
+            + ", " + messageSent);
+  }
+
+  private List<RuleMatch> getRuleMatches(String text, Map<String, String> parameters, Language lang,
+                                         Language motherTongue, QueryParams params) throws Exception {
     final String sourceText = parameters.get("srctext");
     if (sourceText == null) {
       final JLanguageTool lt = getLanguageToolInstance(lang, motherTongue, params);
-      matches = lt.check(text);
+      return lt.check(text);
     } else {
-      if (motherTongueParam == null) {
-        throw new IllegalArgumentException("Missing 'motherTongue' for bilingual checks");
+      if (parameters.get("motherTongue") == null) {
+        throw new IllegalArgumentException("Missing 'motherTongue' parameter for bilingual checks");
       }
       print("Checking bilingual text, with source length " + sourceText.length() +
           " and target length " + text.length() + " (characters), source language " +
-          motherTongue + " and target language " + langParam);
+          motherTongue + " and target language " + lang.getShortNameWithCountryAndVariant());
       final JLanguageTool sourceLt = getLanguageToolInstance(motherTongue, null, params);
       final JLanguageTool targetLt = getLanguageToolInstance(lang, null, params);
       final List<BitextRule> bRules = Tools.getBitextRules(motherTongue, lang);
-      matches = Tools.checkBitext(sourceText, text, sourceLt, targetLt, bRules);
+      return Tools.checkBitext(sourceText, text, sourceLt, targetLt, bRules);
     }
-    setCommonHeaders(httpExchange);
-    final String response = StringTools.ruleMatchesToXML(matches, text,
-            CONTEXT_SIZE, StringTools.XmlPrintMode.NORMAL_XML, lang, motherTongue);
-    httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, response.getBytes(ENCODING).length);
-    httpExchange.getResponseBody().write(response.getBytes(ENCODING));
-    String languageMessage = lang.getShortNameWithVariant();
-    if (motherTongue != null) {
-      languageMessage += " (mother tongue: " + motherTongue.getShortNameWithVariant() + ")";
-    }
-    final String referrer = httpExchange.getRequestHeaders().getFirst("Referer");
-    print("Check done: " + text.length() + " chars, " + languageMessage + ", " + referrer + ", "
-            + (System.currentTimeMillis() - timeStart) + "ms");
   }
 
   private Map<String, String> parseQuery(String query) throws UnsupportedEncodingException {
@@ -268,7 +320,7 @@ class LanguageToolHttpHandler implements HttpHandler {
   private Map<String, String> getParameterMap(String[] pairs) throws UnsupportedEncodingException {
     final Map<String, String> parameters = new HashMap<>();
     for (String pair : pairs) {
-      final int delimPos = pair.indexOf("=");
+      final int delimPos = pair.indexOf('=');
       if (delimPos != -1) {
         final String param = pair.substring(0, delimPos);
         final String key = URLDecoder.decode(param, ENCODING);
@@ -280,13 +332,17 @@ class LanguageToolHttpHandler implements HttpHandler {
   }
 
   private static void print(String s) {
+    print(s, System.out);
+  }
+
+  private static void print(String s, PrintStream outputStream) {
     final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     final String now = dateFormat.format(new Date());
-    System.out.println(now + " " + s);
+    outputStream.println(now + " " + s);
   }
 
   /**
-   * Find or create a JLanguageTool instance for a specific language, mother tongue, and rule configuration.
+   * Create a JLanguageTool instance for a specific language, mother tongue, and rule configuration.
    *
    * @param lang the language to be used.
    * @param motherTongue the user's mother tongue or {@code null}
@@ -351,7 +407,7 @@ class LanguageToolHttpHandler implements HttpHandler {
     final StringBuilder xmlBuffer = new StringBuilder("<?xml version='1.0' encoding='" + ENCODING + "'?>\n<languages>\n");
     for (Language lang : languages) {
       xmlBuffer.append(String.format("\t<language name=\"%s\" abbr=\"%s\" abbrWithVariant=\"%s\"/> \n", lang.getName(),
-              lang.getShortName(), lang.getShortNameWithVariant()));
+              lang.getShortName(), lang.getShortNameWithCountryAndVariant()));
     }
     xmlBuffer.append("</languages>\n");
     return xmlBuffer.toString();

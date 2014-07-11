@@ -1,4 +1,4 @@
-/* LanguageTool, a natural language style checker 
+/* LanguageTool, a natural language style checker
  * Copyright (C) 2005 Daniel Naber (http://www.danielnaber.de)
  * 
  * This library is free software; you can redistribute it and/or
@@ -19,13 +19,14 @@
 
 package org.languagetool.rules.pl;
 
+import java.io.IOException;
+
 import junit.framework.TestCase;
+
 import org.languagetool.JLanguageTool;
 import org.languagetool.TestTools;
 import org.languagetool.language.Polish;
 import org.languagetool.rules.RuleMatch;
-
-import java.io.IOException;
 
 /**
  * @author Ionuț Păduraru
@@ -43,9 +44,14 @@ public class SimpleReplaceRuleTest extends TestCase {
   }
 
   public void testRule() throws IOException {
-
     // correct sentences:
     assertEquals(0, rule.match(langTool.getAnalyzedSentence("Wszystko w porządku.")).length);
+
+     // no checking lemmas:
+    assertEquals(0, rule.match(langTool.getAnalyzedSentence("Pola lodowe")).length);
+
+    //with immunized tokens:
+    assertEquals(0, rule.match(langTool.getAnalyzedSentence("Witamy prez. Komorowskiego!")).length);
 
     // incorrect sentences:
     // at the beginning of a sentence (Romanian replace rule is case-sensitive)
@@ -59,15 +65,14 @@ public class SimpleReplaceRuleTest extends TestCase {
    *
    * @param sentence the sentence containing the incorrect/misspelled word.
    * @param word the word that is correct (the suggested replacement).
-   * @throws IOException
    */
   private void checkSimpleReplaceRule(String sentence, String word) throws IOException {
     final RuleMatch[] matches = rule.match(langTool.getAnalyzedSentence(sentence));
     assertEquals("Invalid matches.length while checking sentence: "
-            + sentence, 1, matches.length);
+        + sentence, 1, matches.length);
     assertEquals("Invalid replacement count wile checking sentence: "
-            + sentence, 1, matches[0].getSuggestedReplacements().size());
+        + sentence, 1, matches[0].getSuggestedReplacements().size());
     assertEquals("Invalid suggested replacement while checking sentence: "
-            + sentence, word, matches[0].getSuggestedReplacements().get(0));
+        + sentence, word, matches[0].getSuggestedReplacements().get(0));
   }
 }

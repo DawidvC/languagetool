@@ -124,7 +124,7 @@ public class Hunspell {
                 }
             }
             //System.out.println("Loading temp lib: "+lib.getAbsolutePath());
-            hsl = (HunspellLibrary)Native.loadLibrary(lib.getAbsolutePath(), HunspellLibrary.class);			
+            hsl = (HunspellLibrary)Native.loadLibrary(lib.getAbsolutePath(), HunspellLibrary.class);
         }
     }
 
@@ -214,7 +214,6 @@ public class Hunspell {
      * @param baseFileName the base name of the dictionary, 
      * passing /dict/da_DK means that the files /dict/da_DK.dic
      * and /dict/da_DK.aff get loaded
-     * @throws IOException 
      */
     public Dictionary getDictionary(String baseFileName)
             throws IOException {
@@ -265,7 +264,6 @@ public class Hunspell {
         /**
          * Creates an instance of the dictionary.
          * @param baseFileName the base name of the dictionary, 
-         * @throws IOException 
          */
         Dictionary(String baseFileName) throws IOException {
             File dic = new File(baseFileName + ".dic");
@@ -278,7 +276,7 @@ public class Hunspell {
             }
 
             hunspellDict = hsl.Hunspell_create(aff.toString(), dic.toString());
-            encoding = hsl.Hunspell_get_dic_encoding(hunspellDict);						               			
+            encoding = hsl.Hunspell_get_dic_encoding(hunspellDict);
 
             //hunspell uses non-standard names of charsets 
             if ("microsoft1251".equals(encoding)) {
@@ -341,7 +339,6 @@ public class Hunspell {
          * Returns a list of suggestions 
          *
          * @param word The word to check and offer suggestions for
-         * @throws CharacterCodingException 
          */
         public List<String> suggest(String word) throws CharacterCodingException {
             List<String> res = new ArrayList<>();
@@ -382,24 +379,20 @@ public class Hunspell {
         
         private String getWordCharsFromFile(final File affixFile) throws IOException {
             String affixWordChars = "";
-            final Scanner scanner = new Scanner(affixFile, encoding);
-            try {
-              while (scanner.hasNextLine()) {
-                final String line = scanner.nextLine().trim();
-                if (line.startsWith("WORDCHARS ")) {
-                  affixWordChars = line.substring("WORDCHARS ".length());
-                }
+          try (Scanner scanner = new Scanner(affixFile, encoding)) {
+            while (scanner.hasNextLine()) {
+              final String line = scanner.nextLine().trim();
+              if (line.startsWith("WORDCHARS ")) {
+                affixWordChars = line.substring("WORDCHARS ".length());
               }
-            } finally {
-              scanner.close();
             }
+          }
             return affixWordChars;
           }
         
         /**
          * Adds a word to the runtime dictionary.
          * @param word Word to be added.
-         * @throws UnsupportedEncodingException
          */
         public void addWord(final String word) throws UnsupportedEncodingException {
             hsl.Hunspell_add(hunspellDict, stringToBytes(word));

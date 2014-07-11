@@ -22,14 +22,10 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.languagetool.Language;
-import org.languagetool.rules.CommaWhitespaceRule;
-import org.languagetool.rules.DoublePunctuationRule;
-import org.languagetool.rules.Rule;
-import org.languagetool.rules.UppercaseSentenceStartRule;
-import org.languagetool.rules.WhitespaceRule;
+import org.languagetool.rules.*;
 import org.languagetool.rules.be.MorfologikBelarusianSpellerRule;
 import org.languagetool.tagging.Tagger;
-import org.languagetool.tagging.be.BelarusianTagger;
+import org.languagetool.tagging.xx.DemoTagger;
 import org.languagetool.tokenizers.SRXSentenceTokenizer;
 import org.languagetool.tokenizers.SentenceTokenizer;
 
@@ -42,26 +38,32 @@ public class Belarusian extends Language {
 
     private Tagger tagger;
     private SentenceTokenizer sentenceTokenizer;
-    
+    private String name ="Belarusian";
+
     @Override
     public String getName() {
-        return "Belarusian";
+      return name;
+    }
+
+    @Override
+    public void setName(final String name) {
+      this.name = name;
     }
 
     @Override
     public String getShortName() {
-        return "be";
-    }
+          return "be";
+      }
 
     @Override
-    public String[] getCountryVariants() {
+    public String[] getCountries() {
         return new String[]{"BY"};
     }
 
     @Override
     public Tagger getTagger() {
         if (tagger == null) {
-            tagger = new BelarusianTagger();
+            tagger = new DemoTagger();
         }
         return tagger;
     }
@@ -87,7 +89,7 @@ public class Belarusian extends Language {
               DoublePunctuationRule.class,
               MorfologikBelarusianSpellerRule.class,
               UppercaseSentenceStartRule.class,
-              WhitespaceRule.class
+              MultipleWhitespaceRule.class
       );
     }
 

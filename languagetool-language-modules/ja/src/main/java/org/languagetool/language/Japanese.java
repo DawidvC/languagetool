@@ -23,8 +23,8 @@ import java.util.List;
 
 import org.languagetool.Language;
 import org.languagetool.rules.DoublePunctuationRule;
+import org.languagetool.rules.MultipleWhitespaceRule;
 import org.languagetool.rules.Rule;
-import org.languagetool.rules.WhitespaceRule;
 import org.languagetool.tagging.Tagger;
 import org.languagetool.tagging.ja.JapaneseTagger;
 import org.languagetool.tokenizers.SRXSentenceTokenizer;
@@ -36,6 +36,7 @@ public class Japanese extends Language {
 
   private Tagger tagger;
   private SentenceTokenizer sentenceTokenizer;
+  private String name = "Japanese";
 
   @Override
   public String getShortName() {
@@ -44,11 +45,16 @@ public class Japanese extends Language {
 
   @Override
   public String getName() {
-    return "Japanese";
+    return name;
   }
 
   @Override
-  public String[] getCountryVariants() {
+  public void setName(final String name) {
+    this.name = name;
+  }
+
+  @Override
+  public String[] getCountries() {
     return new String[] { "JP" };
   }
 
@@ -59,7 +65,10 @@ public class Japanese extends Language {
 
   @Override
   public List<Class<? extends Rule>> getRelevantRules() {
-    return Arrays.asList(DoublePunctuationRule.class, WhitespaceRule.class);
+    return Arrays.asList(
+            DoublePunctuationRule.class,
+            MultipleWhitespaceRule.class
+    );
   }
 
   @Override

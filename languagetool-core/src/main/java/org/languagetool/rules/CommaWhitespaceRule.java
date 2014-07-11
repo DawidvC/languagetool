@@ -1,4 +1,4 @@
-/* LanguageTool, a natural language style checker 
+/* LanguageTool, a natural language style checker
  * Copyright (C) 2005 Daniel Naber (http://www.danielnaber.de)
  * 
  * This library is free software; you can redistribute it and/or
@@ -26,19 +26,20 @@ import org.languagetool.AnalyzedSentence;
 import org.languagetool.AnalyzedTokenReadings;
 import org.languagetool.tools.StringTools;
 
+import static org.languagetool.tools.StringTools.isEmpty;
+
 /**
- * A rule that matches commas and closing parenthesis preceded by whitespace and
+ * A rule that matches periods, commas and closing parenthesis preceded by whitespace and
  * opening parenthesis followed by whitespace.
  * 
  * @author Daniel Naber
  */
-
 public class CommaWhitespaceRule extends Rule {
 
   public CommaWhitespaceRule(final ResourceBundle messages) {
     super(messages);
     super.setCategory(new Category(messages.getString("category_misc")));
-    setLocQualityIssueType("typographical");
+    setLocQualityIssueType(ITSIssueType.Whitespace);
   }
 
   @Override
@@ -52,49 +53,43 @@ public class CommaWhitespaceRule extends Rule {
   }
 
   @Override
-  public final RuleMatch[] match(final AnalyzedSentence text) {
+  public final RuleMatch[] match(final AnalyzedSentence sentence) {
     final List<RuleMatch> ruleMatches = new ArrayList<>();
-    final AnalyzedTokenReadings[] tokens = text.getTokens();
+    final AnalyzedTokenReadings[] tokens = sentence.getTokens();
     String prevToken = "";
     String prevPrevToken = "";
-    boolean prevWhite = false;    
-    int prevLen = 0;
+    boolean prevWhite = false;
     for (int i = 0; i < tokens.length; i++) {
       final String token = tokens[i].getToken();
       final boolean isWhitespace = tokens[i].isWhitespace() || StringTools.isNonBreakingWhitespace(token)
-              || tokens[i].isFieldCode();
+          || tokens[i].isFieldCode();
       String msg = null;
-      int fixLen = 0;
       String suggestionText = null;
       if (isWhitespace && isLeftBracket(prevToken)) {
         msg = messages.getString("no_space_after");
         suggestionText = prevToken;
-        fixLen = 1;
-      } else if (!isWhitespace && prevToken.equals(",") 
-          && isNotQuoteOrHyphen(token) 
-          && containsNoNumber(prevPrevToken) 
+      } else if (!isWhitespace && prevToken.equals(",")
+          && isNotQuoteOrHyphen(token)
+          && containsNoNumber(prevPrevToken)
           && containsNoNumber(token)
           && !",".equals(prevPrevToken)) {
         msg = messages.getString("missing_space_after_comma");
-        suggestionText = ", ";
+        suggestionText = ", " + tokens[i].getToken();
       } else if (prevWhite) {
         if (isRightBracket(token)) {
           msg = messages.getString("no_space_before");
           suggestionText = token;
-          fixLen = 1;
         } else if (token.equals(",")) {
           msg = messages.getString("space_after_comma");
           suggestionText = ",";
-          fixLen = 1;
-          //exception for duplicated comma (we already have another rule for that)
+          // exception for duplicated comma (we already have another rule for that)
           if (i + 1 < tokens.length
-             && ",".equals(tokens[i + 1].getToken())) {
-           msg = null; 
+              && ",".equals(tokens[i + 1].getToken())) {
+            msg = null;
           }
         } else if (token.equals(".")) {
           msg = messages.getString("no_space_before_dot");
           suggestionText = ".";
-          fixLen = 1;
           // exception case for figures such as ".5" and ellipsis
           if (i + 1 < tokens.length
               && isNumberOrDot(tokens[i + 1].getToken())) {
@@ -104,27 +99,26 @@ public class CommaWhitespaceRule extends Rule {
       }
       if (msg != null) {
         final int fromPos = tokens[i - 1].getStartPos();
-        final int toPos = tokens[i - 1].getStartPos() + fixLen + prevLen;
-        // TODO: add some good short comment here
+        final int toPos = tokens[i].getStartPos() + tokens[i].getToken().length();
         final RuleMatch ruleMatch = new RuleMatch(this, fromPos, toPos, msg);
         ruleMatch.setSuggestedReplacement(suggestionText);
         ruleMatches.add(ruleMatch);
       }
       prevPrevToken = prevToken;
       prevToken = token;
-      prevWhite = isWhitespace && !tokens[i].isFieldCode(); //OOo code before comma/dot
-      prevLen = tokens[i].getToken().length();
+      prevWhite = isWhitespace && !tokens[i].isFieldCode(); // LO/OO code before comma/dot
     }
 
     return toRuleMatchArray(ruleMatches);
   }
 
+  /** @deprecated will be made private (deprecated since 2.7) */
   static boolean isNotQuoteOrHyphen(final String str) {
     if (str.length() == 1) {
       final char c = str.charAt(0);
-      if (c =='\'' || c == '-' || c == '”' 
-        || c =='’' || c == '"' || c == '“'
-        || c == ',') {
+      if (c =='\'' || c == '-' || c == '”'
+          || c =='’' || c == '"' || c == '“'
+          || c == ',') {
         return false;
       }
     } else {
@@ -133,35 +127,42 @@ public class CommaWhitespaceRule extends Rule {
     return true;
   }
 
+  /** @deprecated will be made private (deprecated since 2.7) */
   static boolean isNumberOrDot(final String str) {
+    if (isEmpty(str)) {
+      return false;
+    }
     final char c = str.charAt(0);
-    return (c == '.' || Character.isDigit(c)); 
+    return c == '.' || Character.isDigit(c);
   }
 
+  /** @deprecated will be made private (deprecated since 2.7) */ 
   static boolean isLeftBracket(final String str) {
     if (str.length() == 0) {
       return false;
     }
     final char c = str.charAt(0);
-    return (c == '(' || c == '[' || c == '{');
+    return c == '(' || c == '[' || c == '{';
   }
 
+  /** @deprecated will be made private (deprecated since 2.7) */
   static boolean isRightBracket(final String str) {
     if (str.length() == 0) {
       return false;
     }
     final char c = str.charAt(0);
-    return (c == ')' || c == ']' || c == '}');
+    return c == ')' || c == ']' || c == '}';
   }
 
-  static boolean containsNoNumber(final String str) {    
+  /** @deprecated will be made private (deprecated since 2.7) */
+  static boolean containsNoNumber(final String str) {
     for (int i = 0; i < str.length(); i++) {
       if (Character.isDigit(str.charAt(i))) {
         return false;
       }
     }
     return true;
-  }   
+  }
 
   @Override
   public void reset() {

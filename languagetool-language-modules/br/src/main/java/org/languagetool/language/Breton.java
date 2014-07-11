@@ -23,11 +23,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.languagetool.Language;
-import org.languagetool.rules.CommaWhitespaceRule;
-import org.languagetool.rules.DoublePunctuationRule;
-import org.languagetool.rules.Rule;
-import org.languagetool.rules.UppercaseSentenceStartRule;
-import org.languagetool.rules.WhitespaceRule;
+import org.languagetool.rules.*;
 import org.languagetool.rules.br.TopoReplaceRule;
 import org.languagetool.rules.br.MorfologikBretonSpellerRule;
 import org.languagetool.tagging.Tagger;
@@ -36,15 +32,27 @@ import org.languagetool.tagging.disambiguation.Disambiguator;
 import org.languagetool.tagging.disambiguation.rules.XmlRuleDisambiguator;
 import org.languagetool.tokenizers.Tokenizer;
 import org.languagetool.tokenizers.br.BretonWordTokenizer;
+import org.languagetool.tokenizers.SRXSentenceTokenizer;
+import org.languagetool.tokenizers.SentenceTokenizer;
 
 /** 
  * @author Dominique Pelle
  */
 public class Breton extends Language {
 
+  private SentenceTokenizer sentenceTokenizer;
   private Tagger tagger;
   private Tokenizer wordTokenizer;
   private Disambiguator disambiguator;
+  private String name = "Breton";
+
+  @Override
+  public final SentenceTokenizer getSentenceTokenizer() {
+    if (sentenceTokenizer == null) {
+      sentenceTokenizer = new SRXSentenceTokenizer(this);
+    }
+    return sentenceTokenizer;
+  }
 
   @Override
   public final Tokenizer getWordTokenizer() {
@@ -56,7 +64,12 @@ public class Breton extends Language {
 
   @Override
   public String getName() {
-    return "Breton";
+    return name;
+  }
+
+  @Override
+  public void setName(final String name) {
+    this.name = name;
   }
 
   @Override
@@ -65,7 +78,7 @@ public class Breton extends Language {
   }
 
   @Override
-  public String[] getCountryVariants() {
+  public String[] getCountries() {
     return new String[] {"FR"};
   }
   
@@ -100,7 +113,8 @@ public class Breton extends Language {
             DoublePunctuationRule.class,
             MorfologikBretonSpellerRule.class,
             UppercaseSentenceStartRule.class,
-            WhitespaceRule.class,
+            MultipleWhitespaceRule.class,
+            SentenceWhitespaceRule.class,
             TopoReplaceRule.class
     );
   }

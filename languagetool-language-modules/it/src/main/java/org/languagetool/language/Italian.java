@@ -22,31 +22,34 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.languagetool.Language;
-import org.languagetool.rules.CommaWhitespaceRule;
-import org.languagetool.rules.DoublePunctuationRule;
-import org.languagetool.rules.GenericUnpairedBracketsRule;
-import org.languagetool.rules.Rule;
-import org.languagetool.rules.UppercaseSentenceStartRule;
-import org.languagetool.rules.WhitespaceRule;
+import org.languagetool.rules.*;
 // 181 +
 //import org.languagetool.rules.WordRepeatRule;
 import org.languagetool.rules.it.ItalianWordRepeatRule;
 // 181 -
 import org.languagetool.rules.it.MorfologikItalianSpellerRule;
 // 3607406 +
-import org.languagetool.rules.WhitespaceBeforePunctuationRule;
 // 3607406 -
 
 import org.languagetool.tagging.Tagger;
 import org.languagetool.tagging.it.ItalianTagger;
+import org.languagetool.tokenizers.SRXSentenceTokenizer;
+import org.languagetool.tokenizers.SentenceTokenizer;
 
 public class Italian extends Language {
 
   private Tagger tagger;
+  private SentenceTokenizer sentenceTokenizer;
+  private String name = "Italian";
 
   @Override
   public String getName() {
-    return "Italian";
+    return name;
+  }
+
+  @Override
+  public void setName(final String name) {
+    this.name = name;
   }
 
   @Override
@@ -55,7 +58,7 @@ public class Italian extends Language {
   }
   
   @Override
-  public String[] getCountryVariants() {
+  public String[] getCountries() {
     return new String[]{"IT", "CH"};
   }
 
@@ -78,6 +81,14 @@ public class Italian extends Language {
   }
 
   @Override
+  public SentenceTokenizer getSentenceTokenizer() {
+    if (sentenceTokenizer == null) {
+      sentenceTokenizer = new SRXSentenceTokenizer(this);
+    }
+    return sentenceTokenizer;
+  }
+
+  @Override
   public Contributor[] getMaintainers() {
     final Contributor contributor = new Contributor("Paolo Bianchini");
     return new Contributor[] { contributor };
@@ -87,7 +98,7 @@ public class Italian extends Language {
   public List<Class<? extends Rule>> getRelevantRules() {
     return Arrays.asList(
 // 3607406 +
-    		WhitespaceBeforePunctuationRule.class,
+            WhitespaceBeforePunctuationRule.class,
 // 3607406 -
             CommaWhitespaceRule.class,
             DoublePunctuationRule.class,
@@ -98,7 +109,7 @@ public class Italian extends Language {
 //            WordRepeatRule.class,
             ItalianWordRepeatRule.class,
 // 181 -
-            WhitespaceRule.class
+            MultipleWhitespaceRule.class
     );
   }
 

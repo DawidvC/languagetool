@@ -1,4 +1,4 @@
-/* LanguageTool, a natural language style checker 
+/* LanguageTool, a natural language style checker
  * Copyright (C) 2005 Daniel Naber (http://www.danielnaber.de)
  * 
  * This library is free software; you can redistribute it and/or
@@ -35,7 +35,9 @@ import org.languagetool.JLanguageTool;
 import org.languagetool.Language;
 import org.languagetool.TestTools;
 import org.languagetool.XMLValidator;
+import org.languagetool.databroker.ResourceDataBroker;
 import org.languagetool.rules.patterns.PatternTestTools;
+import org.languagetool.synthesis.Synthesizer;
 import org.languagetool.tagging.disambiguation.xx.DemoDisambiguator;
 import org.languagetool.tagging.disambiguation.xx.TrimDisambiguator;
 import org.languagetool.tools.StringTools;
@@ -68,10 +70,11 @@ public class DisambiguationRuleTest extends TestCase {
         final List<DisambiguationPatternRule> rules = ruleLoader
             .getRules(ruleLoader.getClass().getResourceAsStream(name));
         for (DisambiguationPatternRule rule : rules) {
-            PatternTestTools.warnIfRegexpSyntaxNotKosher(rule.getElements(),
-                    rule.getId(), rule.getSubId(), lang);
+          PatternTestTools.warnIfRegexpSyntaxNotKosher(rule.getElements(),
+              rule.getId(), rule.getSubId(), lang);
         }
         testDisambiguationRulesFromXML(rules, languageTool, lang);
+        System.out.println(rules.size() + " rules tested.");
       }
     }
   }
@@ -98,7 +101,7 @@ public class DisambiguationRuleTest extends TestCase {
     Arrays.sort(formToSort);
     return word + StringTools.listToString(Arrays.asList(formToSort), ",") + "]";
   }
-  
+
   private void testDisambiguationRulesFromXML(
       final List<DisambiguationPatternRule> rules,
       final JLanguageTool languageTool, final Language lang) throws IOException {
@@ -115,13 +118,13 @@ public class DisambiguationRuleTest extends TestCase {
           final AnalyzedSentence sent = disambiguateUntil(rules, id,
               languageTool.getRawAnalyzedSentence(goodSentence));
           final AnalyzedSentence sentToReplace = disambiguateUntil(rules, id,
-                  languageTool.getRawAnalyzedSentence(goodSentence));
+              languageTool.getRawAnalyzedSentence(goodSentence));
           //note: we're testing only if string representations are equal
           //it's because getRawAnalyzedSentence does not set all properties
           //in AnalyzedSentence, and during equal test they are set for the
           //left-hand side
-          assertEquals("The untouched example (" + goodSentence + ") for " + lang.getName() + 
-                  " rule " + id +"["+ rule.getSubId() +"] was touched!",
+          assertEquals("The untouched example (" + goodSentence + ") for " + lang.getName() +
+              " rule " + id +"["+ rule.getSubId() +"] was touched!",
               sent.toString(), rule.replace(sentToReplace).toString());
         }
       }
@@ -147,7 +150,7 @@ public class DisambiguationRuleTest extends TestCase {
               .getRawAnalyzedSentence(cleanXML(example.getExample()));
           final AnalyzedSentence sent = disambiguateUntil(rules, id,
               languageTool
-                  .getRawAnalyzedSentence(cleanXML(example.getExample())));
+              .getRawAnalyzedSentence(cleanXML(example.getExample())));
           final AnalyzedSentence disambiguatedSent = rule
               .replace(disambiguateUntil(rules, id, languageTool
                   .getRawAnalyzedSentence(cleanXML(example.getExample()))));
@@ -156,7 +159,7 @@ public class DisambiguationRuleTest extends TestCase {
                   + id, !cleanInput.equals(disambiguatedSent));
           assertTrue(
               "Disambiguated sentence is equal to the input sentence for rule: "
-                  + id, !sent.equals(disambiguatedSent));
+                  + id + ". The sentence was: " + sent, !sent.equals(disambiguatedSent));
           String reading = "";
           String annotations = "";
           for (final AnalyzedTokenReadings readings : sent.getTokens()) {
@@ -164,26 +167,26 @@ public class DisambiguationRuleTest extends TestCase {
               continue;
             }
             if (readings.getStartPos() == expectedMatchStart) {
-              final AnalyzedTokenReadings r[] = { readings };
+              final AnalyzedTokenReadings[] r = { readings };
               reading = new AnalyzedSentence(r).toShortString(",");
               annotations = readings.getHistoricalAnnotations();
               assertTrue(
                   "Wrong marker position in the example for the rule " + id,
                   readings.getStartPos() == expectedMatchStart
-                      && readings.getStartPos() + readings.getToken().length() == expectedMatchEnd);
+                  && readings.getStartPos() + readings.getToken().length() == expectedMatchEnd);
               break;
             }
           }
           assertEquals("The input form for the rule " + id + " in the example: "
               + example.toString() + " is different than expected (expected "
-              + inputForms + " but got " + sortForms(reading) + "). The token has been changed by the disambiguator: " + annotations, 
+              + inputForms + " but got " + sortForms(reading) + "). The token has been changed by the disambiguator: " + annotations,
               inputForms, sortForms(reading));
           for (final AnalyzedTokenReadings readings : disambiguatedSent.getTokens()) {
             if (readings.isSentenceStart() && !outputForms.contains("<S>")) {
               continue;
             }
             if (readings.getStartPos() == expectedMatchStart) {
-              final AnalyzedTokenReadings r[] = { readings };
+              final AnalyzedTokenReadings[] r = { readings };
               reading = new AnalyzedSentence(r).toShortString(",");
               assertTrue(readings.getStartPos() == expectedMatchStart
                   && readings.getStartPos() + readings.getToken().length() == expectedMatchEnd);
@@ -232,5 +235,5 @@ public class DisambiguationRuleTest extends TestCase {
     }
     System.out.println("Tests successful.");
   }
-  
+
 }

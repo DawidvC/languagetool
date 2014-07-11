@@ -19,8 +19,11 @@
 package org.languagetool.tagging.uk;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.languagetool.tagging.BaseTagger;
@@ -36,22 +39,37 @@ import org.languagetool.AnalyzedToken;
 public class UkrainianTagger extends BaseTagger {
   private static final Pattern NUMBER = Pattern.compile("[+-]?[0-9]+(,[0-9]+)?");
 
+  public static final Map<String, String> VIDMINKY_MAP;
+
+  static {
+    HashMap<String, String> map = new HashMap<String, String>();
+    map.put("v_naz", "називний");
+    map.put("v_rod", "родовий");
+    map.put("v_dav", "давальний");
+    map.put("v_zna", "знахідний");
+    map.put("v_oru", "орудний");
+    map.put("v_mis", "місцевий");
+    map.put("v_kly", "кличний");
+    VIDMINKY_MAP = Collections.unmodifiableMap(map);
+  }
+
   @Override
   public final String getFileName() {
     return "/uk/ukrainian.dict";    
   }
-  
+
   public UkrainianTagger() {
     super();
     setLocale(new Locale("uk", "UA"));
+    dontTagLowercaseWithUppercase();
   }
-  
+
   @Override
   public List<AnalyzedToken> additionalTags(String word) {
     if ( NUMBER.matcher(word).matches() ){
       List<AnalyzedToken> additionalTaggedTokens  = new ArrayList<>();
       additionalTaggedTokens.add(new AnalyzedToken(word, IPOSTag.numr.toString(), word));
-        return additionalTaggedTokens;
+      return additionalTaggedTokens;
     }
     return null;
   }

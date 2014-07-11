@@ -1,5 +1,7 @@
 #/bin/sh
 
+export PATH=$PATH:~/bin
+
 function encode() {
     iconv -f utf-8 -t cp1251
 #    cat
@@ -29,7 +31,7 @@ $MFL_CMD fsa_build $FSA_FLAGS -o ukrainian_synth.dict
 
 rm -f all.tagged.tmp
 
-grep "^[^#].*[a-z]" tagged.* | awk '{ print $3 }' | sort | uniq > ukrainian_tags.txt
+grep "^[^# ].*[a-z]" tagged.main.txt | awk '{ print $3 }' | sort | uniq > ukrainian_tags.txt
 
 fi
 
@@ -41,6 +43,7 @@ if [ "$1" == "-f" ]; then
         make -C $spell_uk_dir regtest
     fi
     
+#    cat all_words.lst | encode | sort -u > all.tagged.tmp && \
     cat $spell_uk_dir/test/all_aspell.srt | encode | sort -u > all.tagged.tmp && \
     cat  all.tagged.tmp | #$MFL_CMD tab2morph -i all.tagged.tmp | \
     $MFL_CMD fsa_build $FSA_FLAGS -o uk_UA.dict && \

@@ -22,11 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.languagetool.Language;
-import org.languagetool.rules.CommaWhitespaceRule;
-import org.languagetool.rules.GenericUnpairedBracketsRule;
-import org.languagetool.rules.Rule;
-import org.languagetool.rules.UppercaseSentenceStartRule;
-import org.languagetool.rules.WhitespaceRule;
+import org.languagetool.rules.*;
 import org.languagetool.rules.de.AgreementRule;
 import org.languagetool.rules.de.CaseRule;
 import org.languagetool.rules.de.CompoundRule;
@@ -38,6 +34,8 @@ import org.languagetool.rules.de.GermanWrongWordInContextRule;
 import org.languagetool.rules.de.VerbAgreementRule;
 import org.languagetool.rules.de.WiederVsWiderRule;
 import org.languagetool.rules.de.WordCoherencyRule;
+import org.languagetool.synthesis.GermanSynthesizer;
+import org.languagetool.synthesis.Synthesizer;
 import org.languagetool.tagging.Tagger;
 import org.languagetool.tagging.de.GermanTagger;
 import org.languagetool.tagging.disambiguation.Disambiguator;
@@ -51,12 +49,14 @@ import org.languagetool.tokenizers.SentenceTokenizer;
  */
 public class German extends Language {
 
-  private Tagger tagger;
+  private volatile Tagger tagger;
+  private Synthesizer synthesizer;
   private SentenceTokenizer sentenceTokenizer;
   private Disambiguator disambiguator;
+  private String name = "German";
 
   @Override
-  public Language getDefaultVariant() {
+  public Language getDefaultLanguageVariant() {
     return new GermanyGerman();
   }
   
@@ -70,7 +70,12 @@ public class German extends Language {
 
   @Override
   public String getName() {
-    return "German";
+    return name;
+  }
+
+  @Override
+  public void setName(final String name) {
+    this.name = name;
   }
 
   @Override
@@ -79,7 +84,7 @@ public class German extends Language {
   }
 
   @Override
-  public String[] getCountryVariants() {
+  public String[] getCountries() {
     return new String[]{"LU", "LI", "BE"};
   }
 
@@ -95,14 +100,24 @@ public class German extends Language {
 
   @Override
   public Tagger getTagger() {
-    if (tagger == null) {
+    Tagger t = tagger;
+    if (t == null) {
       synchronized (this) {
-        if (tagger == null) {
-          tagger = new GermanTagger();
+        t = tagger;
+        if (t == null) {
+          tagger = t = new GermanTagger();
         }
       }
     }
-    return tagger;
+    return t;
+  }
+
+  @Override
+  public Synthesizer getSynthesizer() {
+    if (synthesizer == null) {
+      synthesizer = new GermanSynthesizer();
+    }
+    return synthesizer;
   }
 
   @Override
@@ -129,7 +144,8 @@ public class German extends Language {
             GermanDoublePunctuationRule.class,
             GenericUnpairedBracketsRule.class,
             UppercaseSentenceStartRule.class,
-            WhitespaceRule.class,
+            MultipleWhitespaceRule.class,
+            SentenceWhitespaceRule.class,
             // specific to German:
             GermanWordRepeatRule.class,
             GermanWordRepeatBeginningRule.class,

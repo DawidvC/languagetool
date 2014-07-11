@@ -1,4 +1,4 @@
-/* LanguageTool, a natural language style checker 
+/* LanguageTool, a natural language style checker
  * Copyright (C) 2005 Daniel Naber (http://www.danielnaber.de)
  * 
  * This library is free software; you can redistribute it and/or
@@ -18,10 +18,14 @@
  */
 package org.languagetool.rules.pl;
 
-import org.languagetool.rules.AdvancedWordRepeatRule;
-
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.ResourceBundle;
+import java.util.Set;
 import java.util.regex.Pattern;
+
+import org.languagetool.rules.AdvancedWordRepeatRule;
+import org.languagetool.rules.Example;
 
 /**
  * @author Marcin Miłkowski
@@ -31,11 +35,42 @@ public class PolishWordRepeatRule extends AdvancedWordRepeatRule {
   /**
    * Excluded dictionary words.
    */
-  private static final Pattern EXC_WORDS = Pattern
-      .compile("nie|tuż|aż|to|siebie|być|ani|ni|albo|"
-          + "lub|czy|bądź|jako|zł|np|coraz"
-          + "|bardzo|bardziej|proc|ten|jak|mln|tys|swój|mój|"
-          + "twój|nasz|wasz|i|zbyt");
+  private static final Set<String> EXC_WORDS;
+  static {
+    final Set<String> tempSet = new HashSet<>();
+    tempSet.add("nie");
+    tempSet.add("tuż");
+    tempSet.add("aż");
+    tempSet.add("to");
+    tempSet.add("siebie");
+    tempSet.add("być");
+    tempSet.add("ani");
+    tempSet.add("ni");
+    tempSet.add("albo");
+    tempSet.add("lub");
+    tempSet.add("czy");
+    tempSet.add("bądź");
+    tempSet.add("jako");
+    tempSet.add("zł");
+    tempSet.add("np");
+    tempSet.add("coraz");
+    tempSet.add("bardzo");
+    tempSet.add("bardziej");
+    tempSet.add("proc");
+    tempSet.add("ten");
+    tempSet.add("jak");
+    tempSet.add("mln");
+    tempSet.add("tys");
+    tempSet.add("swój");
+    tempSet.add("mój");
+    tempSet.add("twój");
+    tempSet.add("nasz");
+    tempSet.add("wasz");
+    tempSet.add("i");
+    tempSet.add("zbyt");
+    tempSet.add("się");
+    EXC_WORDS = Collections.unmodifiableSet(tempSet);
+  }
 
   /**
    * Excluded part of speech classes.
@@ -51,21 +86,13 @@ public class PolishWordRepeatRule extends AdvancedWordRepeatRule {
 
   public PolishWordRepeatRule(final ResourceBundle messages) {
     super(messages);
-  }
-
-  @Override
-  public final String getId() {
-    return "PL_WORD_REPEAT";
+    addExamplePair(Example.wrong("Mówiła długo, bo lubiła robić wszystko <marker>długo</marker>."),
+                   Example.fixed("Mówiła długo, bo lubiła robić wszystko <marker>powoli</marker>."));
   }
 
   @Override
   public final String getDescription() {
     return "Powtórzenia wyrazów w zdaniu (monotonia stylistyczna)";
-  }
-
-  @Override
-  protected Pattern getExcludedWordsPattern() {
-    return EXC_WORDS;
   }
 
   @Override
@@ -76,6 +103,16 @@ public class PolishWordRepeatRule extends AdvancedWordRepeatRule {
   @Override
   protected Pattern getExcludedPos() {
     return EXC_POS;
+  }
+
+  @Override
+  protected Set<String> getExcludedWordsPattern() {
+    return EXC_WORDS;
+  }
+
+  @Override
+  public final String getId() {
+    return "PL_WORD_REPEAT";
   }
 
   @Override

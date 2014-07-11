@@ -22,12 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.languagetool.Language;
-import org.languagetool.rules.CommaWhitespaceRule;
-import org.languagetool.rules.DoublePunctuationRule;
-import org.languagetool.rules.LongSentenceRule;
-import org.languagetool.rules.Rule;
-import org.languagetool.rules.UppercaseSentenceStartRule;
-import org.languagetool.rules.WhitespaceRule;
+import org.languagetool.rules.*;
 import org.languagetool.rules.ca.AccentuationCheckRule;
 import org.languagetool.rules.ca.CatalanUnpairedBracketsRule;
 import org.languagetool.rules.ca.CatalanUnpairedExclamationMarksRule;
@@ -38,6 +33,7 @@ import org.languagetool.rules.ca.ComplexAdjectiveConcordanceRule;
 import org.languagetool.rules.ca.MorfologikCatalanSpellerRule;
 import org.languagetool.rules.ca.ReflexiveVerbsRule;
 import org.languagetool.rules.ca.SimpleReplaceRule;
+import org.languagetool.rules.ca.SimpleReplaceVerbsRule;
 import org.languagetool.synthesis.Synthesizer;
 import org.languagetool.synthesis.ca.CatalanSynthesizer;
 import org.languagetool.tagging.Tagger;
@@ -50,21 +46,29 @@ import org.languagetool.tokenizers.Tokenizer;
 import org.languagetool.tokenizers.ca.CatalanWordTokenizer;
 
 public class Catalan extends Language {
-
+  
   private Tagger tagger;
   private SentenceTokenizer sentenceTokenizer;
   private Tokenizer wordTokenizer;
   private Synthesizer synthesizer;
   private Disambiguator disambiguator;
+  private String name = "Catalan";
 
+  private static final Language GENERAL_CATALAN = new GeneralCatalan();
+  
   @Override
   public String getName() {
-    return "Catalan";
+    return name;
   }
 
   @Override
-  public String[] getCountryVariants() {
-    return new String[]{"ES"};
+  public void setName(final String name) {
+    this.name = name;
+  }
+
+  @Override
+  public String[] getCountries() {
+    return new String[]{};
   }
   
   @Override
@@ -72,6 +76,11 @@ public class Catalan extends Language {
     return "ca";
   }
 
+  @Override
+  public Language getDefaultLanguageVariant() {
+    return GENERAL_CATALAN;
+  }
+  
   @Override
   public Contributor[] getMaintainers() {
     return new Contributor[] {new Contributor("Ricard Roca"), new Contributor("Jaume Ortolà") };
@@ -84,7 +93,7 @@ public class Catalan extends Language {
             DoublePunctuationRule.class,
             CatalanUnpairedBracketsRule.class,
             UppercaseSentenceStartRule.class,
-            WhitespaceRule.class,            
+            MultipleWhitespaceRule.class,            
             LongSentenceRule.class,
             // specific to Catalan:
             CatalanWordRepeatRule.class,
@@ -95,6 +104,7 @@ public class Catalan extends Language {
             ComplexAdjectiveConcordanceRule.class,
             CatalanWrongWordInContextRule.class,
             ReflexiveVerbsRule.class,
+            SimpleReplaceVerbsRule.class,
             SimpleReplaceRule.class
             //CastellanismesReplaceRule.class,
             //AccentuacioReplaceRule.class

@@ -22,13 +22,13 @@ import java.io.IOException;
 import java.util.ResourceBundle;
 
 import org.languagetool.rules.AbstractCompoundRule;
+import org.languagetool.rules.Example;
 
 /**
  * Checks that compounds (if in the list) are not written as separate words.
  * 
  * @author Marcin Miłkowski, based on code by Daniel Naber
  */
-
 public final class CompoundRule extends AbstractCompoundRule {
 
   private static final String FILE_NAME = "/pl/compounds.txt";
@@ -39,6 +39,8 @@ public final class CompoundRule extends AbstractCompoundRule {
             "Ten wyraz pisze się razem (bez spacji ani łącznika).",
             "Ten wyraz pisze się z łącznikiem lub bez niego.");
     super.setShort("Brak łącznika lub zbędny łącznik");
+    addExamplePair(Example.wrong("Witamy w <marker>Rabce Zdroju</marker>."),
+                   Example.fixed("Witamy w <marker>Rabce-Zdroju</marker>."));
   }
   
   @Override
@@ -51,5 +53,4 @@ public final class CompoundRule extends AbstractCompoundRule {
     return "Sprawdza wyrazy z łącznikiem, np. „łapu capu” zamiast „łapu-capu”";
   }    
 
-  
 }

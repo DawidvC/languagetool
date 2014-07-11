@@ -43,7 +43,11 @@ public class WikipediaTextFilterTest extends TestCase {
   }
 
   public void testEntity() throws Exception {
-    assertExtract("rund 20&nbsp;Kilometer südlich", "rund 20 Kilometer südlich");
+    assertExtract("rund 20&nbsp;Kilometer südlich", "rund 20\u00A0Kilometer südlich");
+    assertExtract("one&lt;br/&gt;two", "one<br/>two");
+    assertExtract("one &ndash; two", "one – two");
+    assertExtract("one &mdash; two", "one — two");
+    assertExtract("one &amp; two", "one & two");
   }
 
   public void testLists() throws Exception {
@@ -59,7 +63,7 @@ public class WikipediaTextFilterTest extends TestCase {
     assertExtract("* [http://theanarchistlibrary.org ''Anarchism: From Theory to Practice''] by [[Daniel Guerin]]. Monthly Review Press.\n",
                   "Anarchism: From Theory to Practice by Daniel Guerin. Monthly Review Press.");
     assertExtract("The <code>$pattern</code>", "The $pattern");
-    assertExtract("<source lang=\"bash\">some source</source>", "some source");
+    assertExtract("foo <source lang=\"bash\">some source</source> bar", "foo bar");
   }
 
   private void assertExtract(String input, String expected) {

@@ -1,4 +1,4 @@
-/* LanguageTool, a natural language style checker 
+/* LanguageTool, a natural language style checker
  * Copyright (C) 2005 Daniel Naber (http://www.danielnaber.de)
  * 
  * This library is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@ import java.util.Map;
 import junit.framework.TestCase;
 
 import org.languagetool.AnalyzedToken;
+import org.languagetool.AnalyzedTokenReadings;
 
 public class UnifierTest extends TestCase {
 
@@ -56,24 +57,28 @@ public class UnifierTest extends TestCase {
     boolean satisfied = uni.isSatisfied(lower1, equiv);
     satisfied &= uni.isSatisfied(lower2, equiv);
     uni.startUnify();
+    satisfied &= uni.getFinalUnificationValue(equiv);
     assertEquals(true, satisfied);
     uni.reset();
 
     satisfied = uni.isSatisfied(upper2, equiv);
     uni.startUnify();
     satisfied &= uni.isSatisfied(lower2, equiv);
+    satisfied &= uni.getFinalUnificationValue(equiv);
     assertEquals(false, satisfied);
     uni.reset();
 
     satisfied = uni.isSatisfied(upper1, equiv);
     uni.startUnify();
     satisfied &= uni.isSatisfied(lower1, equiv);
+    satisfied &= uni.getFinalUnificationValue(equiv);
     assertEquals(false, satisfied);
     uni.reset();
 
     satisfied = uni.isSatisfied(upper2, equiv);
     uni.startUnify();
     satisfied &= uni.isSatisfied(upper1, equiv);
+    satisfied &= uni.getFinalUnificationValue(equiv);
     assertEquals(false, satisfied);
     uni.reset();
     equiv.clear();
@@ -84,6 +89,7 @@ public class UnifierTest extends TestCase {
     satisfied = uni.isSatisfied(upper2, equiv);
     uni.startUnify();
     satisfied &= uni.isSatisfied(upper1, equiv);
+    satisfied &= uni.getFinalUnificationValue(equiv);
     assertEquals(true, satisfied);
     uni.reset();
     equiv.clear();
@@ -94,25 +100,24 @@ public class UnifierTest extends TestCase {
     satisfied = uni.isSatisfied(upper2, equiv);
     uni.startUnify();
     satisfied &= uni.isSatisfied(upper1, equiv);
+    satisfied &= uni.getFinalUnificationValue(equiv);
     assertEquals(false, satisfied);
     uni.reset();
 
     satisfied = uni.isSatisfied(upperAll2, equiv);
     uni.startUnify();
     satisfied &= uni.isSatisfied(upperAll1, equiv);
+    satisfied &= uni.getFinalUnificationValue(equiv);
     assertEquals(true, satisfied);
   }
 
   // slightly non-trivial unification = test if the grammatical number is the same
   public void testUnificationNumber() {
     final UnifierConfiguration unifierConfig = new UnifierConfiguration();
-
-    final Element sgElement = new Element("", false, false, false);
-    sgElement.setPosElement(".*[\\.:]sg:.*", true, false);
-    unifierConfig.setEquivalence("number", "singular", sgElement);
-    final Element plElement = new Element("", false, false, false);
-    plElement.setPosElement(".*[\\.:]pl:.*", true, false);
-    unifierConfig.setEquivalence("number", "plural", plElement);
+    unifierConfig.setEquivalence("number", "singular",
+        preparePOSElement(".*[\\.:]sg:.*"));
+    unifierConfig.setEquivalence("number", "plural",
+        preparePOSElement(".*[\\.:]pl:.*"));
 
     final Unifier uni = unifierConfig.createUnifier();
 
@@ -127,6 +132,7 @@ public class UnifierTest extends TestCase {
     boolean satisfied = uni.isSatisfied(sing1, equiv);
     uni.startUnify();
     satisfied &= uni.isSatisfied(sing2, equiv);
+    satisfied &= uni.getFinalUnificationValue(equiv);
     assertEquals(true, satisfied);
     uni.reset();
 
@@ -136,6 +142,7 @@ public class UnifierTest extends TestCase {
     satisfied |= uni.isSatisfied(sing1a, equiv);
     uni.startUnify();
     satisfied &= uni.isSatisfied(sing2, equiv);
+    satisfied &= uni.getFinalUnificationValue(equiv);
     assertEquals(true, satisfied);
     uni.reset();
 
@@ -148,6 +155,7 @@ public class UnifierTest extends TestCase {
     satisfied |= uni.isSatisfied(sing1a, equiv);
     uni.startUnify();
     satisfied &= uni.isSatisfied(sing2, equiv);
+    satisfied &= uni.getFinalUnificationValue(equiv);
     assertEquals(true, satisfied);
     uni.reset();
 
@@ -159,6 +167,7 @@ public class UnifierTest extends TestCase {
     satisfied |= uni.isSatisfied(sing1a, equiv);
     uni.startUnify();
     satisfied &= uni.isSatisfied(sing2, equiv);
+    satisfied &= uni.getFinalUnificationValue(equiv);
     assertEquals(true, satisfied);
     uni.reset();
 
@@ -166,6 +175,7 @@ public class UnifierTest extends TestCase {
     satisfied = uni.isSatisfied(sing1a, equiv);
     uni.startUnify();
     satisfied &= uni.isSatisfied(sing2, equiv);
+    satisfied &= uni.getFinalUnificationValue(equiv);
     assertEquals(false, satisfied);
     uni.reset();
   }
@@ -206,6 +216,7 @@ public class UnifierTest extends TestCase {
     uni.startUnify();
     satisfied &= uni.isSatisfied(sing2, equiv);
     uni.startNextToken();
+    satisfied &= uni.getFinalUnificationValue(equiv);
     assertEquals(true, satisfied);
     assertEquals("[mały[mały/adj:sg:blahblah:m*], człowiek[człowiek/subst:sg:blahblah:m*]]", Arrays.toString(uni.getUnifiedTokens()));
     uni.reset();
@@ -214,21 +225,16 @@ public class UnifierTest extends TestCase {
   // checks if all tokens share the same set of features to be unified
   public void testMultipleFeats() {
     final UnifierConfiguration unifierConfig = new UnifierConfiguration();
-    final Element sgElement = new Element("", false, false, false);
-    sgElement.setPosElement(".*[\\.:]sg:.*", true, false);
-    unifierConfig.setEquivalence("number", "singular", sgElement);
-    final Element plElement = new Element("", false, false, false);
-    plElement.setPosElement(".*[\\.:]pl:.*", true, false);
-    unifierConfig.setEquivalence("number", "plural", plElement);
-    final Element femElement = new Element("", false, false, false);
-    femElement.setPosElement(".*[\\.:]f([\\.:].*)?", true, false);
-    unifierConfig.setEquivalence("gender", "feminine", femElement);
-    final Element mascElement = new Element("", false, false, false);
-    mascElement.setPosElement(".*[\\.:]m([\\.:].*)?", true, false);
-    unifierConfig.setEquivalence("gender", "masculine", mascElement);
-    final Element neutElement = new Element("", false, false, false);
-    neutElement.setPosElement(".*[\\.:]n([\\.:].*)?", true, false);
-    unifierConfig.setEquivalence("gender", "neutral", neutElement);
+    unifierConfig.setEquivalence("number", "singular",
+        preparePOSElement(".*[\\.:]sg:.*"));
+    unifierConfig.setEquivalence("number", "plural",
+        preparePOSElement(".*[\\.:]pl:.*"));
+    unifierConfig.setEquivalence("gender", "feminine",
+        preparePOSElement(".*[\\.:]f([\\.:].*)?"));
+    unifierConfig.setEquivalence("gender", "masculine",
+        preparePOSElement(".*[\\.:]m([\\.:].*)?"));
+    unifierConfig.setEquivalence("gender", "neutral",
+        preparePOSElement(".*[\\.:]n([\\.:].*)?"));
 
     final Unifier uni = unifierConfig.createUnifier();
 
@@ -250,10 +256,11 @@ public class UnifierTest extends TestCase {
     uni.startNextToken();
     satisfied &= uni.isSatisfied(sing3, equiv);
     uni.startNextToken();
+    satisfied &= uni.getFinalUnificationValue(equiv);
     assertEquals(false, satisfied);
     uni.reset();
 
-    //now test the simplified interface    
+    //now test the simplified interface
     uni.isUnified(sing1, equiv, false);
     uni.isUnified(sing1a, equiv, false);
     uni.isUnified(sing1b, equiv, true);
@@ -285,7 +292,7 @@ public class UnifierTest extends TestCase {
     assertEquals("[osobiste[osobisty/adj:sg:nom.acc.voc:n:pos:aff*], godło[godło/subst:sg:nom.acc.voc:n*]]", Arrays.toString(uni.getFinalUnified()));
     uni.reset();
 
-    //check if two features are left out correctly (both match) 
+    //check if two features are left out correctly (both match)
     AnalyzedToken plur1 = new AnalyzedToken("zgarbieni", "adj:pl:foobar:m", "zgarbiony");
     AnalyzedToken plur2 = new AnalyzedToken("zgarbieni", "adj:pl:blabla:m", "zgarbiony");
 
@@ -297,24 +304,146 @@ public class UnifierTest extends TestCase {
     uni.isUnified(plur3, equiv, false);
     assertTrue(uni.isUnified(plur4, equiv, true));
     assertEquals("[zgarbieni[zgarbiony/adj:pl:foobar:m*,zgarbiony/adj:pl:blabla:m*], " +
-            "ludzie[człowiek/subst:pl:blabla:m*,człowiek/subst:pl:pampam:m*]]", Arrays.toString(uni.getFinalUnified()));
+        "ludzie[człowiek/subst:pl:blabla:m*,człowiek/subst:pl:pampam:m*]]", Arrays.toString(uni.getFinalUnified()));
 
+    //check with a sequence of many tokens
+
+    uni.reset();
+
+    AnalyzedToken case1a = new AnalyzedToken("xx", "abc:sg:f", "xx");
+    AnalyzedToken case1b = new AnalyzedToken("xx", "cde:pl:f", "xx");
+
+    AnalyzedToken case2a = new AnalyzedToken("yy", "abc:pl:f", "yy");
+    AnalyzedToken case2b = new AnalyzedToken("yy", "cde:as:f", "yy");
+    AnalyzedToken case2c = new AnalyzedToken("yy", "cde:pl:c", "yy");
+    AnalyzedToken case2d = new AnalyzedToken("yy", "abc:sg:f", "yy");
+    AnalyzedToken case2e = new AnalyzedToken("yy", "efg:aa:e", "yy");
+
+    uni.isUnified(case1a, equiv, false);
+    uni.isUnified(case1b, equiv, true);
+
+    uni.isUnified(case2a, equiv, false);
+    uni.isUnified(case2b, equiv, false);
+    uni.isUnified(case2c, equiv, false);
+    uni.isUnified(case2d, equiv, false);
+    assertTrue(uni.isUnified(case2e, equiv, true));
+    assertEquals("[xx[xx/abc:sg:f*,xx/cde:pl:f*], yy[yy/abc:pl:f*,yy/abc:sg:f*]]",
+        Arrays.toString(uni.getFinalUnified()));
+
+    uni.reset();
+
+    AnalyzedToken tokenComplex1_1 = new AnalyzedToken("xx", "abc:sg:f", "xx1");
+    AnalyzedToken tokenComplex1_2 = new AnalyzedToken("xx", "cde:pl:f", "xx2");
+
+    AnalyzedToken tokenComplex2_1 = new AnalyzedToken("yy", "abc:sg:f", "yy1");
+    AnalyzedToken tokenComplex2_2 = new AnalyzedToken("yy", "cde:pl:f", "yy2");
+
+    AnalyzedToken tokenComplex3 = new AnalyzedToken("zz", "cde:sg:f", "zz");
+
+    uni.isUnified(tokenComplex1_1, equiv, false);
+    uni.isUnified(tokenComplex1_2, equiv, true);
+
+    uni.isUnified(tokenComplex2_1, equiv, false);
+    uni.isUnified(tokenComplex2_2, equiv, true);
+
+    //both readings of tokenComplex1 and tokenComplex2 should be here:
+    assertEquals("[xx[xx1/abc:sg:f*,xx2/cde:pl:f*], yy[yy1/abc:sg:f*,yy2/cde:pl:f*]]", Arrays.toString(uni.getFinalUnified()));
+
+    assertTrue(uni.isUnified(tokenComplex3, equiv, true));
+
+    //only one reading of tokenComplex1 and tokenComplex2 - as only one agrees with tokenComplex3
+    assertEquals("[xx[xx1/abc:sg:f*], yy[yy1/abc:sg:f*], zz[zz/cde:sg:f*]]", Arrays.toString(uni.getFinalUnified()));
+
+  }
+
+
+  public void testMultipleFeatsWithMultipleTypes() {
+    final UnifierConfiguration unifierConfig = new UnifierConfiguration();
+    unifierConfig.setEquivalence("number", "singular",
+        preparePOSElement(".*[\\.:]sg:.*"));
+    unifierConfig.setEquivalence("number", "plural",
+        preparePOSElement(".*[\\.:]pl:.*"));
+
+    unifierConfig.setEquivalence("gender", "feminine",
+        preparePOSElement(".*[\\.:]f([\\.:].*)?"));
+    unifierConfig.setEquivalence("gender", "masculine",
+        preparePOSElement(".*[\\.:]m1([\\.:].*)?"));
+    unifierConfig.setEquivalence("gender", "masculine",
+        preparePOSElement(".*[\\.:]m2([\\.:].*)?"));
+    unifierConfig.setEquivalence("gender", "masculine",
+        preparePOSElement(".*[\\.:]m3([\\.:].*)?"));
+    unifierConfig.setEquivalence("gender", "neutral1",
+        preparePOSElement(".*[\\.:]n1(?:[\\.:].*)?"));
+    unifierConfig.setEquivalence("gender", "neutral2",
+        preparePOSElement(".*[\\.:]n2(?:[\\.:].*)?"));
+
+    unifierConfig.setEquivalence("case", "nominativus",
+        preparePOSElement(".*[\\.:]nom[\\.:]?.*"));
+    unifierConfig.setEquivalence("case", "accusativus",
+        preparePOSElement(".*[\\.:]acc[\\.:]?.*"));
+    unifierConfig.setEquivalence("case", "dativus",
+        preparePOSElement(".*[\\.:]dat[\\.:]?.*"));
+    unifierConfig.setEquivalence("case", "vocativus",
+        preparePOSElement(".*[\\.:]voc[\\.:]?.*"));
+
+    final Unifier uni = unifierConfig.createUnifier();
+
+    final AnalyzedToken sing1 = new AnalyzedToken("niezgorsze", "adj:sg:acc:n1.n2:pos", "niezgorszy");
+    final AnalyzedToken sing1a = new AnalyzedToken("niezgorsze", "adj:pl:acc:m2.m3.f.n1.n2.p2.p3:pos", "niezgorszy");
+    final AnalyzedToken sing1b = new AnalyzedToken("niezgorsze", "adj:pl:nom.voc:m2.m3.f.n1.n2.p2.p3:pos", "niezgorszy");
+    final AnalyzedToken sing1c = new AnalyzedToken("niezgorsze", "adj:sg:nom.voc:n1.n2:pos", "niezgorszy");
+    final AnalyzedToken sing2 = new AnalyzedToken("lekarstwo", "subst:sg:acc:n2", "lekarstwo");
+    final AnalyzedToken sing2b = new AnalyzedToken("lekarstwo", "subst:sg:nom:n2", "lekarstwo");
+    final AnalyzedToken sing2c = new AnalyzedToken("lekarstwo", "subst:sg:voc:n2", "lekarstwo");
+
+    final Map<String, List<String>> equiv = new HashMap<>();
+    equiv.put("number", null);
+    equiv.put("gender", null);
+    equiv.put("case", null);
+
+    //now test the simplified interface
+    uni.isUnified(sing1, equiv, false);
+    uni.isUnified(sing1a, equiv, false);
+    uni.isUnified(sing1b, equiv, false);
+    uni.isUnified(sing1c, equiv, true);
+    uni.isUnified(sing2, equiv, false);
+    uni.isUnified(sing2b, equiv, false);
+    assertEquals(true, uni.isUnified(sing2c, equiv, true));
+    assertEquals("[niezgorsze[niezgorszy/adj:sg:acc:n1.n2:pos*,niezgorszy/adj:sg:nom.voc:n1.n2:pos*], " +
+        "lekarstwo[lekarstwo/subst:sg:acc:n2*,lekarstwo/subst:sg:nom:n2*,lekarstwo/subst:sg:voc:n2*]]", Arrays.toString(uni.getUnifiedTokens()));
+    uni.reset();
+
+    //test in a different order
+    uni.isUnified(sing1a, equiv, false);
+    uni.isUnified(sing1, equiv, false);
+    uni.isUnified(sing1c, equiv, false);
+    uni.isUnified(sing1b, equiv, true);
+    uni.isUnified(sing2b, equiv, false);
+    uni.isUnified(sing2c, equiv, false);
+    assertEquals(true, uni.isUnified(sing2, equiv, true));
+    assertEquals("[niezgorsze[niezgorszy/adj:sg:acc:n1.n2:pos*,niezgorszy/adj:sg:nom.voc:n1.n2:pos*], " +
+        "lekarstwo[lekarstwo/subst:sg:nom:n2*,lekarstwo/subst:sg:voc:n2*,lekarstwo/subst:sg:acc:n2*]]", Arrays.toString(uni.getUnifiedTokens()));
+    uni.reset();
+
+  }
+
+
+  private Element preparePOSElement(final String posString) {
+    final Element el = new Element("", false, false, false);
+    el.setPosElement(posString, true, false);
+    return el;
   }
 
   public void testNegation() {
     final UnifierConfiguration unifierConfig = new UnifierConfiguration();
-    final Element sgElement = new Element("", false, false, false);
-    sgElement.setPosElement(".*[\\.:]sg:.*", true, false);
-    unifierConfig.setEquivalence("number", "singular", sgElement);
-    final Element plElement = new Element("", false, false, false);
-    plElement.setPosElement(".*[\\.:]pl:.*", true, false);
-    unifierConfig.setEquivalence("number", "plural", plElement);
-    final Element femElement = new Element("", false, false, false);
-    femElement.setPosElement(".*:f", true, false);
-    unifierConfig.setEquivalence("gender", "feminine", femElement);
-    final Element mascElement = new Element("", false, false, false);
-    mascElement.setPosElement(".*:m", true, false);
-    unifierConfig.setEquivalence("gender", "masculine", mascElement);
+    unifierConfig.setEquivalence("number", "singular",
+        preparePOSElement(".*[\\.:]sg:.*"));
+    unifierConfig.setEquivalence("number", "plural",
+        preparePOSElement(".*[\\.:]pl:.*"));
+    unifierConfig.setEquivalence("gender", "feminine",
+        preparePOSElement(".*:f"));
+    unifierConfig.setEquivalence("gender", "masculine",
+        preparePOSElement(".*:m"));
 
     final Unifier uni = unifierConfig.createUnifier();
 
@@ -348,6 +477,7 @@ public class UnifierTest extends TestCase {
     uni.startNextToken();
     satisfied &= uni.isSatisfied(subst_sing_masc, equiv);
     uni.startNextToken();
+    satisfied &= uni.getFinalUnificationValue(equiv);
     assertEquals(true, satisfied);
     uni.reset();
 
@@ -366,6 +496,7 @@ public class UnifierTest extends TestCase {
     uni.startNextToken();
     satisfied &= uni.isSatisfied(subst_sing_masc, equiv);
     uni.startNextToken();
+    satisfied &= uni.getFinalUnificationValue(equiv);
     assertEquals(false, !satisfied);
     uni.reset();
 
@@ -430,4 +561,39 @@ public class UnifierTest extends TestCase {
     uni.reset();
   }
 
-}
+  public void testAddNeutralElement() {
+    final UnifierConfiguration unifierConfig = new UnifierConfiguration();
+    unifierConfig.setEquivalence("number", "singular",
+        preparePOSElement(".*[\\.:]sg:.*"));
+    unifierConfig.setEquivalence("number", "plural",
+        preparePOSElement(".*[\\.:]pl:.*"));
+    unifierConfig.setEquivalence("gender", "feminine",
+        preparePOSElement(".*[\\.:]f([\\.:].*)?"));
+    unifierConfig.setEquivalence("gender", "masculine",
+        preparePOSElement(".*[\\.:]m([\\.:].*)?"));
+    unifierConfig.setEquivalence("gender", "neutral",
+        preparePOSElement(".*[\\.:]n([\\.:].*)?"));
+
+    final Unifier uni = unifierConfig.createUnifier();
+
+    final Map<String, List<String>> equiv = new HashMap<>();
+    equiv.put("number", null);
+    equiv.put("gender", null);
+
+    AnalyzedToken sing1a = new AnalyzedToken("osobiste", "adj:pl:nom.acc.voc:f.n.m2.m3:pos:aff", "osobisty");
+    AnalyzedToken sing1b = new AnalyzedToken("osobiste", "adj:sg:nom.acc.voc:n:pos:aff", "osobisty");
+    AnalyzedToken sing2 = new AnalyzedToken("godło", "subst:sg:nom.acc.voc:n", "godło");
+
+    AnalyzedToken comma = new AnalyzedToken(",", "comma", ",");
+
+    uni.isUnified(sing1a, equiv, false);
+    uni.isUnified(sing1b, equiv, true);
+    uni.addNeutralElement(new AnalyzedTokenReadings(comma, 0));
+    assertEquals(true, uni.isUnified(sing2, equiv, true));
+    assertEquals("[osobiste[osobisty/adj:sg:nom.acc.voc:n:pos:aff*], ,[,/comma*], godło[godło/subst:sg:nom.acc.voc:n*]]",
+        Arrays.toString(uni.getFinalUnified()));
+    uni.reset();
+
+  }
+
+  }

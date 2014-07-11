@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
 French Disambiguation Rules for LanguageTool
-Copyright (C) 2007 Agnès Souque, 2011 Dominique Pellé
-$Id$
+Copyright (C) 2007 Agnès Souque, 2011-2014 Dominique Pellé
 --><!-- ported from Myriam's Gramadoir rules --><!--
 RP => Règles Particulières
 RD => Règles par Défaut
@@ -26,15 +25,36 @@ RB => Règles Brutes
       <token postag=".* [fe] [sp][sp]?" postag_regexp="yes"/>
     </equivalence>
   </unification>
-  
+
+  <rule name="nom" id="NOM">
+    <pattern>
+      <token postag="SENT_START"/>
+      <token regexp="yes">Les?|La</token>
+      <marker><token postag="[NJZK].*" postag_regexp="yes"/></marker>
+    </pattern>
+    <disambig action="filter" postag="[NJZK].*"/>
+  </rule>
+
   <!-- Words not tagged in dicollecte -->
   <rule name="adverbes" id="ADVERBES">
     <pattern>
-      <marker>
-        <token regexp="yes">trop|peu|beaucoup|assez|fort|peut-être</token>
-      </marker>
+      <marker><token regexp="yes">trop|peu|beaucoup|assez|fort|peut-être</token></marker>
     </pattern>
     <disambig postag="A"/>
+  </rule>
+
+  <rule id="LE_LA_PR_OBJ" name="le/la pronom objet">
+    <pattern>
+      <token regexp="yes">je|tu|ils?|ne</token>
+      <marker><token regexp="yes">l[ae]?|les</token></marker>
+      <token postag="V.*" postag_regexp="yes"/>
+    </pattern>
+    <disambig action="filter" postag="R pers.*"/>
+  </rule>
+
+  <rule name="UN" id="un">
+    <pattern><token>un</token></pattern>
+    <disambig postag="D m s"/>
   </rule>
   
   <rule name="la (nom)" id="LA_N">
@@ -110,9 +130,9 @@ RB => Règles Brutes
     </rule>
     <rule>
       <pattern>
-        <token regexp="yes">chaque|des?|maint|mêmes?|moult|nul|plusieurs|quelques<exception scope="previous" regexp="yes">[’´'‛′‘]</exception></token>
+        <token regexp="yes">chaque|des?|maint|mêmes|moult|nul|plusieurs|quelques<exception scope="previous" regexp="yes">[’´'‛′‘]</exception></token>
         <marker>
-          <token postag="N.*" postag_regexp="yes"><exception regexp="yes">est|multiples|si</exception></token>
+          <token postag="N.*" postag_regexp="yes"><exception regexp="yes">est|multiples|si|petite?s?|mauvais</exception></token>
         </marker>
       </pattern>
       <disambig action="filter" postag="N.*"/>
@@ -650,16 +670,6 @@ RB => Règles Brutes
       <disambig postag="V avoir inf"/>
     </rule>
   </rulegroup>
-  <rule name="RP : Det + Nom + Adj" id="RP-D_N_AMBIG_J">
-    <pattern>
-      <unify>  <feature id="number"/> <feature id="gender"/>
-        <token postag="D.*" postag_regexp="yes"/>
-        <token postag="N.*" postag_regexp="yes"/>
-        <token postag="J.*|V ppa .*" postag_regexp="yes"/>
-      </unify>
-    </pattern>
-    <disambig action="filterall"/>
-  </rule>
   <rule name="RP : Det + Adj + Nom" id="RP-D_J_AMBIG_N">
     <pattern>
       <unify>  <feature id="number"/> <feature id="gender"/>
@@ -674,7 +684,7 @@ RB => Règles Brutes
     <pattern>
       <unify> <feature id="number"/> <feature id="gender"/>
         <token postag="D.*" postag_regexp="yes"/>
-        <token postag="N.*|J.*" postag_regexp="yes"><exception regexp="yes">a|dans|envers</exception></token>
+        <token postag="N.*|J.*" postag_regexp="yes"><exception regexp="yes">a|dans|envers|si|fut</exception></token>
       </unify>
     </pattern>
     <disambig action="filterall"/>
@@ -717,7 +727,7 @@ RB => Règles Brutes
     </rule>
   </rulegroup>
 
-  <rulegroup name="RP : Etre/avoir + participe passé ambigu" id="RP-ÊTRE_AVOIR_VPPA_AMBIG">
+  <rulegroup name="RP : Etre/avoir + participe passé ambigu" id="RP-ETRE_AVOIR_VPPA_AMBIG">
     <rule>
       <pattern>
         <token postag="V etre .*|V avoir .*" postag_regexp="yes"/>
@@ -755,7 +765,7 @@ RB => Règles Brutes
           <token>été</token>
         </marker>
       </pattern>
-      <disambig action="replace"><wd lemma="être" pos="V etre ppa m s"/></disambig>
+      <disambig action="replace"><wd lemma="être" pos="V etre ppa e sp"/></disambig>
     </rule>
   </rulegroup>
 
@@ -840,7 +850,7 @@ RB => Règles Brutes
   <rule name="RB : Préposition" id="RB-PREPOSITION">
     <pattern>
       <marker>
-        <token postag="P"/>
+        <token postag="P"><exception regexp="yes">attendu|passé</exception></token>
       </marker>
     </pattern>
     <disambig postag="P"/>
@@ -955,7 +965,7 @@ RB => Règles Brutes
       <disambig action="filter" postag="V.* 3 p"/>
     </rule>
   </rulegroup>
-  
+
   <rule name="RD : ambig J/N" id="RD-ADJ_NOM">
     <pattern>
       <token postag="A"/>
@@ -968,11 +978,11 @@ RB => Règles Brutes
     </pattern>
     <disambig><match no="1" postag_regexp="yes" postag="J.*"/></disambig>
   </rule>
-  
+
   <rule name="RB : adverbes" id="RB-ADVERBES">
     <pattern>
       <marker>
-        <token postag="A"/>
+        <token postag="A"><exception>causa</exception></token>
       </marker>
     </pattern>
     <disambig postag="A"/>
@@ -1058,11 +1068,11 @@ RB => Règles Brutes
       <marker>
         <and>
           <token postag_regexp="yes" postag="V.*"/>
-          <token postag_regexp="yes" postag="N.*"/>
+          <token postag_regexp="yes" postag="[ZN].*"/>
         </and>
       </marker>
     </pattern>
-    <disambig action="filter"><match no="2" postag="N.*" postag_regexp="yes"/></disambig>
+    <disambig action="filter"><match no="2" postag="[ZN].*" postag_regexp="yes"/></disambig>
   </rule>
   
   <rule name="Cela" id="CELA">
@@ -1175,6 +1185,12 @@ RB => Règles Brutes
       <marker><token>forte</token></marker>
     </pattern>
     <disambig postag="J f s"/>
+  </rule>
+  <rule id="BIEN" name="bien">
+    <pattern>
+      <marker><token>bien</token></marker>
+    </pattern>
+    <disambig postag="A"/>
   </rule>
   <rule id="UN_DES" name="un des">
     <pattern>
@@ -1300,18 +1316,30 @@ RB => Règles Brutes
       <disambig postag="N m p"/>
     </rule>
   </rulegroup>
+  <rule id="JAVA" name="Java">
+    <pattern case_sensitive="yes">
+      <marker><token>Java</token></marker>
+    </pattern>
+    <disambig postag="Z m s"/>
+  </rule>
+  <rule id="VIRGINIE" name="Virginie">
+    <pattern case_sensitive="yes">
+      <marker><token>Virginie</token></marker>
+    </pattern>
+    <disambig postag="Z f s"/>
+  </rule>
   <rulegroup id="RENE" name="René">
     <rule>
       <pattern case_sensitive="yes">
         <token>René</token>
       </pattern>
-      <disambig postag="Z m sp"/>
+      <disambig postag="Z m s"/>
     </rule>
     <rule>
       <pattern case_sensitive="yes">
         <token>Renée</token>
       </pattern>
-      <disambig postag="Z f sp"/>
+      <disambig postag="Z f s"/>
     </rule>
   </rulegroup>
   <rulegroup id="AUTOUR" name="Autour">
@@ -1356,6 +1384,36 @@ RB => Règles Brutes
     </pattern>
     <disambig postag="N f s"/>
   </rule>
+  <rulegroup id="BITE" name="bite">
+    <rule>
+      <pattern>
+        <token regexp="yes">il|elle|on|ne</token>
+        <marker><token>bite</token></marker>
+      </pattern>
+      <disambig action="filter" postag="V.*"/>
+    </rule>
+    <rule>
+      <pattern>
+        <token regexp="yes">tu|ne</token>
+        <marker><token>bites</token></marker>
+      </pattern>
+      <disambig action="filter" postag="V.*"/>
+    </rule>
+    <rule>
+      <pattern>
+        <token regexp="yes">[mlts]a|belle|leur|longue|notre|votre|grande|grosse|petite</token>
+        <marker><token>bite</token></marker>
+      </pattern>
+      <disambig postag="N f s"/>
+    </rule>
+    <rule>
+      <pattern>
+        <token regexp="yes">les|belles|leurs|longues|votres|nos|grosses|grandes|petites</token>
+        <marker><token>bites</token></marker>
+      </pattern>
+      <disambig postag="N f p"/>
+    </rule>
+  </rulegroup>
   <rule id="DON_JUAN" name="don Juan">
     <pattern>
       <token>don</token>
@@ -1363,4 +1421,75 @@ RB => Règles Brutes
     </pattern>
     <disambig action="replace"><wd pos="N m sp"/><wd pos="N m sp"/></disambig>
   </rule>
+  <rulegroup id="PUIS" name="puis">
+    <rule>
+      <pattern>
+        <token postag="SENT_START"/>
+        <marker><token>Puis</token></marker>
+        <token postag="V ppa.*" postag_regexp="yes"/>
+      </pattern>
+      <disambig postag="A"/>
+    </rule>
+    <rule>
+      <pattern>
+        <token>,</token>
+        <marker><token>puis</token></marker>
+        <token postag="V ppa.*" postag_regexp="yes"/>
+      </pattern>
+      <disambig postag="A"/>
+    </rule>
+  </rulegroup>
+  <rule id="GRAND_FAIM" name="grand faim">
+    <pattern>
+      <marker>
+        <token>grand</token>
+        <token>faim</token>
+      </marker>
+    </pattern>
+    <disambig action="immunize"/>
+  </rule>
+  <rulegroup id="METTEUR_EN_SCENE" name="metteur en scène">
+    <rule>
+      <pattern>
+        <token>metteur</token>
+        <token>en</token>
+        <marker><token>scène</token></marker>
+      </pattern>
+      <disambig postag="N m s"/>
+    </rule>
+    <rule>
+      <pattern>
+        <token>metteurs</token>
+        <token>en</token>
+        <marker><token>scène</token></marker>
+      </pattern>
+      <disambig postag="N m p"/>
+    </rule>
+  </rulegroup>
+  <rule id="MUSTANG" name="Mustang, Jaquar">
+    <!-- With an upppercase, it is the name of a car and not the animal. -->
+    <pattern>
+       <token><exception postag="SENT_START"/></token>
+      <token regexp="yes">(?-i)Mustang|Jaguar</token>
+    </pattern>
+    <disambig postag="N f s"/>
+  </rule>
+  <rulegroup id="MISE_A_JOUR" name="mise à jour">
+    <rule>
+      <pattern>
+        <token>mise</token>
+        <token>à</token>
+        <marker><token>jour</token></marker>
+      </pattern>
+      <disambig postag="N f s"/>
+    </rule>
+    <rule>
+      <pattern>
+        <token>mises</token>
+        <token>à</token>
+        <marker><token>jour</token></marker>
+      </pattern>
+      <disambig postag="N f p"/>
+    </rule>
+  </rulegroup>
 </rules>

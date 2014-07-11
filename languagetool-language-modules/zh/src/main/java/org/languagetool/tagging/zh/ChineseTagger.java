@@ -32,17 +32,13 @@ public class ChineseTagger implements Tagger {
   public List<AnalyzedTokenReadings> tag(List<String> sentenceTokens) throws IOException {
     final List<AnalyzedTokenReadings> tokenReadings = new ArrayList<>();
     int pos = 0;
-
     for (String word : sentenceTokens) {
-
       final List<AnalyzedToken> l = new ArrayList<>();
-
       AnalyzedToken at = asAnalyzedToken(word);
       l.add(at);
       tokenReadings.add(new AnalyzedTokenReadings(l, pos));
       pos += at.getToken().length();
     }
-
     return tokenReadings;
   }
 
@@ -57,20 +53,11 @@ public class ChineseTagger implements Tagger {
   }
 
   private AnalyzedToken asAnalyzedToken(final String word) {
-    if (word.indexOf("/") < 0) {
+    if (!word.contains("/")) {
       return new AnalyzedToken(" ", null, null);
     }
     String[] parts = word.split("/");
     return new AnalyzedToken(parts[0], parts[1], null);
-  }
-
-  public static final String arrayToString(byte[] bytes) {
-    StringBuffer buff = new StringBuffer();
-
-    for (int i = 0; i < bytes.length; i++) {
-      buff.append(bytes[i] + " ");
-    }
-    return buff.toString();
   }
 
 }

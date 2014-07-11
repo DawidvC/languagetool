@@ -25,6 +25,7 @@ import java.util.ResourceBundle;
 import org.languagetool.AnalyzedSentence;
 import org.languagetool.AnalyzedTokenReadings;
 import org.languagetool.rules.Category;
+import org.languagetool.rules.Example;
 import org.languagetool.rules.RuleMatch;
 
 /**
@@ -36,8 +37,11 @@ import org.languagetool.rules.RuleMatch;
 public class WiederVsWiderRule extends GermanRule {
 
   public WiederVsWiderRule(ResourceBundle messages) {
-    if (messages != null)
+    if (messages != null) {
       super.setCategory(new Category(messages.getString("category_typo")));
+    }
+    addExamplePair(Example.wrong("Das spiegelt die Situation in Deutschland <marker>wieder</marker>."),
+                   Example.fixed("Das spiegelt die Situation in Deutschland <marker>wider</marker>."));
   }
   
   @Override
@@ -51,17 +55,15 @@ public class WiederVsWiderRule extends GermanRule {
   }
 
   @Override
-  public RuleMatch[] match(AnalyzedSentence text) {
+  public RuleMatch[] match(AnalyzedSentence sentence) {
     final List<RuleMatch> ruleMatches = new ArrayList<>();
-    final AnalyzedTokenReadings[] tokens = text.getTokens();
+    final AnalyzedTokenReadings[] tokens = sentence.getTokens();
     boolean foundSpiegelt = false;
     boolean foundWieder = false;
     boolean foundWider = false;
-    for (int i=0; i<tokens.length; i++) {
+    for (int i = 0; i < tokens.length; i++) {
       final String token = tokens[i].getToken();
-      if (token.trim().equals("")) {
-        // ignore
-      } else {
+      if (!token.trim().equals("")) {
         if (token.equalsIgnoreCase("spiegelt") || token.equalsIgnoreCase("spiegeln") || token.equalsIgnoreCase("spiegelte")
                 || token.equalsIgnoreCase("spiegelten") || token.equalsIgnoreCase("spiegelst")) {
           foundSpiegelt = true;

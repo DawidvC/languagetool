@@ -28,6 +28,7 @@ import org.languagetool.tools.StringTools;
 
 /**
  * Information about an error rule that matches text and the position of the match.
+ * See {@link org.languagetool.tools.ContextTools} for displaying errors in their original text context.
  * 
  * @author Daniel Naber
  */
@@ -45,7 +46,7 @@ public class RuleMatch implements Comparable<RuleMatch> {
   private final int fromPos;
   private final int toPos;
   private final String message;
-  private final String shortMessage;   // for OOo/LO context menu
+  private final String shortMessage;   // used e.g. for OOo/LO context menu
 
   private List<String> suggestedReplacements = new ArrayList<>();
 
@@ -242,16 +243,8 @@ public class RuleMatch implements Comparable<RuleMatch> {
   /** Compare by start position. */
   @Override
   public int compareTo(final RuleMatch other) {
-    if (other == null) {
-      throw new ClassCastException();
-    }
-    if (getFromPos() < other.getFromPos()) {
-      return -1;
-    }
-    if (getFromPos() > other.getFromPos()) {
-      return 1;
-    }
-    return 0;
+    Objects.requireNonNull(other);
+    return Integer.compare(getFromPos(), other.getFromPos());
   }
 
 }

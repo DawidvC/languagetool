@@ -22,13 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.languagetool.Language;
-import org.languagetool.rules.CommaWhitespaceRule;
-import org.languagetool.rules.DoublePunctuationRule;
-import org.languagetool.rules.GenericUnpairedBracketsRule;
-import org.languagetool.rules.Rule;
-import org.languagetool.rules.UppercaseSentenceStartRule;
-import org.languagetool.rules.WhitespaceRule;
-import org.languagetool.rules.WordRepeatRule;
+import org.languagetool.rules.*;
 import org.languagetool.rules.spelling.hunspell.HunspellNoSuggestionRule;
 import org.languagetool.tagging.Tagger;
 import org.languagetool.tagging.disambiguation.Disambiguator;
@@ -44,6 +38,7 @@ public class Esperanto extends Language {
   private SentenceTokenizer sentenceTokenizer;
   private Tokenizer wordTokenizer;
   private Disambiguator disambiguator;
+  private String name = "Esperanto";
 
   @Override
   public final SentenceTokenizer getSentenceTokenizer() {
@@ -63,8 +58,14 @@ public class Esperanto extends Language {
 
   @Override
   public String getName() {
-    return "Esperanto";
+    return name;
   }
+
+  @Override
+  public void setName(final String name) {
+    this.name = name;
+  }
+
 
   @Override
   public String getShortName() {
@@ -72,9 +73,8 @@ public class Esperanto extends Language {
   }
 
   @Override
-  public String[] getCountryVariants() {
-    /* return "ANY" country code as a "country-less" placeholder for OOo: */
-    return new String[] {"ANY"};
+  public String[] getCountries() {
+    return new String[]{};
   }
   
   @Override
@@ -104,7 +104,8 @@ public class Esperanto extends Language {
             HunspellNoSuggestionRule.class,
             UppercaseSentenceStartRule.class,
             WordRepeatRule.class,
-            WhitespaceRule.class
+            MultipleWhitespaceRule.class,
+            SentenceWhitespaceRule.class
     );
   }
 

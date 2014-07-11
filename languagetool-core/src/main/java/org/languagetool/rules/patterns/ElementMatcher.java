@@ -58,14 +58,14 @@ public class ElementMatcher {
 
   // TODO: add .compile for all exceptions of the element?
   public void resolveReference(final int firstMatchToken,
-                               final AnalyzedTokenReadings[] tokens, Language language)
+      final AnalyzedTokenReadings[] tokens, Language language)
           throws IOException {
     if (baseElement.isReferenceElement()) {
       final int refPos = firstMatchToken
-              + baseElement.getMatch().getTokenRef();
+          + baseElement.getMatch().getTokenRef();
       if (refPos < tokens.length) {
         element = baseElement.compile(tokens[refPos],
-                language.getSynthesizer());
+            language.getSynthesizer());
       }
     }
   }

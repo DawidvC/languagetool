@@ -33,7 +33,7 @@ public class MorfologikPolishSpellerRuleTest {
   @Test
   public void testMorfologikSpeller() throws IOException {
     final MorfologikPolishSpellerRule rule =
-            new MorfologikPolishSpellerRule (TestTools.getMessages("Polish"), new Polish());
+        new MorfologikPolishSpellerRule (TestTools.getMessages("Polish"), new Polish());
 
     final JLanguageTool langTool = new JLanguageTool(new Polish());
 
@@ -42,8 +42,20 @@ public class MorfologikPolishSpellerRuleTest {
     assertEquals(0, rule.match(langTool.getAnalyzedSentence("Żółw na starość wydziela dziwną woń.")).length);
     //test for "LanguageTool":
     assertEquals(0, rule.match(langTool.getAnalyzedSentence("LanguageTool jest świetny!")).length);
+
+    //test for the ignored uppercase word "Gdym":
+    assertEquals(0, rule.match(langTool.getAnalyzedSentence("Gdym to zobaczył, zdębiałem.")).length);
+
     assertEquals(0, rule.match(langTool.getAnalyzedSentence(",")).length);
     assertEquals(0, rule.match(langTool.getAnalyzedSentence("123454")).length);
+
+    //compound word with ignored part "techniczno"
+    assertEquals(0, rule.match(langTool.getAnalyzedSentence("Bogactwo nie rośnie proporcjonalnie do jej rozwoju techniczno-terytorialnego.")).length);
+
+    //compound word with one of the compound prefixes:
+    assertEquals(0, rule.match(langTool.getAnalyzedSentence("Antypostmodernistyczna batalia hiperfilozofów")).length);
+   //compound words: "trzynastobitowy", "zgniłożółty"
+    assertEquals(0, rule.match(langTool.getAnalyzedSentence("Trzynastobitowe przystawki w kolorze zgniłożółtym")).length);
 
     //incorrect sentences:
 
@@ -52,10 +64,21 @@ public class MorfologikPolishSpellerRuleTest {
     assertEquals(1, matches.length);
     assertEquals(0, matches[0].getFromPos());
     assertEquals(4, matches[0].getToPos());
-    assertEquals("żółw", matches[0].getSuggestedReplacements().get(0));
+    assertEquals("Żółw", matches[0].getSuggestedReplacements().get(0));
 
     assertEquals(1, rule.match(langTool.getAnalyzedSentence("aõh")).length);
-    assertEquals(0, rule.match(langTool.getAnalyzedSentence("a")).length);
+
+    //tokenizing on prefixes niby- and quasi-
+    assertEquals(0, rule.match(langTool.getAnalyzedSentence("Niby-artysta spotkał się z quasi-opiekunem i niby-Francuzem.")).length);
+
+    final RuleMatch[] prunedMatches = rule.match(langTool.getAnalyzedSentence("Clarkem"));
+    assertEquals(1, prunedMatches.length);
+    assertEquals(5, prunedMatches[0].getSuggestedReplacements().size());
+    assertEquals("Ciarkę", prunedMatches[0].getSuggestedReplacements().get(0));
+    assertEquals("Czarkę", prunedMatches[0].getSuggestedReplacements().get(1));
+    assertEquals("Clarke", prunedMatches[0].getSuggestedReplacements().get(2));
+    assertEquals("Clarkiem", prunedMatches[0].getSuggestedReplacements().get(3));
+    assertEquals("Clarkom", prunedMatches[0].getSuggestedReplacements().get(4));
   }
 
 }

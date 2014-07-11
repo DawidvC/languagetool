@@ -24,6 +24,7 @@ import java.util.Set;
 
 import org.languagetool.AnalyzedTokenReadings;
 import org.languagetool.Language;
+import org.languagetool.rules.Example;
 import org.languagetool.rules.WordRepeatBeginningRule;
 
 /**
@@ -35,6 +36,8 @@ public class EnglishWordRepeatBeginningRule extends WordRepeatBeginningRule {
   
   public EnglishWordRepeatBeginningRule(final ResourceBundle messages, final Language language) {
     super(messages, language);
+    addExamplePair(Example.wrong("Moreover, the street is almost entirely residential. <marker>Moreover</marker>, it was named after a poet."),
+                   Example.fixed("Moreover, the street is almost entirely residential. <marker>It</marker> was named after a poet."));
   }
   
   @Override
@@ -52,8 +55,7 @@ public class EnglishWordRepeatBeginningRule extends WordRepeatBeginningRule {
   
   @Override
   protected boolean isAdverb(final AnalyzedTokenReadings token) {
-    if (ADVERBS.contains(token.getToken())) return true;
-    return false;
+    return ADVERBS.contains(token.getToken());
   }
 
 }

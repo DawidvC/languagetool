@@ -70,9 +70,10 @@ public class HTTPSServer extends Server {
       final HttpsConfigurator configurator = getConfigurator(sslContext);
       ((HttpsServer)server).setHttpsConfigurator(configurator);
       final RequestLimiter limiter = getRequestLimiterOrNull(config);
-      final LanguageToolHttpHandler httpHandler = new LanguageToolHttpHandler(config.isVerbose(), allowedIps, runInternally, limiter);
+      httpHandler = new LanguageToolHttpHandler(config.isVerbose(), allowedIps, runInternally, limiter);
       httpHandler.setMaxTextLength(config.getMaxTextLength());
       httpHandler.setAllowOriginUrl(config.getAllowOriginUrl());
+      httpHandler.setMaxCheckTimeMillis(config.getMaxCheckTimeMillis());
       server.createContext("/", httpHandler);
       executorService = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
       server.setExecutor(executorService);
@@ -140,24 +141,31 @@ public class HTTPSServer extends Server {
       System.out.println("                 'keystore' - a Java keystore with an SSL certificate");
       System.out.println("                 'password' - the keystore's password");
       System.out.println("                 'maxTextLength' - maximum text length, longer texts will cause an error (optional)");
+      System.out.println("                 'maxCheckTimeMillis' - maximum time in milliseconds allowed per check (optional)");
       System.out.println("                 'requestLimit' - maximum number of requests (optional)");
       System.out.println("                 'requestLimitPeriodInSeconds' - time period to which requestLimit applies (optional)");
       printCommonOptions();
       System.exit(1);
     }
     final boolean runInternal = false;
-    final HTTPSServerConfig config = new HTTPSServerConfig(args);
     try {
-      final HTTPSServer server;
-      if (config.isPublicAccess()) {
-        System.out.println("WARNING: running in public mode, LanguageTool API can be accessed without restrictions!");
-        server = new HTTPSServer(config, runInternal, null, null);
-      } else {
-        server = new HTTPSServer(config, runInternal, DEFAULT_HOST, DEFAULT_ALLOWED_IPS);
+      final HTTPSServerConfig config = new HTTPSServerConfig(args);
+      try {
+        final HTTPSServer server;
+        if (config.isPublicAccess()) {
+          System.out.println("WARNING: running in public mode, LanguageTool API can be accessed without restrictions!");
+          server = new HTTPSServer(config, runInternal, null, null);
+        } else {
+          server = new HTTPSServer(config, runInternal, DEFAULT_HOST, DEFAULT_ALLOWED_IPS);
+        }
+        server.run();
+      } catch (Exception e) {
+        throw new RuntimeException("Could not start LanguageTool HTTPS server on " + HTTPServerConfig.DEFAULT_HOST + ", port " + config.getPort(), e);
       }
-      server.run();
-    } catch (Exception e) {
-      throw new RuntimeException("Could not start LanguageTool HTTPS server on " + HTTPServerConfig.DEFAULT_HOST + ", port " + config.getPort(), e);
+    } catch (IllegalConfigurationException e) {
+      System.out.println(e.getMessage());
+      System.out.println("Note: this is the HTTPS server - if you want to use plain HTTP instead, please see http://languagetool.org/http-server/");
+      System.exit(1);
     }
   }
 

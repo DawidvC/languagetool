@@ -26,14 +26,14 @@ import org.ictclas4j.segment.SentenceSeg;
 import org.ictclas4j.utility.Utility;
 import org.languagetool.tokenizers.SentenceTokenizer;
 
-public class ChineseSentenceTokenizer extends SentenceTokenizer {
+public class ChineseSentenceTokenizer implements SentenceTokenizer {
 
   @Override
   public List<String> tokenize(String text) {
 
     final SentenceSeg ss = new SentenceSeg(text);
-    final ArrayList<Sentence> sens = ss.getSens();
-    final ArrayList<String> list = new ArrayList<>();
+    final List<Sentence> sens = ss.getSens();
+    final List<String> list = new ArrayList<>();
 
     for (Sentence sen : sens) {
       String str = sen.getContent();
@@ -46,5 +46,16 @@ public class ChineseSentenceTokenizer extends SentenceTokenizer {
       list.add(str);
     }
     return list;
+  }
+
+  /** Note: does have no effect for Chinese */
+  @Override
+  public void setSingleLineBreaksMarksParagraph(boolean lineBreakParagraphs) {
+  }
+
+  /** Note: will always return {@code false} */
+  @Override
+  public boolean singleLineBreaksMarksPara() {
+    return false;
   }
 }

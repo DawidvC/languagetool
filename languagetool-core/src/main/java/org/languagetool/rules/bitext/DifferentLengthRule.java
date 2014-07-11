@@ -22,6 +22,7 @@ import java.io.IOException;
 
 import org.languagetool.AnalyzedSentence;
 import org.languagetool.AnalyzedTokenReadings;
+import org.languagetool.rules.ITSIssueType;
 import org.languagetool.rules.RuleMatch;
 
 /**
@@ -32,8 +33,11 @@ import org.languagetool.rules.RuleMatch;
  */
 public class DifferentLengthRule extends BitextRule {
 
+  private static final int MAX_SKEW = 250;
+  private static final int MIN_SKEW = 30;
+
   public DifferentLengthRule() {
-    setLocQualityIssueType("length");
+    setLocQualityIssueType(ITSIssueType.Length);
   }
 
   @Override
@@ -65,7 +69,7 @@ public class DifferentLengthRule extends BitextRule {
   
   private boolean isLengthDifferent(final String src, final String trg) {
     final double skew = (((double) src.length() / (double) trg.length()) * 100.00);
-    return (skew > 250 || skew < 30);
+    return (skew > MAX_SKEW || skew < MIN_SKEW);
   }
   
   @Override

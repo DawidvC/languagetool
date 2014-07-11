@@ -19,16 +19,15 @@
 package org.languagetool.gui;
 
 import java.awt.Container;
-import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -60,7 +59,7 @@ public class LanguageManagerDialog implements ActionListener {
   private final ResourceBundle messages;
 
   private JDialog dialog;
-  private JList list;
+  private JList<File> list;
   private JButton addButton;
   private JButton removeButton;
   private JButton closeButton;
@@ -68,9 +67,9 @@ public class LanguageManagerDialog implements ActionListener {
   public LanguageManagerDialog(Frame owner, List<Language> languages) {
     this.owner = owner;
     for (Language lang : languages) {
-        for (final String ruleFile : lang.getRuleFileNames()) {
-            ruleFiles.add(new File(ruleFile));
-        }
+      for (final String ruleFile : lang.getRuleFileNames()) {
+        ruleFiles.add(new File(ruleFile));
+      }
     }
     messages = JLanguageTool.getMessageBundle();
   }
@@ -95,7 +94,7 @@ public class LanguageManagerDialog implements ActionListener {
     final Container contentPane = dialog.getContentPane();
     contentPane.setLayout(new GridBagLayout());
 
-    list = new JList<>(ruleFiles.toArray());
+    list = new JList<>(ruleFiles.toArray(new File[ruleFiles.size()]));
     GridBagConstraints cons = new GridBagConstraints();
     cons.insets = new Insets(4, 4, 4, 4);
     cons.gridx = 0;
@@ -144,7 +143,32 @@ public class LanguageManagerDialog implements ActionListener {
   @Override
   public void actionPerformed(ActionEvent e) {
     if (e.getSource() == addButton) {
-      final File ruleFile = Tools.openFileDialog(owner, new XMLFileFilter());
+      Configuration config = null;
+      try {
+        config = new Configuration(null);
+      } catch (IOException e1) {
+        throw new RuntimeException(e1);
+      }
+      File initialDir;
+      File ruleFile;
+      if (config.getExternalRuleDirectory() != null) {
+        initialDir = new File(config.getExternalRuleDirectory());
+        if (initialDir.isDirectory()) {
+          ruleFile = Tools.openFileDialog(owner, new XMLFileFilter(), initialDir);
+        } else {
+          ruleFile = Tools.openFileDialog(owner, new XMLFileFilter());
+        }
+      } else {
+          ruleFile = Tools.openFileDialog(owner, new XMLFileFilter());
+      }
+      if (config != null) {
+        config.setExternalRuleDirectory(ruleFile.getParent());
+        try {
+          config.saveConfiguration(null);
+        } catch (IOException e1) {
+          throw new RuntimeException(e1);
+        }
+      }
       if (!ruleFiles.contains(ruleFile)) {
         ruleFiles.add(ruleFile);
         list.setListData(ruleFiles.toArray(new File[ruleFiles.size()]));
@@ -161,14 +185,14 @@ public class LanguageManagerDialog implements ActionListener {
     } else if (e.getSource() == closeButton) {
       dialog.setVisible(false);
     } else {
-      throw new IllegalArgumentException("Don't know how to handle " + e); //$NON-NLS-1$
+      throw new IllegalArgumentException("Don't know how to handle " + e);
     }
   }
   
   /**
    * Return all external Languages.
    */
-  List<Language> getLanguages() {
+  List<Language> getLanguages() throws IllegalAccessException, InstantiationException {
     final List<Language> languages = new ArrayList<>();
     for (File ruleFile : ruleFiles) {
       if (ruleFile != null) {
@@ -183,14 +207,14 @@ public class LanguageManagerDialog implements ActionListener {
     @Override
     public boolean accept(final File f) {
       if (f.getName().startsWith("rules") && f.getName().toLowerCase().endsWith(".xml") 
-              || f.isDirectory()) { //$NON-NLS-1$
+              || f.isDirectory()) {
         return true;
       }
       return false;
     }
     @Override
     public String getDescription() {
-      return "rules*.xml"; //$NON-NLS-1$
+      return "rules*.xml";
     }
   }
 

@@ -20,6 +20,7 @@ package org.languagetool.rules.spelling.morfologik;
 
 import morfologik.speller.Speller;
 import morfologik.stemming.Dictionary;
+
 import org.languagetool.JLanguageTool;
 import org.languagetool.rules.spelling.SpellingCheckRule;
 import org.languagetool.tools.StringTools;
@@ -36,6 +37,7 @@ import java.util.Locale;
  */
 public class MorfologikSpeller {
 
+  private final Dictionary dictionary;
   private final Speller speller;
   private final Locale conversionLocale;
 
@@ -49,7 +51,8 @@ public class MorfologikSpeller {
       throw new RuntimeException("maxEditDistance must be > 0: " + maxEditDistance);
     }
     final URL url = JLanguageTool.getDataBroker().getFromResourceDirAsUrl(filename);
-    speller = new Speller(Dictionary.read(url), maxEditDistance);
+    dictionary = Dictionary.read(url);
+    speller = new Speller(dictionary, maxEditDistance);
     this.conversionLocale = conversionLocale != null ? conversionLocale : Locale.getDefault();
   }
 
@@ -71,40 +74,49 @@ public class MorfologikSpeller {
   }
 
   public boolean isMisspelled(String word) {
-    boolean isAlphabetic = true;
-    if (word.length() == 1) { // dictionaries usually do not contain punctuation
-      isAlphabetic = StringTools.isAlphabetic(word.charAt(0));
-    }
-    return word.length() > 0 && isAlphabetic
-            && !containsDigit(word)
+    return word.length() > 0 
             && !SpellingCheckRule.LANGUAGETOOL.equals(word)
             && !SpellingCheckRule.LANGUAGETOOL_FX.equals(word)
-            && !speller.isInDictionary(word)
-            && !(!StringTools.isMixedCase(word) 
-                && speller.isInDictionary(word.toLowerCase(conversionLocale)));
+            && speller.isMisspelled(word);
   }
 
   public List<String> getSuggestions(String word) {
     final List<String> suggestions = new ArrayList<>();
     try {
       suggestions.addAll(speller.findReplacements(word));
-      if (suggestions.isEmpty() && !word.toLowerCase(conversionLocale).equals(word)) {
-        suggestions.addAll(speller.findReplacements(word.toLowerCase(conversionLocale)));
-      }
       suggestions.addAll(speller.replaceRunOnWords(word));
     } catch (CharacterCodingException e) {
       throw new RuntimeException(e);
     }
+    // capitalize suggestions if necessary
+    if (dictionary.metadata.isConvertingCase()
+        && StringTools.startsWithUppercase(word)) {
+      for (int i = 0; i < suggestions.size(); i++) {
+        String uppercaseFirst = StringTools.uppercaseFirstChar(suggestions
+            .get(i));
+        // remove capitalized duplicates
+        int auxIndex = suggestions.indexOf(uppercaseFirst);
+        if (auxIndex > i) {
+          suggestions.remove(auxIndex);
+        }
+        if (auxIndex > -1 && auxIndex < i) {
+          suggestions.remove(i);
+          i--;
+        } else {
+          suggestions.set(i, uppercaseFirst);
+        }
+      }
+    }
     return suggestions;
   }
 
-  private boolean containsDigit(final String s) {
-    for (int k = 0; k < s.length(); k++) {
-      if (Character.isDigit(s.charAt(k))) {
-        return true;
-      }
-    }
-    return false;
+  /**
+   * Determines whether the dictionary uses case conversions.
+   * @return True when the speller uses spell conversions.
+   * @since 2.5
+   */
+  public boolean convertsCase() {
+    return speller.convertsCase();
   }
 
 }

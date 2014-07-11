@@ -37,7 +37,6 @@ import org.languagetool.rules.RuleMatch;
  * 
  * @author Marcin Miłkowski
  */
-
 public abstract class BitextRule extends Rule {
 
   public static List<Class<? extends BitextRule>> getRelevantRules() {
@@ -64,17 +63,17 @@ public abstract class BitextRule extends Rule {
   public abstract void reset();
 
   /**
-   * This method makes no sense for bitext, return null??
+   * This method makes no sense for bitext, thus it always returns {@code null}.
    */
   @Override
-  public RuleMatch[] match(AnalyzedSentence text) throws IOException {
+  public RuleMatch[] match(AnalyzedSentence sentence) throws IOException {
     return null;
   }
 
   /**
    * Set the source language. If the language is not supported
    * by LT, you need to use the default tokenizers etc.
-   * @param lang - Source Language
+   * @param lang Source Language
    */
   public final void setSourceLang(final Language lang) {
     sourceLanguage = lang;
@@ -113,9 +112,9 @@ public abstract class BitextRule extends Rule {
     return incorrectExamples;
   }
 
-  protected String getPureText(AnalyzedSentence text) {
+  protected String getPureText(AnalyzedSentence sentence) {
     final StringBuilder sb = new StringBuilder();
-    for (AnalyzedTokenReadings token : text.getTokens()) {
+    for (AnalyzedTokenReadings token : sentence.getTokens()) {
       sb.append(token.getToken());
     }
     return sb.toString();

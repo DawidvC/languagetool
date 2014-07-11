@@ -23,8 +23,8 @@ import java.util.List;
 
 import org.languagetool.Language;
 import org.languagetool.rules.DoublePunctuationRule;
+import org.languagetool.rules.MultipleWhitespaceRule;
 import org.languagetool.rules.Rule;
-import org.languagetool.rules.WhitespaceRule;
 import org.languagetool.tagging.Tagger;
 import org.languagetool.tagging.zh.ChineseTagger;
 import org.languagetool.tokenizers.SentenceTokenizer;
@@ -34,63 +34,66 @@ import org.languagetool.tokenizers.zh.ChineseWordTokenizer;
 
 public class Chinese extends Language {
 
-	private Tagger tagger;
-	private Tokenizer wordTokenizer;
-	private SentenceTokenizer sentenceTokenizer;
+  private Tagger tagger;
+  private Tokenizer wordTokenizer;
+  private SentenceTokenizer sentenceTokenizer;
+  private String name = "Chinese";
 
-	@Override
-	public String getShortName() {
-		return "zh";
-	}
+  @Override
+  public String getShortName() {
+    return "zh";
+  }
 
-	@Override
-	public String getName() {
-		return "Chinese";
-	}
+  @Override
+  public String getName() {
+    return name;
+  }
 
-	@Override
-	public String[] getCountryVariants() {
-		return new String[] { "CN" };
-	}
+  @Override
+  public void setName(final String name) {
+    this.name = name;
+  }
 
-	@Override
-	public Contributor[] getMaintainers() {
-		return new Contributor[] { new Contributor("Tao Lin"),
-				new Contributor("Fangjie Wang"),
-				new Contributor("Wenting Cheng"), new Contributor("Xiang Yao"),
-				new Contributor("Tong Wang"), new Contributor("Jiawen Mo"),
-				new Contributor("Jiarong Li"), new Contributor("Weijie Huang"),
-				new Contributor("Yixin Zhou"), new Contributor("Xinmin Chen"),
-				new Contributor("Xiaofei Liu"), new Contributor("Debiao Luo"), };
-	}
+  @Override
+  public String[] getCountries() {
+    return new String[] { "CN" };
+  }
 
-	@Override
-	public List<Class<? extends Rule>> getRelevantRules() {
-		return Arrays.asList(DoublePunctuationRule.class, WhitespaceRule.class);
-	}
+  @Override
+  public Contributor[] getMaintainers() {
+    return new Contributor[] { new Contributor("Tao Lin") };
+  }
 
-	@Override
-	public final Tagger getTagger() {
-		if (tagger == null) {
-			tagger = new ChineseTagger();
-		}
-		return tagger;
-	}
+  @Override
+  public List<Class<? extends Rule>> getRelevantRules() {
+    return Arrays.asList(
+            DoublePunctuationRule.class,
+            MultipleWhitespaceRule.class
+    );
+  }
 
-	@Override
-	public final Tokenizer getWordTokenizer() {
-		if (wordTokenizer == null) {
-			wordTokenizer = new ChineseWordTokenizer();
-		}
-		return wordTokenizer;
-	}
+  @Override
+  public final Tagger getTagger() {
+    if (tagger == null) {
+      tagger = new ChineseTagger();
+    }
+    return tagger;
+  }
 
-	@Override
-	public final SentenceTokenizer getSentenceTokenizer() {
-		if (sentenceTokenizer == null) {
-			sentenceTokenizer = new ChineseSentenceTokenizer();
-		}
-		return sentenceTokenizer;
-	}
+  @Override
+  public final Tokenizer getWordTokenizer() {
+    if (wordTokenizer == null) {
+      wordTokenizer = new ChineseWordTokenizer();
+    }
+    return wordTokenizer;
+  }
+
+  @Override
+  public final SentenceTokenizer getSentenceTokenizer() {
+    if (sentenceTokenizer == null) {
+      sentenceTokenizer = new ChineseSentenceTokenizer();
+    }
+    return sentenceTokenizer;
+  }
 
 }

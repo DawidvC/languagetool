@@ -21,46 +21,34 @@ You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301
 USA
-
-$Id: grammar.xml 7145 2012-06-01 10:52:39Z milek_pl $
 -->
-<!--suppress CheckTagEmptyBody -->
 <rules lang="en-GB" xsi:noNamespaceSchemaLocation="../../../../../../../../../../languagetool-core/src/main/resources/org/languagetool/rules/rules.xsd"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema">
-	<!-- ====================================================================== -->
-	<!-- Possible typos -->
-	<!-- ====================================================================== -->
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<category name="American English phrases" type="locale-violation">
 		<rule id="ZIP_CODE_POSTCODE" name="zip code/postcode">
 			<pattern>
 				<token>zip</token>
 				<token>code</token>
 			</pattern>
-			<message>
-				This expression is common for American English. Did you mean <suggestion>postcode</suggestion>?
-			</message>
+			<message>This expression is common for American English. Did you mean <suggestion>postcode</suggestion>?</message>
 			<url>http://www.learnenglish.de/mistakes/USvsBrEnglish.html</url>
 			<example type="incorrect">Please enter your <marker>zip code</marker>.</example>
 			<example type="correct">Please enter your postcode.</example>
 		</rule>
 		<rule id="APARTMENT-FLAT" name="apartment/flat">
 			<pattern>
-				<token>apartment</token>				
+				<token>apartment</token>
 			</pattern>
-			<message>
-				This word is common for American English. Did you mean <suggestion>flat</suggestion>?
-			</message>
+			<message>This word is common for American English. Did you mean <suggestion>flat</suggestion>?</message>
 			<url>http://www.learnenglish.de/mistakes/USvsBrEnglish.html</url>
 			<example type="incorrect">I just bought an <marker>apartment</marker>?</example>
 			<example type="correct">Where's your flat?</example>
 		</rule>
 		<rule id="BAND-AID_PLASTER" name="band-aid/plaster">
 			<pattern>
-				<token>band-aid</token>				
+				<token>band-aid</token>
 			</pattern>
-			<message>
-				This word is common for American English. Did you mean <suggestion>plaster</suggestion>?
-			</message>
+			<message>This word is common for American English. Did you mean <suggestion>plaster</suggestion>?</message>
 			<url>http://www.learnenglish.de/mistakes/USvsBrEnglish.html</url>
 			<example type="incorrect">Where's the <marker>band-aid</marker>?</example>
 			<example type="correct">Where's the plaster?</example>
@@ -68,13 +56,11 @@ $Id: grammar.xml 7145 2012-06-01 10:52:39Z milek_pl $
 		<rule id="GROUND_VS_MINCED" name="ground beef/minced beef">
 			<pattern>
 				<marker>
-				<token>ground</token>
+					<token>ground</token>
 				</marker>
-				<token>beef</token>				
+				<token>beef</token>
 			</pattern>
-			<message>
-				This word is common for American English. Did you mean <suggestion>minced</suggestion>?
-			</message>
+			<message>This word is common for American English. Did you mean <suggestion>minced</suggestion>?</message>
 			<url>http://www.learnenglish.de/mistakes/USvsBrEnglish.html</url>
 			<example type="incorrect">Do vegetarians eat <marker>ground</marker> beef?</example>
 			<example type="correct">No, vegetarians do not eat minced beef.</example>
@@ -82,48 +68,40 @@ $Id: grammar.xml 7145 2012-06-01 10:52:39Z milek_pl $
 		<rule id="FIRST_GROUND_FLOOR" name="first floor/ground floor">
 			<pattern>
 				<marker>
-				<token>first</token>
+					<token>first</token>
 				</marker>
-				<token>floor</token>				
+				<token>floor</token>
 			</pattern>
-			<message>
-				This word is common for American English. Did you mean <suggestion>ground</suggestion>?
-			</message>
+			<message>This word is common for American English. Did you mean <suggestion>ground</suggestion>?</message>
 			<url>http://www.learnenglish.de/mistakes/USvsBrEnglish.html</url>
 			<example type="incorrect">The room is on the <marker>first</marker> floor.</example>
 			<example type="correct">You mean on the ground floor?</example>
 		</rule>
 		<rule id="VACUUM_CLEANER_HOOVER" name="vacuum cleaner/hoover">
 			<pattern>
-				<marker>
-				<token>vacuum</token>				
+				<token>vacuum</token>
 				<token inflected="yes">cleaner</token>
-				</marker>				
 			</pattern>
-			<message>
-				This expression is common for American English. Did you mean <suggestion>hoover</suggestion>?
-			</message>
+			<message>This expression is common for American English. Did you mean <suggestion>hoover</suggestion>?</message>
 			<url>http://www.learnenglish.de/mistakes/USvsBrEnglish.html</url>
 			<example type="incorrect">Buy me a <marker>vacuum cleaner</marker>.</example>
 			<example type="correct">All I need is a hoover.</example>
 		</rule>
 		<rule id="MOVIE_THEATER_CINEMA" name="movie theater/cinema">
 			<pattern>
-				<marker>
-				<token>movie</token>				
+				<token>movie</token>
 				<token inflected="yes">theater</token>
-				</marker>				
 			</pattern>
-			<message>
-				This expression is common for American English. Did you mean <suggestion>cinema</suggestion>?
-			</message>
+			<message>This expression is common for American English. Did you mean <suggestion>cinema</suggestion>?</message>
 			<url>http://www.learnenglish.de/mistakes/USvsBrEnglish.html</url>
 			<example type="incorrect">Let's go to a <marker>movie theater</marker>.</example>
 			<example type="correct">Edward Norton – not appearing in a cinema near you.</example>
 		</rule>		
 		<rule id="GOT_GOTTEN" name="gotten/got">
 			<pattern>
-				<marker><token>gotten</token></marker>
+				<marker>
+					<token>gotten</token>
+				</marker>
 				<token><exception>up</exception></token>
 			</pattern>
 			<message>In the UK, the word 'gotten' is usually no longer used. Did you mean <suggestion>got</suggestion>?</message>
@@ -131,6 +109,6 @@ $Id: grammar.xml 7145 2012-06-01 10:52:39Z milek_pl $
 			<example type="correct">He's gotten up on the wrong side of bed.</example>
 			<example type="incorrect" correction="got">He has <marker>gotten</marker> some food.</example>
 		</rule>
-				
+
 	</category>
 </rules>

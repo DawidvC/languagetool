@@ -147,7 +147,6 @@ public class SimpleReplaceRule extends Rule {
    * Same as {@link AbstractSimpleReplaceRule#loadWords} but allows multiple words.   
    * @param file the file to load.
    * @return the list of maps containing the error-corrections pairs. <br/>The n-th map contains key strings of (n+1) words.
-   * @throws IOException when the file contains errors.
    * @see #getWordTokenizer
    */
   private List<Map<String, String>> loadWords(final InputStream file)
@@ -214,9 +213,9 @@ public class SimpleReplaceRule extends Rule {
   }
 
   @Override
-  public RuleMatch[] match(final AnalyzedSentence text) {
+  public RuleMatch[] match(final AnalyzedSentence sentence) {
     final List<RuleMatch> ruleMatches = new ArrayList<>();
-    final AnalyzedTokenReadings[] tokens = text
+    final AnalyzedTokenReadings[] tokens = sentence
             .getTokensWithoutWhitespace();
 
     final Queue<AnalyzedTokenReadings> prevTokens = new ArrayBlockingQueue<>(wrongWords.size());
@@ -224,11 +223,13 @@ public class SimpleReplaceRule extends Rule {
     for (int i = 1; i < tokens.length; i++) {
       addToQueue(tokens[i], prevTokens);
       final StringBuilder sb = new StringBuilder();
-      final ArrayList<String> variants = new ArrayList<>();
-      final List<AnalyzedTokenReadings> prevTokensList = Arrays.asList(prevTokens.toArray(new AnalyzedTokenReadings[] {}));
+      final List<String> variants = new ArrayList<>();
+      final List<AnalyzedTokenReadings> prevTokensList =
+              Arrays.asList(prevTokens.toArray(new AnalyzedTokenReadings[prevTokens.size()]));
       for (int j = prevTokensList.size() - 1; j >= 0; j--) {
-        if (j != prevTokensList.size() - 1 && prevTokensList.get(j + 1).isWhitespaceBefore())
+        if (j != prevTokensList.size() - 1 && prevTokensList.get(j + 1).isWhitespaceBefore()) {
           sb.insert(0, " ");
+        }
         sb.insert(0, prevTokensList.get(j).getToken());
         variants.add(0, sb.toString());
       }

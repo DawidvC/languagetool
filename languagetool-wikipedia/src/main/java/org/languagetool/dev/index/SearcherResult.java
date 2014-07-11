@@ -33,6 +33,8 @@ public class SearcherResult {
 
   private boolean resultIsTimeLimited;
   private int docCount;
+  private boolean hasTooManyLuceneMatches;
+  private int luceneMatchCount;
 
   public SearcherResult(List<MatchingSentence> matchingSentences, int checkedSentences, Query relaxedQuery) {
     this.matchingSentences = matchingSentences;
@@ -67,4 +69,21 @@ public class SearcherResult {
   public int getDocCount() {
     return docCount;
   }
+
+  public void setHasTooManyLuceneMatches(boolean hasTooManyLuceneMatches) {
+    this.hasTooManyLuceneMatches = hasTooManyLuceneMatches;
+  }
+
+  public boolean hasTooManyLuceneMatches() {
+    return hasTooManyLuceneMatches;
+  }
+
+  public void setLuceneMatchCount(int luceneMatchCount) {
+    this.luceneMatchCount = luceneMatchCount;
+  }
+
+  public int getLuceneMatchCount() {
+    return luceneMatchCount;
+  }
+
 }

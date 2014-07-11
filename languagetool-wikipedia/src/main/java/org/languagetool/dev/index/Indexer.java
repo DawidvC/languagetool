@@ -40,6 +40,7 @@ import org.languagetool.tokenizers.SentenceTokenizer;
 
 import static org.languagetool.dev.index.PatternRuleQueryBuilder.FIELD_NAME;
 import static org.languagetool.dev.index.PatternRuleQueryBuilder.FIELD_NAME_LOWERCASE;
+import static org.languagetool.dev.index.PatternRuleQueryBuilder.SOURCE_FIELD_NAME;
 
 /**
  * A class with a main() method that takes a text file and indexes its sentences, including POS tags
@@ -48,18 +49,15 @@ import static org.languagetool.dev.index.PatternRuleQueryBuilder.FIELD_NAME_LOWE
  */
 public class Indexer implements AutoCloseable {
 
-  private static final Version LUCENE_VERSION = Version.LUCENE_44;
+  private static final Version LUCENE_VERSION = Version.LUCENE_4_9;
 
   private final IndexWriter writer;
   private final SentenceTokenizer sentenceTokenizer;
 
   public Indexer(Directory dir, Language language) {
     try {
-      final Map<String, Analyzer> analyzerMap = new HashMap<>();
-      analyzerMap.put(FIELD_NAME, new LanguageToolAnalyzer(LUCENE_VERSION, new JLanguageTool(language), false));
-      analyzerMap.put(FIELD_NAME_LOWERCASE, new LanguageToolAnalyzer(LUCENE_VERSION, new JLanguageTool(language), true));
-      final Analyzer analyzer = new PerFieldAnalyzerWrapper(new DoNotUseAnalyzer(), analyzerMap);
-      final IndexWriterConfig writerConfig = new IndexWriterConfig(LUCENE_VERSION, analyzer);
+      final Analyzer analyzer = getAnalyzer(language);
+      final IndexWriterConfig writerConfig = getIndexWriterConfig(analyzer);
       writerConfig.setOpenMode(OpenMode.CREATE);
       writer = new IndexWriter(dir, writerConfig);
       sentenceTokenizer = language.getSentenceTokenizer();
@@ -71,6 +69,17 @@ public class Indexer implements AutoCloseable {
   public static void main(String[] args) throws IOException {
     ensureCorrectUsageOrExit(args);
     run(args[0], args[1], args[2]);
+  }
+
+  static Analyzer getAnalyzer(Language language) throws IOException {
+    final Map<String, Analyzer> analyzerMap = new HashMap<>();
+    analyzerMap.put(FIELD_NAME, new LanguageToolAnalyzer(LUCENE_VERSION, new JLanguageTool(language), false));
+    analyzerMap.put(FIELD_NAME_LOWERCASE, new LanguageToolAnalyzer(LUCENE_VERSION, new JLanguageTool(language), true));
+    return new PerFieldAnalyzerWrapper(new DoNotUseAnalyzer(), analyzerMap);
+  }
+
+  static IndexWriterConfig getIndexWriterConfig(Analyzer analyzer) {
+    return new IndexWriterConfig(LUCENE_VERSION, analyzer);
   }
 
   private static void ensureCorrectUsageOrExit(String[] args) {
@@ -110,23 +119,27 @@ public class Indexer implements AutoCloseable {
   }
 
   public static void run(BufferedReader reader, Indexer indexer, boolean isSentence) throws IOException {
-    indexer.index(reader, isSentence, -1);
+    indexer.index(reader, null, isSentence, -1);
   }
 
   public void index(String content, boolean isSentence, int docCount) throws IOException {
-    final BufferedReader br = new BufferedReader(new StringReader(content));
-    index(br, isSentence, docCount);
+    index(content, null, isSentence, docCount);
   }
 
-  public void index(BufferedReader reader, boolean isSentence, int docCount) throws IOException {
+  public void index(String content, String source, boolean isSentence, int docCount) throws IOException {
+    final BufferedReader br = new BufferedReader(new StringReader(content));
+    index(br, source, isSentence, docCount);
+  }
+
+  public void index(BufferedReader reader, String source, boolean isSentence, int docCount) throws IOException {
     String line;
     while ((line = reader.readLine()) != null) {
       if (isSentence) {
-        add(-1, line);
+        add(-1, line, source);
       } else {
         final List<String> sentences = sentenceTokenizer.tokenize(line);
         for (String sentence : sentences) {
-          add(docCount, sentence);
+          add(docCount, sentence, source);
         }
       }
     }
@@ -136,7 +149,7 @@ public class Indexer implements AutoCloseable {
     writer.addDocument(doc);
   }
 
-  private void add(int docCount, String sentence) throws IOException {
+  private void add(int docCount, String sentence, String source) throws IOException {
     final Document doc = new Document();
     final FieldType type = new FieldType();
     type.setStored(true);
@@ -149,6 +162,13 @@ public class Indexer implements AutoCloseable {
       countType.setStored(true);
       countType.setIndexed(false);
       doc.add(new Field("docCount", docCount + "", countType));
+    }
+    if (source != null) {
+      final FieldType sourceType = new FieldType();
+      sourceType.setStored(true);
+      sourceType.setIndexed(true);
+      sourceType.setTokenized(false);
+      doc.add(new Field(SOURCE_FIELD_NAME, source, sourceType));
     }
     writer.addDocument(doc);
   }

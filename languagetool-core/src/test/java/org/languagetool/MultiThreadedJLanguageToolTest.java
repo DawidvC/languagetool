@@ -29,12 +29,8 @@ import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.languagetool.language.Contributor;
 import org.languagetool.language.Demo;
-import org.languagetool.rules.Rule;
-import org.languagetool.rules.RuleMatch;
-import org.languagetool.rules.UppercaseSentenceStartRule;
-import org.languagetool.rules.WhitespaceRule;
+import org.languagetool.rules.*;
 
 public class MultiThreadedJLanguageToolTest {
 
@@ -42,15 +38,26 @@ public class MultiThreadedJLanguageToolTest {
   public void testCheck() throws IOException {
     JLanguageTool tool;
     
-    tool = new MultiThreadedJLanguageTool(new Demo());    
+    tool = new MultiThreadedJLanguageTool(new Demo());
     final List<String> ruleMatchIds1 = getRuleMatchIds(tool);
-    assertTrue(ruleMatchIds1.size() >= 10);
+    assertTrue(ruleMatchIds1.size() == 10);
     Assert.assertEquals(4, tool.getSentenceCount());
     
     tool = new JLanguageTool(new Demo());
     final List<String> ruleMatchIds2 = getRuleMatchIds(tool);
     assertThat(ruleMatchIds1, is(ruleMatchIds2));
     Assert.assertEquals(4, tool.getSentenceCount());
+  }
+  
+  @Test
+  public void testTextAnalysis() throws IOException {
+    JLanguageTool tool = new MultiThreadedJLanguageTool(new Demo());
+    List<AnalyzedSentence> analyzedSentences = tool.analyzeText("This is a sentence. And another one.");
+    assertThat(analyzedSentences.size(), is(2));
+    assertThat(analyzedSentences.get(0).getTokens().length, is(10));
+    assertThat(analyzedSentences.get(0).getTokensWithoutWhitespace().length, is(6));  // sentence start has its own token
+    assertThat(analyzedSentences.get(1).getTokens().length, is(7));
+    assertThat(analyzedSentences.get(1).getTokensWithoutWhitespace().length, is(5));
   }
   
   @Test
@@ -84,32 +91,16 @@ public class MultiThreadedJLanguageToolTest {
 
   @Test
   public void testTwoRulesOnly() throws IOException {
-    MultiThreadedJLanguageTool langTool = new MultiThreadedJLanguageTool(new Language() {
-      @Override
-      public String getShortName() {
-        return "zz";
-      }
-      @Override
-      public String getName() {
-        return "Fake Language";
-      }
-      @Override
-      public String[] getCountryVariants() {
-        return new String[0];
-      }
-      @Override
-      public Contributor[] getMaintainers() {
-        return null;
-      }
+    MultiThreadedJLanguageTool langTool = new MultiThreadedJLanguageTool(new FakeLanguage() {
       @Override
       public List<Class<? extends Rule>> getRelevantRules() {
         // less rules than processors (depending on the machine), should at least not crash
         return Arrays.asList(
                 UppercaseSentenceStartRule.class,
-                WhitespaceRule.class
+                MultipleWhitespaceRule.class
         );
       }
     });
-    langTool.check("my test text");
+    assertThat(langTool.check("my test  text").size(), is(2));
   }
 }

@@ -35,7 +35,7 @@ public class DoublePunctuationRule extends Rule {
   public DoublePunctuationRule(final ResourceBundle messages) {
     super(messages);
     super.setCategory(new Category(messages.getString("category_misc")));
-    setLocQualityIssueType("typographical");
+    setLocQualityIssueType(ITSIssueType.Typographical);
   }
 
   @Override
@@ -49,9 +49,9 @@ public class DoublePunctuationRule extends Rule {
   }
 
   @Override
-  public final RuleMatch[] match(final AnalyzedSentence text) {
+  public final RuleMatch[] match(final AnalyzedSentence sentence) {
     final List<RuleMatch> ruleMatches = new ArrayList<>();
-    final AnalyzedTokenReadings[] tokens = text.getTokens();
+    final AnalyzedTokenReadings[] tokens = sentence.getTokens();
     int startPos = 0;
     int dotCount = 0;
     int commaCount = 0;

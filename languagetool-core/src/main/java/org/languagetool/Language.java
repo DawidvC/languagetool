@@ -21,7 +21,6 @@ package org.languagetool;
 import org.languagetool.chunking.Chunker;
 import org.languagetool.databroker.ResourceDataBroker;
 import org.languagetool.language.Contributor;
-import org.languagetool.language.Demo;
 import org.languagetool.rules.Rule;
 import org.languagetool.rules.patterns.Unifier;
 import org.languagetool.rules.patterns.UnifierConfiguration;
@@ -30,9 +29,7 @@ import org.languagetool.tagging.Tagger;
 import org.languagetool.tagging.disambiguation.Disambiguator;
 import org.languagetool.tagging.disambiguation.xx.DemoDisambiguator;
 import org.languagetool.tagging.xx.DemoTagger;
-import org.languagetool.tokenizers.SentenceTokenizer;
-import org.languagetool.tokenizers.Tokenizer;
-import org.languagetool.tokenizers.WordTokenizer;
+import org.languagetool.tokenizers.*;
 import org.languagetool.tools.MultiKeyProperties;
 import org.languagetool.tools.StringTools;
 
@@ -52,19 +49,21 @@ import java.util.*;
  */
 public abstract class Language {
 
-  public static final Language DEMO = new Demo();
-  
   private static final String PROPERTIES_PATH = "META-INF/org/languagetool/language-module.properties";
   private static final String PROPERTIES_KEY = "languageClasses";
   
   private static List<Language> externalLanguages = new ArrayList<>();
+
+  private boolean isExternalLanguage = false;
+
+  private List<String> externalRuleFiles = new ArrayList<>();
   
   /**
    * All languages supported by LanguageTool. This includes at least a "demo" language
    * for testing.
    */
   public static Language[] LANGUAGES = getLanguages();
-  
+
   private static Language[] getLanguages() {
     final List<Language> languages = new ArrayList<>();
     final Set<String> languageClassNames = new HashSet<>();
@@ -72,8 +71,7 @@ public abstract class Language {
       final Enumeration<URL> propertyFiles = Language.class.getClassLoader().getResources(PROPERTIES_PATH);
       while (propertyFiles.hasMoreElements()) {
         final URL url = propertyFiles.nextElement();
-        final InputStream inputStream = url.openStream();
-        try {
+        try (InputStream inputStream = url.openStream()) {
           // We want to be able to read properties file with duplicate key, as produced by
           // Maven when merging files:
           final MultiKeyProperties props = new MultiKeyProperties(inputStream);
@@ -94,14 +92,11 @@ public abstract class Language {
               languageClassNames.add(className);
             }
           }
-        } finally {
-          inputStream.close();
         }
       }
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
-    languages.add(DEMO);
     return languages.toArray(new Language[languages.size()]);
   }
 
@@ -120,22 +115,29 @@ public abstract class Language {
   /**
    * All languages supported by LanguageTool, but without the demo language.
    */
-  public static final Language[] REAL_LANGUAGES = new Language[LANGUAGES.length-1];
-  static {
-    int i = 0;
-    for (final Language lang : LANGUAGES) {
-      if (!lang.getShortName().equals(Demo.SHORT_NAME)) {
-        REAL_LANGUAGES[i] = lang;
-        i++;
+  public static final Language[] REAL_LANGUAGES = getRealLanguages();
+
+  /**
+   * Returns all languages supported by LanguageTool but without the demo language.
+   * In contrast to Language.REAL_LANGUAGES contains external languages as well.
+   * @return All supported languages.
+   * @since 2.6
+   */
+  public static Language[] getRealLanguages() {
+    List<Language> result = new ArrayList<>();
+    for (Language lang : LANGUAGES) {
+      if (!"xx".equals(lang.getShortName())) {  // skip demo language
+        result.add(lang);
       }
     }
+    return result.toArray(new Language[result.size()]);
   }
 
   private static final Language[] BUILTIN_LANGUAGES = LANGUAGES;
 
   private static final Disambiguator DEMO_DISAMBIGUATOR = new DemoDisambiguator();
   private static final Tagger DEMO_TAGGER = new DemoTagger();
-  private static final SentenceTokenizer SENTENCE_TOKENIZER = new SentenceTokenizer();
+  private static final SentenceTokenizer SENTENCE_TOKENIZER = new SimpleSentenceTokenizer();
   private static final WordTokenizer WORD_TOKENIZER = new WordTokenizer();
   
   private UnifierConfiguration unifierConfiguration = new UnifierConfiguration();
@@ -145,7 +147,7 @@ public abstract class Language {
 
   /**
    * Get this language's two character code, e.g. <code>en</code> for English.
-   * The country variant (e.g. "US"), if any, is not returned.
+   * The country parameter (e.g. "US"), if any, is not returned.
    * @return language code
    */
   public abstract String getShortName();
@@ -156,14 +158,50 @@ public abstract class Language {
    * @return language name
    */
   public abstract String getName();
+
+  /**
+   * Set this language's name in English.
+   * @since 2.6
+   */
+  public abstract void setName(final String name);
   
   /**
-   * Get this language's country variants, e.g. <code>US</code> (as in <code>en-US</code>) or
+   * Get this language's country options , e.g. <code>US</code> (as in <code>en-US</code>) or
    * <code>PL</code> (as in <code>pl-PL</code>).
-   * @return String[] - array of country variants for the language.
+   * @return String[] - array of country options for the language.
    */
-  public abstract String[] getCountryVariants();
+  public abstract String[] getCountries();
 
+  /**
+   * Get this language's variant, e.g. <code>valencia</code> (as in <code>ca-ES-valencia</code>)
+   * or <code>null</code>.
+   * Attention: not to be confused with "country" option
+   * @return String - variant for the language.
+   * @since 2.3
+   */
+  public String getVariant() {
+    return null;
+  }
+  
+  /**
+   * Get enabled rules different from the default ones for this language variant. 
+   * 
+   * @return enabled rules for the language variant.
+   * @since 2.4
+   */
+  public List<String> getDefaultEnabledRulesForVariant() {
+    return new ArrayList<>();
+  }
+
+  /**
+   * Get disabled rules different from the default ones for this language variant. 
+   * 
+   * @return disabled rules for the language variant.
+   * @since 2.4
+   */
+  public List<String> getDefaultDisabledRulesForVariant() {
+    return new ArrayList<>();
+  }
   /**
    * Get the name(s) of the maintainer(s) for this language or <code>null</code>.
    */
@@ -188,33 +226,31 @@ public abstract class Language {
    * Get this language's Java locale, considering language code and country code (if any).
    * @since 2.1
    */
-  public Locale getLocaleWithCountry() {
-    if (getCountryVariants().length > 0) {
-      return new Locale(getShortName(), getCountryVariants()[0]);
+  public Locale getLocaleWithCountryAndVariant() {
+    if (getCountries().length > 0) {
+      if (getVariant() != null) {
+        return new Locale(getShortName(), getCountries()[0], getVariant());
+      }
+      else {
+        return new Locale(getShortName(), getCountries()[0]);
+      }
     } else {
       return getLocale();
     }
   }
 
   /**
-   * Get the location of the rule file(s).
-   * @deprecated use {@link #getRuleFileNames()} instead (deprecated since 2.3)
-   */
-  public List<String> getRuleFileName() {
-    return getRuleFileNames();
-  }
-
-  /**
-   * Get the location of the rule file(s).
+   * Get the location of the rule file(s) in a form like {@code /org/languagetool/rules/de/grammar.xml}.
    */
   public List<String> getRuleFileNames() {
     final List<String> ruleFiles = new ArrayList<>();
+    ruleFiles.addAll(getExternalRuleFiles());
     final ResourceDataBroker dataBroker = JLanguageTool.getDataBroker();
     ruleFiles.add(dataBroker.getRulesDir()
             + "/" + getShortName() + "/" + JLanguageTool.PATTERN_FILE);
-    if (getShortNameWithVariant().length() > 2) {
+    if (getShortNameWithCountryAndVariant().length() > 2) {
       final String fileName = getShortName() + "/"
-              + getShortNameWithVariant()
+              + getShortNameWithCountryAndVariant()
               + "/" + JLanguageTool.PATTERN_FILE;
       if (dataBroker.ruleFileExists(fileName)) {
         ruleFiles.add(dataBroker.getRulesDir() + "/" + fileName);
@@ -224,11 +260,31 @@ public abstract class Language {
   }
 
   /**
+   * @since 2.6
+   */
+  public List<String> getExternalRuleFiles() {
+    return externalRuleFiles;
+  }
+
+  /**
+   * Adds an external rule file to the language. After running this method,
+   * one has to run JLanguageTool.activateDefaultPatternRules() to make sure
+   * that all external rules are activated.
+   *
+   * @param externalRuleFile Absolute file path to rules.
+   * @since 2.6
+   */
+  public void addExternalRuleFile(String externalRuleFile) {
+    externalRuleFiles.add(externalRuleFile);
+  }
+
+
+  /**
    * Languages that have country variants need to overwrite this to select their most common variant.
    * @return default country variant or {@code null}
    * @since 1.8
    */
-  public Language getDefaultVariant() {
+  public Language getDefaultLanguageVariant() {
     return null;
   }
 
@@ -313,7 +369,7 @@ public abstract class Language {
    */
   public final String getTranslatedName(final ResourceBundle messages) {
     try {
-      return messages.getString(getShortNameWithVariant());
+      return messages.getString(getShortNameWithCountryAndVariant());
     } catch (final MissingResourceException e) {
       try {
         return messages.getString(getShortName());
@@ -324,16 +380,19 @@ public abstract class Language {
   }
   
   /**
-   * Get the short name of the language with a country variant, if it is
-   * a single-variant language. For generic language classes, get only a two- or
+   * Get the short name of the language with country and variant (if any), if it is
+   * a single-country language. For generic language classes, get only a two- or
    * three-character code.
    * @since 1.8
    */
-  public final String getShortNameWithVariant() {
+  public final String getShortNameWithCountryAndVariant() {
     String name = getShortName();
-    if (getCountryVariants().length == 1 
+    if (getCountries().length == 1 
             && !name.contains("-x-")) {   // e.g. "de-DE-x-simple-language"
-      name += "-" + getCountryVariants()[0];
+      name += "-" + getCountries()[0];
+      if (getVariant() != null) {   // e.g. "ca-ES-valencia"
+        name += "-" + getVariant();
+      }
     }
     return name;
   }
@@ -417,9 +476,11 @@ public abstract class Language {
     if (language == null) {
       final StringBuilder sb = new StringBuilder();
       for (Language realLanguage : LANGUAGES) {
-        sb.append(" ").append(realLanguage.getShortNameWithVariant());
+        sb.append(' ').append(realLanguage.getShortNameWithCountryAndVariant());
       }
-      throw new IllegalArgumentException("'" + langCode + "' is not a language code known to LanguageTool. Supported language codes are:" + sb.toString());
+      throw new IllegalArgumentException("'" + langCode + "' is not a language code known to LanguageTool." +
+              " Supported language codes are:" + sb.toString() + ". The list of languages is read from " + PROPERTIES_PATH +
+              " in the Java classpath. See http://wiki.languagetool.org/java-api for details.");
     }
     return language;
   }
@@ -448,17 +509,29 @@ public abstract class Language {
         }
       }
     } else if (langCode.contains("-")) {
-      final String[] parts = langCode.split("-");
-      if (parts.length != 2) {
-        throw new IllegalArgumentException("'" + langCode + "' isn't a valid language code");
-      }
-      for (Language element : Language.LANGUAGES) {
-        if (parts[0].equalsIgnoreCase(element.getShortName())
-            && element.getCountryVariants().length == 1
-            && parts[1].equalsIgnoreCase(element.getCountryVariants()[0])) {
-          result = element;
-          break;
+      final String[] parts = langCode.split("-"); 
+      if (parts.length == 2) { // e.g. en-US
+        for (Language element : Language.LANGUAGES) {
+          if (parts[0].equalsIgnoreCase(element.getShortName())
+              && element.getCountries().length == 1
+              && parts[1].equalsIgnoreCase(element.getCountries()[0])) {
+            result = element;
+            break;
+          }
         }
+      } else if (parts.length == 3) { // e.g. ca-ES-valencia
+        for (Language element : Language.LANGUAGES) {
+          if (parts[0].equalsIgnoreCase(element.getShortName())
+              && element.getCountries().length == 1
+              && parts[1].equalsIgnoreCase(element.getCountries()[0])
+              && parts[2].equalsIgnoreCase(element.getVariant())) {
+            result = element;
+            break;
+          }
+        }
+      }
+      else { 
+        throw new IllegalArgumentException("'" + langCode + "' isn't a valid language code");
       }
     } else {
       for (Language element : Language.LANGUAGES) {
@@ -489,7 +562,7 @@ public abstract class Language {
       }
     }
     for (Language aLanguage : REAL_LANGUAGES) {
-      if (aLanguage.getShortNameWithVariant().equals("en-US")) {
+      if (aLanguage.getShortNameWithCountryAndVariant().equals("en-US")) {
         return aLanguage;
       }
     }
@@ -499,7 +572,7 @@ public abstract class Language {
   private static Language getLanguageForLanguageNameAndCountry(Locale locale) {
     for (Language language : Language.REAL_LANGUAGES) {
       if (language.getShortName().equals(locale.getLanguage())) {
-        final List<String> countryVariants = Arrays.asList(language.getCountryVariants());
+        final List<String> countryVariants = Arrays.asList(language.getCountries());
         if (countryVariants.contains(locale.getCountry())) {
           return language;
         }
@@ -512,7 +585,7 @@ public abstract class Language {
     // use default variant if available:
     for (Language language : Language.REAL_LANGUAGES) {
       if (language.getShortName().equals(locale.getLanguage()) && language.hasVariant()) {
-        final Language defaultVariant = language.getDefaultVariant();
+        final Language defaultVariant = language.getDefaultLanguageVariant();
         if (defaultVariant != null) {
           return defaultVariant;
         }
@@ -531,35 +604,6 @@ public abstract class Language {
   public final String toString() {
     return getName();
   }
-  
-  /**
-   * Get sorted info about all maintainers (without country variants) to be used in the About dialog.
-   * @param messages {{@link ResourceBundle} language bundle to translate the info
-   * @return A list of maintainers, sorted by name of language.
-   * @since 0.9.9
-   */
-  public static String getAllMaintainers(final ResourceBundle messages) {
-    final StringBuilder maintainersInfo = new StringBuilder();
-    final List<String> toSort = new ArrayList<>();
-    for (final Language lang : Language.REAL_LANGUAGES) {
-      if (!lang.isVariant()) {
-        if (lang.getMaintainers() != null) {
-          final List<String> names = new ArrayList<>();
-          for (Contributor contributor : lang.getMaintainers()) {
-            names.add(contributor.getName());
-          }
-          toSort.add(messages.getString(lang.getShortName()) +
-              ": " + listToStringWithLineBreaks(names));
-        }
-      }            
-    }    
-    Collections.sort(toSort);
-    for (final String lElem : toSort) {
-      maintainersInfo.append(lElem);
-      maintainersInfo.append('\n');
-    }
-    return maintainersInfo.toString();
-  }
 
   /**
    * Whether this is a country variant of another language, i.e. whether it doesn't
@@ -568,7 +612,7 @@ public abstract class Language {
    */
   public final boolean isVariant() {
     for (Language language : LANGUAGES) {
-      final boolean skip = language.getShortNameWithVariant().equals(getShortNameWithVariant());
+      final boolean skip = language.getShortNameWithCountryAndVariant().equals(getShortNameWithCountryAndVariant());
       if (!skip && language.getClass().isAssignableFrom(getClass())) {
         return true;
       }
@@ -582,7 +626,7 @@ public abstract class Language {
    */
   public final boolean hasVariant() {
     for (Language language : LANGUAGES) {
-      final boolean skip = language.getShortNameWithVariant().equals(getShortNameWithVariant());
+      final boolean skip = language.getShortNameWithCountryAndVariant().equals(getShortNameWithCountryAndVariant());
       if (!skip && getClass().isAssignableFrom(language.getClass())) {
         return true;
       }
@@ -591,7 +635,16 @@ public abstract class Language {
   }
 
   public boolean isExternal() {
-    return false;
+    return isExternalLanguage;
+  }
+
+  /**
+   * Sets the language as external. Useful for
+   * making a copy of an existing language.
+   * @since 2.6
+   */
+  public void makeExternal() {
+    isExternalLanguage = true;
   }
 
   /**
@@ -602,37 +655,17 @@ public abstract class Language {
    */
   public boolean equalsConsiderVariantsIfSpecified(Language otherLanguage) {
     if (getShortName().equals(otherLanguage.getShortName())) {
-      final boolean thisHasVariant = hasCountryVariant();
-      final boolean otherHasVariant = otherLanguage.hasCountryVariant();
-      if (thisHasVariant && otherHasVariant) {
-        return getShortNameWithVariant().equals(otherLanguage.getShortNameWithVariant());
-      }
-      return true;
+      final boolean thisHasCountry = hasCountry();
+      final boolean otherHasCountry = otherLanguage.hasCountry();
+      return !(thisHasCountry && otherHasCountry) ||
+              getShortNameWithCountryAndVariant().equals(otherLanguage.getShortNameWithCountryAndVariant());
     } else {
       return false;
     }
   }
 
-  private boolean hasCountryVariant() {
-    return getCountryVariants().length == 1 && !(getCountryVariants().length == 1 && getCountryVariants()[0].equals("ANY"));
-  }
-
-  private static String listToStringWithLineBreaks(final Collection<String> l) {
-    final StringBuilder sb = new StringBuilder();
-    int i = 0;
-    for (final Iterator<String> iter = l.iterator(); iter.hasNext();) {
-      final String str = iter.next();
-      sb.append(str);
-      if (iter.hasNext()) {
-        if (i > 0 && i % 3 == 0) {
-          sb.append(",\n    ");
-        } else {
-          sb.append(", ");
-        }
-      }
-      i++;
-    }
-    return sb.toString();
+  private boolean hasCountry() {
+    return getCountries().length == 1;
   }
 
 }

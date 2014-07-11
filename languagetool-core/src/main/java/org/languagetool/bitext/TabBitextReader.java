@@ -35,10 +35,10 @@ public class TabBitextReader implements BitextReader {
   protected BufferedReader in;
   protected StringPair nextPair; 
   protected String nextLine;
-  private String prevLine;
+  protected int sentencePos;
 
+  private String prevLine;
   private int lineCount = -1;
-  protected int sentencePos;  
 
   public TabBitextReader(final String filename, final String encoding) {
     try {     
@@ -50,7 +50,7 @@ public class TabBitextReader implements BitextReader {
       nextLine = in.readLine();
       prevLine = "";
       nextPair = tab2StringPair(nextLine);
-    } catch(IOException e) { 
+    } catch (IOException e) { 
       throw new IllegalArgumentException(e); 
     }
   }
@@ -126,7 +126,5 @@ public class TabBitextReader implements BitextReader {
   public String getCurrentLine() {
     return prevLine;
   }
-
-
 
 }

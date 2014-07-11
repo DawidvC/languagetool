@@ -50,7 +50,6 @@ public class ManualTagger {
   /**
    * Look up a word's baseform and POS information.
    * 
-   * @param term
    * @return an array with the baseform (at position 0, 2, ...) and the POS
    *         information (at position 1, 3, ...) or <code>null</code> if the
    *         word is unknown
@@ -64,18 +63,17 @@ public class ManualTagger {
     for (final Object element : l) {
       final LookedUpTerm lookedUpTerm = (LookedUpTerm) element;
       plainResult.add(lookedUpTerm.baseform);
-      plainResult.add(lookedUpTerm.postags);
+      plainResult.add(lookedUpTerm.posTags);
     }
     if (plainResult.isEmpty()) {
       return null;
     }
-    return plainResult.toArray(new String[]{});
+    return plainResult.toArray(new String[plainResult.size()]);
   }
 
   private Map<String, List<LookedUpTerm>> loadMapping(final InputStream inputStream, final String encoding) throws IOException {
     final Map<String, List<LookedUpTerm>> map = new HashMap<>();
-    final Scanner scanner = new Scanner(inputStream, encoding);
-    try {
+    try (Scanner scanner = new Scanner(inputStream, encoding)) {
       while (scanner.hasNextLine()) {
         final String line = scanner.nextLine();
         if (StringTools.isEmpty(line) || line.charAt(0) == '#') {
@@ -92,8 +90,6 @@ public class ManualTagger {
         terms.add(new LookedUpTerm(parts[1], parts[2]));
         map.put(parts[0], terms);
       }
-    } finally {
-      scanner.close();
     }
     return map;
   }
@@ -103,11 +99,11 @@ public class ManualTagger {
 class LookedUpTerm {
 
   String baseform;
-  String postags;
+  String posTags;
 
-  LookedUpTerm(final String baseform, final String postags) {
+  LookedUpTerm(final String baseform, final String posTags) {
     this.baseform = baseform;
-    this.postags = postags;
+    this.posTags = posTags;
   }
 
 }

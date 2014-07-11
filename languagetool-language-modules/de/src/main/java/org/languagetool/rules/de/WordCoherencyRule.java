@@ -32,6 +32,7 @@ import org.languagetool.AnalyzedToken;
 import org.languagetool.AnalyzedTokenReadings;
 import org.languagetool.JLanguageTool;
 import org.languagetool.rules.Category;
+import org.languagetool.rules.Example;
 import org.languagetool.rules.RuleMatch;
 
 /**
@@ -57,7 +58,9 @@ public class WordCoherencyRule extends GermanRule {
     if (messages != null) {
       super.setCategory(new Category(messages.getString("category_misc")));
     }
-    relevantWords = loadWords(JLanguageTool.getDataBroker().getFromRulesDirAsStream(FILE_NAME)); 
+    relevantWords = loadWords(JLanguageTool.getDataBroker().getFromRulesDirAsStream(FILE_NAME));
+    addExamplePair(Example.wrong("Die Delfine gehören zu den Zahnwalen. <marker>Delphine</marker> sind in allen Meeren verbreitet."),
+                   Example.fixed("Die Delfine gehören zu den Zahnwalen. <marker>Delfine</marker> sind in allen Meeren verbreitet."));
   }
   
   @Override
@@ -71,19 +74,13 @@ public class WordCoherencyRule extends GermanRule {
   }
 
   @Override
-  public RuleMatch[] match(AnalyzedSentence text) {
+  public RuleMatch[] match(AnalyzedSentence sentence) {
     final List<RuleMatch> ruleMatches = new ArrayList<>();
-    final AnalyzedTokenReadings[] tokens = text.getTokens();
+    final AnalyzedTokenReadings[] tokens = sentence.getTokens();
     int pos = 0;
     for (AnalyzedTokenReadings tmpToken : tokens) {
-      //TODO: definitely should be changed
-      //if the general lemmatizer is working
-      //defaulting to the first element because the
-      //general German lemmatizer is not (yet) there
       String token = tmpToken.getToken();
-      if (tmpToken.isWhitespace()) {
-        // ignore
-      } else {
+      if (!tmpToken.isWhitespace()) {
         final String origToken = token;
         final List<AnalyzedToken> readings = tmpToken.getReadings();
         // TODO: in theory we need to care about the other readings, too (affects e.g. German "Schenke" as a noun):
@@ -115,8 +112,7 @@ public class WordCoherencyRule extends GermanRule {
 
   private Map<String, String> loadWords(InputStream file) throws IOException {
     final Map<String, String> map = new HashMap<>();
-    final Scanner scanner = new Scanner(file, FILE_ENCODING);
-    try {
+    try (Scanner scanner = new Scanner(file, FILE_ENCODING)) {
       while (scanner.hasNextLine()) {
         final String line = scanner.nextLine().trim();
         if (line.length() < 1) {
@@ -132,8 +128,6 @@ public class WordCoherencyRule extends GermanRule {
         map.put(parts[0], parts[1]);
         map.put(parts[1], parts[0]);
       }
-    } finally {
-      scanner.close();
     }
     return map;
   }

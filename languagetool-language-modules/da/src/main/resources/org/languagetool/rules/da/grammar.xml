@@ -218,9 +218,7 @@ $Id$
     <rulegroup id="talord" name="Talord" default="on">
       <rule> <!-- Talord over 100 med 'og' -->
         <pattern>
-          <token regexp="yes">((en|et|to|tre|fire|fem|seks|syv|otte|ni|ti|elleve|tolv|tretten|fjorten|femten|seksten|sytten|atten|nitten|tyve|tredive|tredve|fyrre|halvtreds|tres|halvfjers|firs|halvfems|hundred(|e)|tusind(|e|er)|million(|er)|milliard(|er))
-            (hundred(|e)|tusind(|e|er)|million(|er)|milliard(|er))
-            .*(hundred(|e)|tusind(|e|er)|million(|er)|milliard(|er)|og|en|et|to|tre|fire|fem|seks|syv|otte|ni|ti|elleve|tolv|tretten|fjorten|femten|seksten|sytten|atten|nitten|tyve|tredive|tredve|fyrre|halvtreds|tres|halvfjers|firs|halvfems))
+          <token regexp="yes">((en|et|to|tre|fire|fem|seks|syv|otte|ni|ti|elleve|tolv|tretten|fjorten|femten|seksten|sytten|atten|nitten|tyve|tredive|tredve|fyrre|halvtreds|tres|halvfjers|firs|halvfems|hundrede?|tusind(er?)?|million(er)?|milliard(er)?)(hundrede?|tusind(er?)?|million(er)?|milliard(er)?).*(hundrede?|tusind(er?)?|million(er)?|milliard(er)?|og|en|et|to|tre|fire|fem|seks|syv|otte|ni|ti|elleve|tolv|tretten|fjorten|femten|seksten|sytten|atten|nitten|tyve|tredive|tredve|fyrre|halvtreds|tres|halvfjers|firs|halvfems))
           <exception negate="yes" regexp="yes">.*[a-s,u-å]og.*[a-s,u-å]</exception></token>
         </pattern>
         <message>Talord over hundrede skrives i flere ord: <suggestion><match no="1" regexp_match="(?iu)((og)((en|et|to|tre|fire|fem|seks|syv|otte|ni)og(tyve|tredive|tredve|fyrre|halvtreds|tres|halvfjers|firs|halvfems)))|((og)(en|et|to|tre|fire|fem|seks|syv|otte|ni|ti|elleve|tolv|tretten|fjorten|femten|seksten|sytten|atten|nitten|tyve|tredive|tredve|fyrre|halvtreds|tres|halvfjers|firs|halvfems)(?!((hundred|tusind|million|milliard)(er|e|))))|(og)|(en|et|to|tre|fire|fem|seks|syv|otte|ni|ti|elleve|tolv|tretten|fjorten|femten|seksten|sytten|atten|nitten|tyve|tredive|tredve|fyrre|halvtreds|tres|halvfjers|firs|halvfems|(hundred|tusind|million|milliard)(er|e|))" regexp_replace="$2$7$12$13 $3$8"/></suggestion>.</message>
@@ -240,8 +238,8 @@ $Id$
       <rule> <!-- Talord over 100 uden 'og' (kun to talord) -->
         <pattern>
           <token regexp="yes">
-            (en|et|to|tre|fire|fem|seks|syv|otte|ni|ti|elleve|tolv|tretten|fjorten|femten|seksten|sytten|atten|nitten|tyve|tredive|tredve|fyrre|halvtreds|tres|halvfjers|firs|halvfems|hundred(|e)|tusind(|e|er)|million(|er)|milliard(|er))
-            (hundred(|e)|tusind(|e|er)|million(|er)|milliard(|er)) </token>
+            (en|et|to|tre|fire|fem|seks|syv|otte|ni|ti|elleve|tolv|tretten|fjorten|femten|seksten|sytten|atten|nitten|tyve|tredive|tredve|fyrre|halvtreds|tres|halvfjers|firs|halvfems|hundrede?|tusind(er?)?|million(er?)?|milliard(er?)?)(hundrede?|tusind(er?)?|million(er)?|milliard(er)?)
+          </token>
         </pattern>
         <message>Talord over hundrede skrives i flere ord: <suggestion><match no="1" regexp_match="(?iu)(en|et|to|tre|fire|fem|seks|syv|otte|ni|ti|elleve|tolv|tretten|fjorten|femten|seksten|sytten|atten|nitten|tyve|tredive|tredve|fyrre|halvtreds|tres|halvfjers|firs|halvfems|(hundred|tusind|million|milliard)(er|e|))((hundred|tusind|million|milliard)(er|e|))" regexp_replace="$1 $4"/></suggestion>.</message>
         <url>https://wiki.documentfoundation.org/DA/LanguageTool/Regler#Talord</url>
@@ -614,7 +612,7 @@ $Id$
     <rulegroup id="besøgstid_besøgelsestid" name="kende besøgstid→besøgelsestid">
       <rule>
         <pattern>
-          <token regexp="yes">kend(|e|er|te)</token>
+          <token regexp="yes">kend(er?|te)?</token>
           <token/>
           <marker>
             <token>besøgstid</token>
@@ -643,7 +641,7 @@ $Id$
       </rule>
       <rule>
         <pattern>
-          <token regexp="yes">kend(|e|er|te)</token>
+          <token regexp="yes">kend(er?|te)?</token>
           <token regexp="yes">ikke|aldrig</token>
           <token/>
           <marker>
@@ -1102,9 +1100,9 @@ $Id$
     <rulegroup id="Opremsningskomma" name="Mangler opremsningskomma" default="off"> <!-- Kan IKKE bruges før analyse af navneord er på plads (så falske positiver som "jeg spørger" [et jeg, en spørger] ikke forekommer). Mangler fyldestgørende tags! -->
       <rule>
         <pattern>
-          <token postag_regexp="yes" postag="sub:.*:nom"></token>
+          <token postag_regexp="yes" postag="sub:.*:nom"/>
           <token spacebefore="no">,</token>
-          <token postag_regexp="yes" postag="sub:.*:nom"></token>
+          <token postag_regexp="yes" postag="sub:.*:nom"/>
           <token spacebefore="no">,</token>
           <marker>
             <token postag_regexp="yes" postag="sub:.*:nom"><exception negate_pos="yes" postag_regexp="yes" postag="sub:.*:nom"/></token>
@@ -1119,10 +1117,10 @@ $Id$
       </rule>
       <rule>
         <pattern>
-          <token postag_regexp="yes" postag="sub:.*:nom"></token>
+          <token postag_regexp="yes" postag="sub:.*:nom"/>
           <token spacebefore="no">,</token>
           <token postag_regexp="yes" postag="sub:.*:gen|adj:.*" skip="-1"><exception scope="next" negate_pos="yes" postag_regexp="yes" postag="sub:.*|adj:.*"/></token>
-          <token postag_regexp="yes" postag="sub:.*:nom"></token>
+          <token postag_regexp="yes" postag="sub:.*:nom"/>
           <token spacebefore="no">,</token>
           <token postag_regexp="yes" postag="sub:.*:gen|adj:.*" skip="-1"><exception scope="next" negate_pos="yes" postag_regexp="yes" postag="sub:.*|adj:.*"/></token>
           <marker>
@@ -1140,12 +1138,12 @@ $Id$
       </rule>
       <rule> <!-- Opremsningskomma før og -->
         <pattern>
-          <token postag_regexp="yes" postag="sub:.*"></token>
+          <token postag_regexp="yes" postag="sub:.*"/>
           <token spacebefore="no">,</token>
-          <token postag_regexp="yes" postag="sub:.*"></token>
+          <token postag_regexp="yes" postag="sub:.*"/>
           <token spacebefore="no">,</token>
           <marker>
-            <token postag_regexp="yes" postag="sub:.*"></token>
+            <token postag_regexp="yes" postag="sub:.*"/>
             <token spacebefore="no">,</token>
             <token regexp="yes">og|eller</token>
           </marker>
@@ -1159,10 +1157,10 @@ $Id$
       </rule>
       <rule>
         <pattern>
-          <token postag_regexp="yes" postag="sub:.*:nom"></token>
+          <token postag_regexp="yes" postag="sub:.*:nom"/>
           <token spacebefore="no">,</token>
           <token postag_regexp="yes" postag="sub:.*:gen|adj:.*" skip="-1"><exception scope="next" negate_pos="yes" postag_regexp="yes" postag="sub:.*|adj:.*"/></token>
-          <token postag_regexp="yes" postag="sub:.*:nom"></token>
+          <token postag_regexp="yes" postag="sub:.*:nom"/>
           <token spacebefore="no">,</token>
           <token postag_regexp="yes" postag="sub:.*:gen|adj:.*" skip="-1"><exception scope="next" negate_pos="yes" postag_regexp="yes" postag="sub:.*|adj:.*"/></token>
           <marker>

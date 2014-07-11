@@ -22,25 +22,28 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.languagetool.Language;
-import org.languagetool.rules.CommaWhitespaceRule;
-import org.languagetool.rules.DoublePunctuationRule;
-import org.languagetool.rules.GenericUnpairedBracketsRule;
-import org.languagetool.rules.Rule;
-import org.languagetool.rules.UppercaseSentenceStartRule;
-import org.languagetool.rules.WhitespaceRule;
-import org.languagetool.rules.WordRepeatRule;
+import org.languagetool.rules.*;
 import org.languagetool.rules.spelling.hunspell.HunspellRule;
 import org.languagetool.rules.sv.CompoundRule;
 import org.languagetool.tagging.Tagger;
 import org.languagetool.tagging.sv.SwedishTagger;
+import org.languagetool.tokenizers.SRXSentenceTokenizer;
+import org.languagetool.tokenizers.SentenceTokenizer;
 
 public class Swedish extends Language {
 
+  private SentenceTokenizer sentenceTokenizer;
   private Tagger tagger;
+  private String name = "Swedish";
 
   @Override
-  public final String getName() {
-    return "Swedish";
+  public String getName() {
+    return name;
+  }
+
+  @Override
+  public void setName(final String name) {
+    this.name = name;
   }
 
   @Override
@@ -49,7 +52,7 @@ public class Swedish extends Language {
   }
 
   @Override
-  public final String[] getCountryVariants() {
+  public final String[] getCountries() {
     return new String[]{"SE", "FI"};
   }
   
@@ -59,6 +62,14 @@ public class Swedish extends Language {
       tagger = new SwedishTagger();
     }
     return tagger;
+  }
+
+  @Override
+  public SentenceTokenizer getSentenceTokenizer() {
+    if (sentenceTokenizer == null) {
+      sentenceTokenizer = new SRXSentenceTokenizer(this);
+    }
+    return sentenceTokenizer;
   }
 
   @Override
@@ -75,7 +86,7 @@ public class Swedish extends Language {
             HunspellRule.class,
             UppercaseSentenceStartRule.class,
             WordRepeatRule.class,
-            WhitespaceRule.class,
+            MultipleWhitespaceRule.class,
             CompoundRule.class
     );
   }

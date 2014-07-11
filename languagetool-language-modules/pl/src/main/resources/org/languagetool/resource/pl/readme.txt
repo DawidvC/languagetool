@@ -10,7 +10,7 @@ BUILD:  8 mar 2013 12:05:02
 
 LICENCE
 
-Copyright (c) 2013, Marcin Mi≥kowski
+Copyright (c) 2013, Marcin Mi≈Çkowski
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -61,7 +61,7 @@ dictionaries in morfologik-stemming Java library.
 
 TAGSET
 
-The tagset used is roughly similar to IPI/NKJP corpus tagset, and described in more detail in the readme_pl.txt file.
+The tagset used is roughly similar to IPI/NKJP corpus tagset, and described in more detail in the tagset.txt file.
 See also www.nkjp.pl.
 
-Morfologik, (c) 2007-2013 Marcin Mi≥kowski.
+Morfologik, (c) 2007-2013 Marcin Mi≈Çkowski.

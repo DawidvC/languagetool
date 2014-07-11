@@ -50,15 +50,24 @@ public class MorfologikBritishSpellerRuleTest {
 
     //incorrect sentences:
 
-    final RuleMatch[] matches = rule.match(langTool.getAnalyzedSentence("Behavior"));
+    RuleMatch[] matches = rule.match(langTool.getAnalyzedSentence("Behavior"));
     // check match positions:
     assertEquals(1, matches.length);
     assertEquals(0, matches[0].getFromPos());
     assertEquals(8, matches[0].getToPos());
-    assertEquals("behaviour", matches[0].getSuggestedReplacements().get(0));
+    assertEquals("Behaviour", matches[0].getSuggestedReplacements().get(0));
 
     assertEquals(1, rule.match(langTool.getAnalyzedSentence("aõh")).length);
     assertEquals(0, rule.match(langTool.getAnalyzedSentence("a")).length);
+    
+    //based on replacement pairs:
+    
+    matches = rule.match(langTool.getAnalyzedSentence("He teached us."));
+    // check match positions:
+    assertEquals(1, matches.length);
+    assertEquals(3, matches[0].getFromPos());
+    assertEquals(10, matches[0].getToPos());
+    assertEquals("taught", matches[0].getSuggestedReplacements().get(0));
   }
 
 }

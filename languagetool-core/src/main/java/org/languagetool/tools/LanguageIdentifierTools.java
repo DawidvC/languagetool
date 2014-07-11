@@ -28,7 +28,13 @@ import org.apache.tika.language.LanguageProfile;
 import org.languagetool.JLanguageTool;
 import org.languagetool.Language;
 
-public class LanguageIdentifierTools {
+public final class LanguageIdentifierTools {
+
+  private static final String PROFILE_SUFFIX = ".ngp";
+  private static final String PROFILE_ENCODING = "UTF-8";
+
+  private LanguageIdentifierTools() {
+  }
 
   public static void addLtProfiles() {
     for (Language language : Language.REAL_LANGUAGES) {
@@ -37,9 +43,6 @@ public class LanguageIdentifierTools {
   }
 
   private static void addProfile(Language language) {
-    final String PROFILE_SUFFIX = ".ngp";
-    final String PROFILE_ENCODING = "UTF-8";
-
     try {
       final LanguageProfile profile = new LanguageProfile();
 
@@ -50,8 +53,7 @@ public class LanguageIdentifierTools {
         // as Tika supports most languages out of the box.
         return;
       }
-      final InputStream stream = JLanguageTool.getDataBroker().getFromResourceDirAsStream(detectionFile);
-      try {
+      try (InputStream stream = JLanguageTool.getDataBroker().getFromResourceDirAsStream(detectionFile)) {
         final InputStreamReader in = new InputStreamReader(stream, PROFILE_ENCODING);
         final BufferedReader reader =
                 new BufferedReader(in);
@@ -65,8 +67,6 @@ public class LanguageIdentifierTools {
           }
           line = reader.readLine();
         }
-      } finally {
-        stream.close();
       }
 
       LanguageIdentifier.addProfile(languageCode, profile);

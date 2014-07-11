@@ -27,6 +27,7 @@ import org.languagetool.language.French;
 import org.languagetool.tagging.disambiguation.rules.XmlRuleDisambiguator;
 import org.languagetool.tagging.disambiguation.xx.DemoDisambiguator;
 import org.languagetool.tagging.fr.FrenchTagger;
+import org.languagetool.tokenizers.SRXSentenceTokenizer;
 import org.languagetool.tokenizers.SentenceTokenizer;
 import org.languagetool.tokenizers.WordTokenizer;
 
@@ -41,26 +42,20 @@ public class FrenchRuleDisambiguatorTest extends TestCase {
   private JLanguageTool lt; 
   
   @Override
-  public void setUp() {
+  public void setUp() throws IOException {
     tagger = new FrenchTagger();
     tokenizer = new WordTokenizer();
-    sentenceTokenizer = new SentenceTokenizer();
-    disambiguator = new XmlRuleDisambiguator(new French());
+    French language = new French();
+    sentenceTokenizer = new SRXSentenceTokenizer(language);
+    disambiguator = new XmlRuleDisambiguator(language);
     disamb2 = new DemoDisambiguator();    
-    try {
-      lt = new JLanguageTool(new French());
-    } catch (IOException e) {
-      fail(e.getMessage());
-    }
+    lt = new JLanguageTool(language);
   }
 
   public void testChunker() throws IOException {
     TestTools.myAssert("Il a enfin publié son livre.",
         "/[null]SENT_START Il/[il]R pers suj 3 m s  /[null]null a/[avoir]V avoir ind pres 3 s  /[null]null enfin/[enfin]A  /[null]null publié/[publier]V ppa m s  /[null]null son/[son]D e s  /[null]null livre/[livre]N e s ./[null]null", 
         tokenizer, sentenceTokenizer, tagger, disambiguator);
-    TestTools.myAssert("Il a enfin publié son livre.",
-        "/[null]SENT_START Il/[il]R pers suj 3 m s  /[null]null a/[a]N m sp|a/[avoir]V avoir ind pres 3 s  /[null]null enfin/[enfin]A  /[null]null publié/[publier]V ppa m s|publié/[publié]J m s  /[null]null son/[son]D m s|son/[son]N m s  /[null]null livre/[livre]N e s|livre/[livrer]V imp pres 2 s|livre/[livrer]V ind pres 1 s|livre/[livrer]V ind pres 3 s|livre/[livrer]V sub pres 1 s|livre/[livrer]V sub pres 3 s ./[null]null",
-        tokenizer, sentenceTokenizer, tagger, disamb2);
     TestTools.myAssert("Je danse toutes les semaines au club.",
         "/[null]SENT_START Je/[je]R pers suj 1 s  /[null]null danse/[danser]V ind pres 1 s|danse/[danser]V sub pres 1 s  /[null]null toutes/[tous]R f p|toutes/[tout]D f p  /[null]null les/[le]D e p  /[null]null semaines/[semaine]N f p  /[null]null au/[au]D m s  /[null]null club/[club]N m s ./[null]null",
         tokenizer, sentenceTokenizer, tagger, disambiguator);
@@ -79,14 +74,6 @@ public class FrenchRuleDisambiguatorTest extends TestCase {
     TestTools.myAssert("Je suis petite.",
         "/[null]SENT_START Je/[je]R pers suj 1 s  /[null]null suis/[suivre]V imp pres 2 s|suis/[suivre]V ind pres 1 s|suis/[suivre]V ind pres 2 s|suis/[être]V etre ind pres 1 s  /[null]null petite/[petit]J f s|petite/[petit]N f s ./[null]null", 
         tokenizer, sentenceTokenizer, tagger, disamb2);
-  }
-
-  public void testAnnotations() throws IOException {
-     final AnalyzedSentence sent = lt.getAnalyzedSentence("Les avions");
-     assertEquals(sent.getAnnotations(), "Disambiguator log: \n\n" +
-        "RP-D_N_AMBIG:1 Les[le/D e p*,les/R pers obj 3 p*] -> Les[le/D e p*]"+
-             "\nRB-LE_LA_LES:1 Les[le/D e p*] -> Les[le/D e p*]" +
-        "\n\nRP-D_N_AMBIG:1 avions[avoir/V avoir ind impa 1 p,avion/N m p,avoir/SENT_END] -> avions[avion/N m p,avoir/SENT_END]\n");
   }
   
 }

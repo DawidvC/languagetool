@@ -18,66 +18,27 @@
  */
 package org.languagetool.tokenizers;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import net.sourceforge.segment.TextIterator;
 import net.sourceforge.segment.srx.SrxDocument;
-import net.sourceforge.segment.srx.SrxParser;
-import net.sourceforge.segment.srx.SrxTextIterator;
-import net.sourceforge.segment.srx.io.Srx2SaxParser;
-
 import org.languagetool.JLanguageTool;
 import org.languagetool.Language;
 
+import java.util.List;
+
 /**
- * Class to tokenize sentences using an SRX file.
+ * Class to tokenize sentences using LanguageTool's global SRX file for all
+ * languages. If you add a language that's not part of the official LanguageTool
+ * distribution, see {@link LocalSRXSentenceTokenizer} instead.
  * 
  * @author Marcin Miłkowski
  * @author Jarek Lipski
  */
-public class SRXSentenceTokenizer extends SentenceTokenizer {
-	
-  private static final String RULES = "/segment.srx";
-  private static final SrxDocument document = createSrxDocument();
+public class SRXSentenceTokenizer implements SentenceTokenizer {
+
+  private static final SrxDocument DOCUMENT = SrxTools.createSrxDocument(JLanguageTool.getDataBroker().getFromResourceDirAsStream("/segment.srx"));
 
   private final String languageCode;
 
   private String parCode;
-
-  private static SrxDocument createSrxDocument() {
-    BufferedReader srxReader = null;
-    try {
-      srxReader = new BufferedReader(new InputStreamReader(
-              JLanguageTool.getDataBroker().getFromResourceDirAsStream(RULES), "utf-8"));
-      final Map<String, Object> parserParameters = new HashMap<>();
-      parserParameters.put(Srx2SaxParser.VALIDATE_PARAMETER, true);
-      final SrxParser srxParser = new Srx2SaxParser(parserParameters);
-      final SrxDocument document = srxParser.parse(srxReader);
-      return document;
-    } catch (IOException e) {
-      throw new RuntimeException("Could not load rules " + RULES + " from resource dir "
-              + JLanguageTool.getDataBroker().getResourceDir(), e);
-    } finally {
-      closeQuietly(srxReader);
-    }
-  }
-
-  private static void closeQuietly(BufferedReader srxReader) {
-    if (srxReader != null) {
-      try {
-        srxReader.close();
-      } catch (IOException e) {
-        // can't throw exception in final block, so logging an error.
-        System.err.println("Error closing SRX file reader.");
-      }
-    }
-  }
 
   public SRXSentenceTokenizer(final Language language) {
     this.languageCode = language.getShortName();
@@ -86,12 +47,7 @@ public class SRXSentenceTokenizer extends SentenceTokenizer {
 
   @Override
   public final List<String> tokenize(final String text) {
-    final List<String> segments = new ArrayList<>();
-    final TextIterator textIterator = new SrxTextIterator(document, languageCode + parCode, text);
-    while (textIterator.hasNext()) {
-      segments.add(textIterator.next());
-    }
-    return segments;
+    return SrxTools.tokenize(text, DOCUMENT, languageCode + parCode);
   }
 
   @Override
@@ -102,7 +58,7 @@ public class SRXSentenceTokenizer extends SentenceTokenizer {
   /**
    * @param lineBreakParagraphs
    *          if <code>true</code>, single lines breaks are assumed to end a
-   *          paragraph, with <code>false</code>, only two ore more consecutive
+   *          paragraph; if <code>false</code>, only two ore more consecutive
    *          line breaks end a paragraph
    */
   @Override

@@ -23,26 +23,30 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.languagetool.Language;
-import org.languagetool.rules.CommaWhitespaceRule;
-import org.languagetool.rules.DoublePunctuationRule;
-import org.languagetool.rules.GenericUnpairedBracketsRule;
-import org.languagetool.rules.Rule;
-import org.languagetool.rules.UppercaseSentenceStartRule;
-import org.languagetool.rules.WhitespaceRule;
+import org.languagetool.rules.*;
 import org.languagetool.rules.spelling.hunspell.HunspellRule;
 import org.languagetool.tagging.Tagger;
 import org.languagetool.tagging.tl.TagalogTagger;
+import org.languagetool.tokenizers.SRXSentenceTokenizer;
+import org.languagetool.tokenizers.SentenceTokenizer;
 
 /** 
  * @author Nathaniel Oco
  */
 public class Tagalog extends Language {
 
+  private SentenceTokenizer sentenceTokenizer;
   private Tagger tagger;
+  private String name = "Tagalog";
 
   @Override
   public String getName() {
-    return "Tagalog";
+    return name;
+  }
+
+  @Override
+  public void setName(final String name) {
+    this.name = name;
   }
 
   @Override
@@ -51,10 +55,18 @@ public class Tagalog extends Language {
   }
 
   @Override
-  public String[] getCountryVariants() {
+  public String[] getCountries() {
     return new String[] {"PH"};
   }
-  
+
+  @Override
+  public final SentenceTokenizer getSentenceTokenizer() {
+    if (sentenceTokenizer == null) {
+      sentenceTokenizer = new SRXSentenceTokenizer(this);
+    }
+    return sentenceTokenizer;
+  }
+
   @Override
   public Tagger getTagger() {
     if (tagger == null) {
@@ -65,10 +77,10 @@ public class Tagalog extends Language {
 
   @Override
   public Contributor[] getMaintainers() {
-  	final Contributor contributor1 = new Contributor ("Nathaniel Oco");
-  	final Contributor contributor2 = new Contributor ("Allan Borra");
-  	contributor1.setUrl("http://www.dlsu.edu.ph/research/centers/adric/nlp/");
-  	contributor2.setUrl("http://www.dlsu.edu.ph/research/centers/adric/nlp/faculty/borra.asp");
+    final Contributor contributor1 = new Contributor("Nathaniel Oco");
+    contributor1.setUrl("http://www.dlsu.edu.ph/research/centers/adric/nlp/");
+    final Contributor contributor2 = new Contributor("Allan Borra");
+    contributor2.setUrl("http://www.dlsu.edu.ph/research/centers/adric/nlp/faculty/borra.asp");
     return new Contributor[] { contributor1, contributor2 };
   }
 
@@ -80,7 +92,7 @@ public class Tagalog extends Language {
             GenericUnpairedBracketsRule.class,
             HunspellRule.class,
             UppercaseSentenceStartRule.class,
-            WhitespaceRule.class
+            MultipleWhitespaceRule.class
     );
   }
 

@@ -23,6 +23,8 @@ import org.languagetool.rules.*;
 import org.languagetool.rules.ml.MorfologikMalayalamSpellerRule;
 import org.languagetool.tagging.Tagger;
 import org.languagetool.tagging.ml.MalayalamTagger;
+import org.languagetool.tokenizers.SRXSentenceTokenizer;
+import org.languagetool.tokenizers.SentenceTokenizer;
 import org.languagetool.tokenizers.Tokenizer;
 import org.languagetool.tokenizers.ml.MalayalamWordTokenizer;
 
@@ -31,12 +33,19 @@ import java.util.List;
 
 public class Malayalam extends Language {
 
+  private SentenceTokenizer sentenceTokenizer;
   private Tagger tagger;
   private Tokenizer wordTokenizer;
+  private String name = "Malayalam";
 
   @Override
-  public final String getName() {
-    return "Malayalam";
+  public String getName() {
+    return name;
+  }
+
+  @Override
+  public void setName(final String name) {
+    this.name = name;
   }
 
   @Override
@@ -53,8 +62,16 @@ public class Malayalam extends Language {
   }
   
   @Override
-  public final String[] getCountryVariants() {
+  public final String[] getCountries() {
     return new String[]{"IN"};
+  }
+
+  @Override
+  public final SentenceTokenizer getSentenceTokenizer() {
+    if (sentenceTokenizer == null) {
+      sentenceTokenizer = new SRXSentenceTokenizer(this);
+    }
+    return sentenceTokenizer;
   }
   
   @Override
@@ -67,8 +84,7 @@ public class Malayalam extends Language {
     
   @Override
   public final Contributor[] getMaintainers() {
-    return new Contributor[] {new Contributor("Jithesh.V.S")
-        };
+    return new Contributor[] { new Contributor("Jithesh.V.S") };
   }
 
   @Override
@@ -80,7 +96,7 @@ public class Malayalam extends Language {
             MorfologikMalayalamSpellerRule.class,
             UppercaseSentenceStartRule.class,
             WordRepeatRule.class,
-            WhitespaceRule.class
+            MultipleWhitespaceRule.class
     );
   }
 

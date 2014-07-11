@@ -18,7 +18,6 @@
  */
 package org.languagetool.rules;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,13 +40,12 @@ public abstract class WrongWordInContextRule extends Rule {
 
   private final List<ContextWords> contextWordsSet;
 
-  public WrongWordInContextRule(final ResourceBundle messages) throws IOException {
+  public WrongWordInContextRule(final ResourceBundle messages) {
     if (messages != null) {
       super.setCategory(new Category(getCategoryString()));
     }
-    final String filename = getFilename();
-    contextWordsSet = loadContextWords(JLanguageTool.getDataBroker().getFromRulesDirAsStream(filename));
-    setLocQualityIssueType("misspelling");
+    contextWordsSet = loadContextWords(JLanguageTool.getDataBroker().getFromRulesDirAsStream(getFilename()));
+    setLocQualityIssueType(ITSIssueType.Misspelling);
   }
 
   protected abstract String getFilename();
@@ -67,9 +65,9 @@ public abstract class WrongWordInContextRule extends Rule {
   }
 
   @Override
-  public RuleMatch[] match(final AnalyzedSentence text) {
+  public RuleMatch[] match(final AnalyzedSentence sentence) {
     final List<RuleMatch> ruleMatches = new ArrayList<>();
-    final AnalyzedTokenReadings[] tokens = text.getTokensWithoutWhitespace();
+    final AnalyzedTokenReadings[] tokens = sentence.getTokensWithoutWhitespace();
     for (ContextWords contextWords: contextWordsSet) {
       final boolean[] matchedWord = {false, false};
       final Matcher[] matchers = {null, null};
@@ -96,14 +94,14 @@ public abstract class WrongWordInContextRule extends Rule {
       int endPos = 0;
       String matchedToken = "";
       // when both words have been found, we cannot determine if one of them is wrong
-      if(matchedWord[0] && !matchedWord[1]) {
+      if (matchedWord[0] && !matchedWord[1]) {
         foundWord = 0;
         notFoundWord = 1;
         matchers[1] = contextWords.contexts[1].matcher("");
         startPos = tokens[i-1].getStartPos();
         endPos = tokens[i-1].getStartPos() + token1.length();
         matchedToken = token1;
-      } else if(matchedWord[1] && !matchedWord[0]) {
+      } else if (matchedWord[1] && !matchedWord[0]) {
         foundWord = 1;
         notFoundWord = 0;
         matchers[0] = contextWords.contexts[0].matcher("");
@@ -112,7 +110,7 @@ public abstract class WrongWordInContextRule extends Rule {
         matchedToken = token2;
       }
       
-      if(foundWord != -1) {
+      if (foundWord != -1) {
         final boolean[] matchedContext = {false, false};
         matchers[foundWord] = contextWords.contexts[foundWord].matcher("");
         matchers[notFoundWord] = contextWords.contexts[notFoundWord].matcher("");
@@ -127,7 +125,7 @@ public abstract class WrongWordInContextRule extends Rule {
           token = tokens[i].getToken();
           matchedContext[notFoundWord] = matchers[notFoundWord].reset(token).find();
         }
-        if(matchedContext[notFoundWord] && !matchedContext[foundWord]) {
+        if (matchedContext[notFoundWord] && !matchedContext[foundWord]) {
           final String msg = getMessage(matchedToken, matchedToken.replaceFirst(contextWords.matches[foundWord],contextWords.matches[notFoundWord]),
                   contextWords.explanations[notFoundWord], contextWords.explanations[foundWord]);
           final RuleMatch ruleMatch = new RuleMatch(this, startPos, endPos, msg, getShortMessageString());
@@ -168,8 +166,7 @@ public abstract class WrongWordInContextRule extends Rule {
    */
   private List<ContextWords> loadContextWords(final InputStream file) {
     final List<ContextWords> set = new ArrayList<>();
-    final Scanner scanner = new Scanner(file, "utf-8");
-    try {
+    try (Scanner scanner = new Scanner(file, "utf-8")) {
       while (scanner.hasNextLine()) {
         final String line = scanner.nextLine();
         if (line.charAt(0) == '#') {
@@ -193,16 +190,16 @@ public abstract class WrongWordInContextRule extends Rule {
           set.add(contextWords);
         } // if (column.length >= 6)
       }
-    } finally {
-      scanner.close();
     }
     return set;
   }
   
   class ContextWords {
     
-    String matches[] = {"", ""}, explanations[] = {"", ""};
-    Pattern words[], contexts[];
+    String[] matches = {"", ""};
+    String[] explanations = {"", ""};
+    Pattern[] words;
+    Pattern[] contexts;
     
     ContextWords() {
       words = new Pattern[2];
@@ -210,12 +207,12 @@ public abstract class WrongWordInContextRule extends Rule {
     }
     
     private String addBoundaries(String str) {
-      String ignore_case = "";
+      String ignoreCase = "";
       if (str.startsWith("(?i)")) {
         str = str.substring(4);
-        ignore_case = "(?i)";
+        ignoreCase = "(?i)";
       }
-      return ignore_case + "\\b(" + str + ")\\b";
+      return ignoreCase + "\\b(" + str + ")\\b";
     }
     
     public void setWord(int i, String word) {

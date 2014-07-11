@@ -5,6 +5,7 @@
 # Also see: http://www.learnenglish.org.uk/grammar/archive/articles_pronunciation.html
 α
 8
+8th
 8m
 11
 11,000
@@ -22,8 +23,11 @@
 88
 89
 800
+8000
+8-course
 F
 *FBI
+*FM
 *FDA
 L
 M
@@ -36,6 +40,9 @@ N
 Nvidia
 S
 R
+*Rh-
+*Rh+
+*Rh-incompatible
 h-bomb
 habitual
 hauteur
@@ -46,6 +53,7 @@ heirloom
 heirship
 historic
 historical
+homage
 honest
 honestly
 honesty
@@ -75,6 +83,7 @@ lcd
 mpg
 mph
 *MBA
+*MA
 *MRI
 MSc
 *MS
@@ -93,3 +102,6 @@ Xbox
 *SUV
 *STD
 *SPF
+*HB
+*RAF
+*IOU

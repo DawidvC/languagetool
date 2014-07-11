@@ -1,5 +1,5 @@
 /* LanguageTool, a natural language style checker
- * Copyright (C) 2005 Daniel Naber (http://www.danielnaber.de)
+ * Copyright (C) 2014 Daniel Naber, Marcin Miłkowski (http://www.languagetool.org)
  * 
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,10 +20,7 @@ package org.languagetool;
 
 import org.apache.commons.lang.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * A sentence that has been tokenized and analyzed.
@@ -35,25 +32,50 @@ public class AnalyzedSentence {
   private final AnalyzedTokenReadings[] tokens;
 
   private AnalyzedTokenReadings[] nonBlankTokens;
-
-  /**
-   * Array mapping positions of tokens as returned with
-   * getTokensWithoutWhitespace() to the internal tokens array.
-   */
+  private volatile Set<String> tokenSet;
+  private volatile Set<String> lemmaSet;
   private int[] whPositions;
 
   /**
-   * Sets {@link AnalyzedTokenReadings}. Whitespace is also a token.
+   * Creates an AnalyzedSentence from the given {@link AnalyzedTokenReadings}. Whitespace is also a token.
    */
   public AnalyzedSentence(final AnalyzedTokenReadings[] tokens) {
     this.tokens = tokens;
   }
 
-  public AnalyzedSentence(final AnalyzedTokenReadings[] tokens, final
-      int[] whPositions) {
+  public AnalyzedSentence(final AnalyzedTokenReadings[] tokens, final int[] whPositions) {
     this.tokens = tokens;
     this.setWhPositions(whPositions);
     getTokensWithoutWhitespace();
+  }
+
+  /**
+   * The method copies {@link org.languagetool.AnalyzedSentence} and returns the copy.
+   * Useful for performing local immunization (for example).
+   *
+   * @param sentence {@link org.languagetool.AnalyzedSentence} to be copied
+   * @return a new object which is a copy
+   * @since  2.5
+   */
+  public AnalyzedSentence copy(final AnalyzedSentence sentence) {
+    AnalyzedTokenReadings[] copyTokens = new AnalyzedTokenReadings[sentence.getTokens().length];
+    for (int i = 0; i < copyTokens.length; i++) {
+      copyTokens[i] = new AnalyzedTokenReadings(sentence.getTokens()[i].getReadings(),
+          sentence.getTokens()[i].getStartPos());
+      copyTokens[i].setHistoricalAnnotations(sentence.getTokens()[i].getHistoricalAnnotations());
+      copyTokens[i].setChunkTags(sentence.getTokens()[i].getChunkTags());
+      if (sentence.getTokens()[i].isImmunized()) {
+        copyTokens[i].immunize();
+      }
+      if (sentence.getTokens()[i].isIgnoredBySpeller()) {
+        copyTokens[i].ignoreSpelling();
+      }
+      copyTokens[i].setWhitespaceBefore(sentence.getTokens()[i].isWhitespaceBefore());
+    }
+    AnalyzedSentence copy = new AnalyzedSentence(copyTokens);
+    copy.setNonBlankTokens(sentence.getTokensWithoutWhitespace());
+    copy.setWhPositions(sentence.getWhPositions());
+    return copy;
   }
 
   /**
@@ -118,6 +140,18 @@ public class AnalyzedSentence {
   }
 
   /**
+   * Return string representation without any analysis information, just the original text.
+   * @since 2.6
+   */
+  final String toTextString() {
+    StringBuilder sb = new StringBuilder();
+    for (final AnalyzedTokenReadings element : tokens) {
+      sb.append(element.getToken());
+    }
+    return sb.toString();
+  }
+
+  /**
    * Return string representation with chunk information.
    */
   public final String toString(String readingDelimiter) {
@@ -137,9 +171,9 @@ public class AnalyzedSentence {
         final String posTag = token.getPOSTag();
         if (element.isSentenceStart()) {
           sb.append("<S>");
-        } else if (JLanguageTool.SENTENCE_END_TAGNAME.equals(token.getPOSTag())) {
+        } else if (JLanguageTool.SENTENCE_END_TAGNAME.equals(posTag)) {
           sb.append("</S>");
-        } else if (JLanguageTool.PARAGRAPH_END_TAGNAME.equals(token.getPOSTag())) {
+        } else if (JLanguageTool.PARAGRAPH_END_TAGNAME.equals(posTag)) {
           sb.append("<P/>");
         } else if (posTag == null && !includeChunks) {
           sb.append(token.getToken());
@@ -154,8 +188,11 @@ public class AnalyzedSentence {
       }
       if (!element.isWhitespace()) {
         if (includeChunks) {
-          sb.append(",");
+          sb.append(',');
           sb.append(StringUtils.join(element.getChunkTags(), "|"));
+        }
+        if (element.isImmunized()) {
+          sb.append("{!},");
         }
         sb.append(']');
       } else {
@@ -170,27 +207,28 @@ public class AnalyzedSentence {
    * Get disambiguator actions log.
    */
   public final String getAnnotations() {
-    final StringBuilder sb = new StringBuilder();
+    final StringBuilder sb = new StringBuilder(40);
     sb.append("Disambiguator log: \n");
     for (final AnalyzedTokenReadings element : tokens) {
       if (!element.isWhitespace() &&
               !"".equals(element.getHistoricalAnnotations())) {
         sb.append(element.getHistoricalAnnotations());
-        sb.append("\n");
+        sb.append('\n');
       }
     }
     return sb.toString();
   }
 
   /**
-   * @param whPositions the whPositions to set
+   * @param whPositions the whPositions to set, see {@link #getWhPositions()}
    */
   public void setWhPositions(int[] whPositions) {
     this.whPositions = whPositions;
   }
 
   /**
-   * @return the whPositions
+   * Array mapping positions of tokens as returned with
+   * {@link #getTokensWithoutWhitespace()} to the internal tokens array.
    */
   public int[] getWhPositions() {
     return whPositions;
@@ -203,8 +241,45 @@ public class AnalyzedSentence {
     this.nonBlankTokens = nonBlankTokens;
   }
 
+  /**
+   * Get the lowercase tokens of this sentence in a set.
+   * Used internally for performance optimization.
+   * @since 2.4
+   */
+  public synchronized Set<String> getTokenSet() {
+    if (tokenSet == null) {
+      tokenSet = new HashSet<>();
+      for (AnalyzedTokenReadings token : tokens) {
+        tokenSet.add(token.getToken().toLowerCase());
+      }
+    }
+    return tokenSet;
+  }
+
+  /**
+   * Get the lowercase lemmas of this sentence in a set.
+   * Used internally for performance optimization.
+   * @since 2.5
+   */
+  public synchronized Set<String> getLemmaSet() {
+    if (lemmaSet == null) {
+      lemmaSet = new HashSet<>();
+      for (AnalyzedTokenReadings token : tokens) {
+        for (AnalyzedToken lemmaTok : token.getReadings()) {
+          if (lemmaTok.getLemma() != null) {
+            lemmaSet.add(lemmaTok.getLemma().toLowerCase());
+          } else {
+            lemmaSet.add(lemmaTok.getToken().toLowerCase());
+          }
+        }
+      }
+    }
+    return lemmaSet;
+  }
+
+  @SuppressWarnings("ControlFlowStatementWithoutBraces")
   @Override
-  public boolean equals(Object obj) {
+  public synchronized boolean equals(Object obj) {
     if (this == obj)
       return true;
     if (obj == null)
@@ -218,16 +293,22 @@ public class AnalyzedSentence {
       return false;
     if (!Arrays.equals(whPositions, other.whPositions))
       return false;
+    if (tokenSet != null && !tokenSet.equals(other.tokenSet))
+      return false;
+    if (lemmaSet != null && !lemmaSet.equals(other.lemmaSet))
+      return false;
     return true;
   }
 
   @Override
-  public int hashCode() {
+  public synchronized int hashCode() {
     final int prime = 31;
     int result = 1;
     result = prime * result + Arrays.hashCode(nonBlankTokens);
     result = prime * result + Arrays.hashCode(tokens);
     result = prime * result + Arrays.hashCode(whPositions);
+    result = prime * result + tokenSet.hashCode();
+    result = prime * result + lemmaSet.hashCode();
     return result;
   }
 

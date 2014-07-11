@@ -1,4 +1,4 @@
-/* LanguageTool, a natural language style checker 
+/* LanguageTool, a natural language style checker
  * Copyright (C) 2005 Daniel Naber (http://www.danielnaber.de)
  * 
  * This library is free software; you can redistribute it and/or
@@ -19,16 +19,15 @@
 package org.languagetool.synthesis.en;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import morfologik.stemming.Dictionary;
-import morfologik.stemming.DictionaryLookup;
+import morfologik.stemming.IStemmer;
 import morfologik.stemming.WordData;
 
 import org.languagetool.AnalyzedToken;
-import org.languagetool.JLanguageTool;
 import org.languagetool.rules.en.AvsAnRule;
 import org.languagetool.synthesis.BaseSynthesizer;
 
@@ -49,15 +48,14 @@ import org.languagetool.synthesis.BaseSynthesizer;
 public class EnglishSynthesizer extends BaseSynthesizer {
 
   private static final String RESOURCE_FILENAME = "/en/english_synth.dict";
-
   private static final String TAGS_FILE_NAME = "/en/english_tags.txt";
 
-  /** A special tag to add determiners. **/
+  // A special tag to add determiners.
   private static final String ADD_DETERMINER = "+DT";
 
-  /** A special tag to add only indefinite articles. **/
+  // A special tag to add only indefinite articles.
   private static final String ADD_IND_DETERMINER = "+INDT";
-  
+
   public EnglishSynthesizer() {
     super(RESOURCE_FILENAME, TAGS_FILE_NAME);
   }
@@ -66,10 +64,8 @@ public class EnglishSynthesizer extends BaseSynthesizer {
    * Get a form of a given AnalyzedToken, where the form is defined by a
    * part-of-speech tag.
    * 
-   * @param token
-   *          AnalyzedToken to be inflected.
-   * @param posTag
-   *          A desired part-of-speech tag.
+   * @param token AnalyzedToken to be inflected.
+   * @param posTag A desired part-of-speech tag.
    * @return String value - inflected word.
    */
   @Override
@@ -82,18 +78,65 @@ public class EnglishSynthesizer extends BaseSynthesizer {
     } else if (ADD_IND_DETERMINER.equals(posTag)) {
       final AvsAnRule rule = new AvsAnRule(null);
       return new String[] { rule.suggestAorAn(token.getToken()) };
-    } else {
-      if (synthesizer == null) {
-        final URL url = JLanguageTool.getDataBroker().getFromResourceDirAsUrl(RESOURCE_FILENAME);
-        synthesizer = new DictionaryLookup(Dictionary.read(url));
-      }
-      final List<WordData> wordData = synthesizer.lookup(token.getLemma() + "|" + posTag);
-      final List<String> wordForms = new ArrayList<>();
-      for (WordData wd : wordData) {
-        wordForms.add(wd.getStem().toString());
-      }
-      return wordForms.toArray(new String[wordForms.size()]);
     }
-  }  
+
+    final IStemmer synthesizer = createStemmer();
+    final List<WordData> wordData = synthesizer.lookup(token.getLemma() + "|" + posTag);
+    final List<String> wordForms = new ArrayList<>();
+    for (WordData wd : wordData) {
+      wordForms.add(wd.getStem().toString());
+    }
+    return wordForms.toArray(new String[wordForms.size()]);
+  }
+
+  /**
+   * Special English regexp based synthesizer that allows adding articles
+   * when the regexp-based tag ends with a special signature {@code \\+INDT} or {@code \\+DT}.
+   * 
+   * @since 2.5
+   */
+  @Override
+  public String[] synthesize(final AnalyzedToken token, final String posTag,
+      final boolean posTagRegExp) throws IOException {
+
+    if (posTag != null && posTagRegExp) {
+      String myPosTag = posTag;
+      String det = "";
+      if (posTag.endsWith(ADD_IND_DETERMINER)) {
+        myPosTag = myPosTag.substring(0, myPosTag.indexOf(ADD_IND_DETERMINER) - "\\".length());
+        final AvsAnRule rule = new AvsAnRule(null);
+        det = rule.suggestAorAn(token.getLemma());
+        det = det.substring(0, det.indexOf(' ') + " ".length());
+      } else if (posTag.endsWith(ADD_DETERMINER)) {
+        myPosTag = myPosTag.substring(0, myPosTag.indexOf(ADD_DETERMINER) - "\\".length());
+        det = "the ";
+      }
+
+      initPossibleTags();
+      final Pattern p = Pattern.compile(myPosTag);
+      final List<String> results = new ArrayList<>();
+
+      for (final String tag : possibleTags) {
+        final Matcher m = p.matcher(tag);
+        if (m.matches()) {
+          lookup(token.getLemma(), tag, results, det);
+        }
+      }
+      return results.toArray(new String[results.size()]);
+    }
+
+    return synthesize(token, posTag);
+  }
+
+  private void lookup(String lemma, String posTag, List<String> results, String determiner) {
+    synchronized (this) { // the stemmer is not thread-safe
+      final List<WordData> wordForms = getStemmer().lookup(lemma + "|" + posTag);
+      for (WordData wd : wordForms) {
+        results.add(determiner + wd.getStem().toString());
+      }
+    }
+  }
 
 }
+
+

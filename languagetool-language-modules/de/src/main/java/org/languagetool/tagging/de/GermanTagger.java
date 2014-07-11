@@ -37,9 +37,9 @@ import org.languagetool.tokenizers.de.GermanCompoundTokenizer;
 import org.languagetool.tools.StringTools;
 
 /**
- * German part-of-speech tagger, requires data file in <code>resource/de/german.dict</code>.
+ * German part-of-speech tagger, requires data file in <code>de/german.dict</code> in the classpath.
  * The POS tagset is described in
- * <a href="https://https://github.com/languagetool-org/languagetool/blob/master/languagetool-language-modules/de/src/main/resources/org/languagetool/resource/de/tagset.txt">tagset.txt</a>
+ * <a href="https://github.com/languagetool-org/languagetool/blob/master/languagetool-language-modules/de/src/main/resources/org/languagetool/resource/de/tagset.txt">tagset.txt</a>
  *
  * @author Marcin Milkowski, Daniel Naber
  */
@@ -48,9 +48,9 @@ public class GermanTagger implements Tagger {
   private static final String DICT_FILENAME = "/de/german.dict";
   private static final String USER_DICT_FILENAME = "/de/added.txt";
 
-  private Dictionary dictionary;
-  private ManualTagger manualTagger;
-  private GermanCompoundTokenizer compoundTokenizer;
+  private volatile Dictionary dictionary;
+  private volatile ManualTagger manualTagger;
+  private volatile GermanCompoundTokenizer compoundTokenizer;
 
   public GermanTagger() {
   }
@@ -64,9 +64,15 @@ public class GermanTagger implements Tagger {
 
   protected void initializeIfRequired() throws IOException {
     // Lazy initialize all fields when needed and only once.
-    if (dictionary == null || manualTagger == null || compoundTokenizer == null) {
+    Dictionary dict = dictionary;
+    ManualTagger mTagger = manualTagger;
+    GermanCompoundTokenizer gTokenizer = compoundTokenizer;
+    if (dict == null || mTagger == null || gTokenizer == null) {
       synchronized (this) {
-        if (dictionary == null || manualTagger == null || compoundTokenizer == null) {
+        dict = dictionary;
+        mTagger = manualTagger;
+        gTokenizer = compoundTokenizer;
+        if (dict == null || mTagger == null || gTokenizer == null) {
           initialize();
         }
       }
@@ -92,16 +98,15 @@ public class GermanTagger implements Tagger {
   public List<AnalyzedTokenReadings> tag(final List<String> sentenceTokens, final boolean ignoreCase) throws IOException {
     initializeIfRequired();
 
-    String[] taggerTokens;
     boolean firstWord = true;
     final List<AnalyzedTokenReadings> tokenReadings = new ArrayList<>();
     int pos = 0;
 
     final IStemmer morfologik = new DictionaryLookup(dictionary);
 
-    for (String word: sentenceTokens) {
-      final List<AnalyzedGermanToken> l = new ArrayList<>();
-      taggerTokens = lexiconLookup(word, morfologik);
+    for (String word : sentenceTokens) {
+      final List<AnalyzedToken> l = new ArrayList<>();
+      String[] taggerTokens = lexiconLookup(word, morfologik);
       if (firstWord && taggerTokens == null && ignoreCase) { // e.g. "Das" -> "das" at start of sentence
         taggerTokens = lexiconLookup(word.toLowerCase(), morfologik);
         firstWord = false;
@@ -113,7 +118,7 @@ public class GermanTagger implements Tagger {
         if (!StringTools.isEmpty(word.trim())) {
           final List<String> compoundParts = compoundTokenizer.tokenize(word);
           if (compoundParts.size() <= 1) {
-            l.add(new AnalyzedGermanToken(word, null, null));
+            l.add(new AnalyzedToken(word, null, null));
           } else {
             // last part governs a word's POS:
             String lastPart = compoundParts.get(compoundParts.size()-1);
@@ -124,21 +129,21 @@ public class GermanTagger implements Tagger {
             if (taggerTokens != null) {
               tagWord(taggerTokens, word, l, compoundParts);
             } else {
-              l.add(new AnalyzedGermanToken(word, null, null));
+              l.add(new AnalyzedToken(word, null, null));
             }
           }
         } else {
-          l.add(new AnalyzedGermanToken(word, null, null));
+          l.add(new AnalyzedToken(word, null, null));
         }
       }
 
-      tokenReadings.add(new AnalyzedTokenReadings(l.toArray(new AnalyzedGermanToken[l.size()]), pos));
+      tokenReadings.add(new AnalyzedTokenReadings(l.toArray(new AnalyzedToken[l.size()]), pos));
       pos += word.length();
     }
     return tokenReadings;
   }
 
-  private void tagWord(String[] taggerTokens, String word, List<AnalyzedGermanToken> l) {
+  private void tagWord(String[] taggerTokens, String word, List<AnalyzedToken> l) {
     tagWord(taggerTokens, word, l, null);
   }
 
@@ -146,7 +151,7 @@ public class GermanTagger implements Tagger {
    * @param compoundParts all compound parts of the complete word or <code>null</code>,
    *   if the original input is not a compound
    */
-  private void tagWord(String[] taggerTokens, String word, List<AnalyzedGermanToken> l,
+  private void tagWord(String[] taggerTokens, String word, List<AnalyzedToken> l,
           List<String> compoundParts) {
     int i = 0;
     while (i < taggerTokens.length) {
@@ -157,9 +162,9 @@ public class GermanTagger implements Tagger {
         final List<String> allButLastPart = compoundParts.subList(0, compoundParts.size() - 1);
         final String lemma = StringTools.listToString(allButLastPart, "")
             + StringTools.lowercaseFirstChar(taggerTokens[i]);
-        l.add(new AnalyzedGermanToken(word, taggerTokens[i + 1], lemma));
+        l.add(new AnalyzedToken(word, taggerTokens[i + 1], lemma));
       } else {
-        l.add(new AnalyzedGermanToken(word, taggerTokens[i + 1], taggerTokens[i]));
+        l.add(new AnalyzedToken(word, taggerTokens[i + 1], taggerTokens[i]));
       }
       i = i + 2;
     }
@@ -198,24 +203,12 @@ public class GermanTagger implements Tagger {
 
   @Override
   public final AnalyzedTokenReadings createNullToken(final String token, final int startPos) {
-    return new AnalyzedTokenReadings(new AnalyzedGermanToken(token, null, null), startPos);
+    return new AnalyzedTokenReadings(new AnalyzedToken(token, null, null), startPos);
   }
 
   @Override
   public AnalyzedToken createToken(String token, String posTag) {
-    return new AnalyzedGermanToken(token, posTag);
+    return new AnalyzedToken(token, posTag, null);
   }
-
-  /**
-   * Test only
-   *
-  public static void main(final String[] args) throws IOException {
-    final GermanTagger gt = new GermanTagger();
-    final List<String> l = new ArrayList<>();
-    l.add("Einfacher");
-    //System.err.println(gt.lookup("Treffen", 0));
-    final List<AnalyzedTokenReadings> res = gt.tag(l);
-    System.err.println(res);
-  }*/
 
 }

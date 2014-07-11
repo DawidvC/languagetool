@@ -18,20 +18,17 @@
  */
 package org.languagetool.tools;
 
-import org.languagetool.JLanguageTool;
 import org.languagetool.Language;
-import org.languagetool.rules.Category;
-import org.languagetool.rules.RuleMatch;
-import org.languagetool.rules.patterns.PatternRule;
 
 import java.io.*;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 /**
- * Tools for reading files etc.
+ * Tools for working with strings.
  * 
  * @author Daniel Naber
  */
@@ -61,7 +58,6 @@ public final class StringTools {
     CONTINUE_XML
   }
 
-  private static final int DEFAULT_CONTEXT_SIZE = 25;
   private static final Pattern XML_COMMENT_PATTERN = Pattern.compile("<!--.*?-->", Pattern.DOTALL);
   private static final Pattern XML_PATTERN = Pattern.compile("(?<!<)<[^<>]+>", Pattern.DOTALL);
 
@@ -73,38 +69,19 @@ public final class StringTools {
    * Throw exception if the given string is null or empty or only whitespace.
    */
   public static void assureSet(final String s, final String varName) {
-    if (s == null) {
-      throw new NullPointerException(varName + " cannot be null");
-    }
+    Objects.requireNonNull(varName);
     if (isEmpty(s.trim())) {
       throw new IllegalArgumentException(varName + " cannot be empty or whitespace only");
     }
   }
 
   /**
-   * Read a file's content.
-   * @deprecated use {@link #readStream(java.io.InputStream, String)} instead (deprecated since LT 2.3)
-   */
-  public static String readFile(final InputStream file) throws IOException {
-    return readFile(file, null);
-  }
-
-  /**
-   * Read the text stream using the given encoding.
-   *
-   * @deprecated use {@link #readStream(java.io.InputStream, String)} instead (deprecated since LT 2.3)
-   */
-  public static String readFile(final InputStream stream, final String encoding) throws IOException {
-    return readStream(stream, encoding);
-  }
-
-  /**
    * Read the text stream using the given encoding.
    *
    * @param stream InputStream the stream to be read
-   * @param encoding the stream's character encoding, e.g. {@code utf-8}
-   * @return a string with the stream's content, lines separated by {@code \n}
-   * @throws IOException
+   * @param encoding the stream's character encoding, e.g. {@code utf-8}, or {@code null} to use the system encoding
+   * @return a string with the stream's content, lines separated by {@code \n} (note that {@code \n} will
+   *  be added to the last line even if it is not in the stream)
    * @since LanguageTool 2.3
    */
   public static String readStream(final InputStream stream, final String encoding) throws IOException {
@@ -139,7 +116,13 @@ public final class StringTools {
    * (ignoring characters for which no upper-/lowercase distinction exists).
    */
   public static boolean isAllUppercase(final String str) {
-    return str.equals(str.toUpperCase());
+    for(int i = 0; i < str.length(); i++) {
+      char c = str.charAt(i);
+      if (Character.isLetter(c) && Character.isLowerCase(c)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**
@@ -150,19 +133,37 @@ public final class StringTools {
   public static boolean isMixedCase(final String str) {
     return !isAllUppercase(str)
         && !isCapitalizedWord(str)
-        && !str.equals(str.toLowerCase());
+        && isNotAllLowercase(str);
+  }
+
+  /**
+   * Returns true if <code>str</code> is made up of all-lowercase characters
+   * (ignoring characters for which no upper-/lowercase distinction exists).
+   * @since 2.5
+   */
+  public static boolean isNotAllLowercase(final String str) {
+    for(int i = 0; i < str.length(); i++) {
+      char c = str.charAt(i);
+      if (Character.isLetter(c) && !Character.isLowerCase(c)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
    * @param str input string
+   * @return true if word starts with an uppercase letter and all other letters are lowercase
    */
   public static boolean isCapitalizedWord(final String str) {
-    if (isEmpty(str)) {
-      return false;
-    }
-    final char firstChar = str.charAt(0);
-    if (Character.isUpperCase(firstChar)) {
-      return str.substring(1).equals(str.substring(1).toLowerCase());
+    if (!isEmpty(str) && Character.isUpperCase(str.charAt(0))) {
+      for (int i = 1; i < str.length(); i++) {
+        char c = str.charAt(i);
+        if (Character.isLetter(c) && !Character.isLowerCase(c)) {
+          return false;
+        }
+      }
+      return true;
     }
     return false;
   }
@@ -174,11 +175,7 @@ public final class StringTools {
     if (isEmpty(str)) {
       return false;
     }
-    final char firstChar = str.charAt(0);
-    if (Character.isUpperCase(firstChar)) {
-      return true;
-    }
-    return false;
+    return Character.isUpperCase(str.charAt(0));
   }
 
   /**
@@ -213,7 +210,7 @@ public final class StringTools {
       return str;
     }
     if (str.length() == 1) {
-      return toUpperCase ? str.toUpperCase() : str.toLowerCase();
+      return toUpperCase ? str.toUpperCase(Locale.ENGLISH) : str.toLowerCase();
     }
     int pos = 0;
     final int len = str.length() - 1;
@@ -240,24 +237,9 @@ public final class StringTools {
     return sb.toString();
   }
 
-  /**
-   * @deprecated use {@link #streamToString(java.io.InputStream, String)} instead (deprecated since 1.8)
-   */
-  public static String streamToString(final InputStream is) throws IOException {
-    final InputStreamReader isr = new InputStreamReader(is);
-    try {
-      return readerToString(isr);
-    } finally {
-      isr.close();
-    }
-  }
-
   public static String streamToString(final InputStream is, String charsetName) throws IOException {
-    final InputStreamReader isr = new InputStreamReader(is, charsetName);
-    try {
+    try (InputStreamReader isr = new InputStreamReader(is, charsetName)) {
       return readerToString(isr);
-    } finally {
-      isr.close();
     }
   } 
   
@@ -272,7 +254,7 @@ public final class StringTools {
    * Escapes these characters: less than, greater than, quote, ampersand.
    */
   public static String escapeHTML(final String s) {
-    // this version is much faster than using s.replaceAll
+    // this version is much faster than using s.replaceAll()
     final StringBuilder sb = new StringBuilder();
     final int n = s.length();
     for (int i = 0; i < n; i++) {
@@ -299,124 +281,6 @@ public final class StringTools {
     return sb.toString();
   }
 
-  /**
-   * Get an XML representation of the given rule matches.
-   * 
-   * @param text the original text that was checked, used to get the context of the matches
-   * @param contextSize the desired context size in characters
-   * @deprecated Use {@link #ruleMatchesToXML(List,String,int,XmlPrintMode)} instead
-   */
-  public static String ruleMatchesToXML(final List<RuleMatch> ruleMatches,
-      final String text, final int contextSize) {
-    return ruleMatchesToXML(ruleMatches, text, contextSize, XmlPrintMode.NORMAL_XML);
-  }
-
-  /**
-   * Get an XML representation of the given rule matches.
-   *
-   * @param text the original text that was checked, used to get the context of the matches
-   * @param contextSize the desired context size in characters
-   * @param xmlMode how to print the XML
-   * @param lang the language of the text (might be null)
-   * @param motherTongue the mother tongue of the user (might be null)
-   */
-  public static String ruleMatchesToXML(final List<RuleMatch> ruleMatches,
-      final String text, final int contextSize, final XmlPrintMode xmlMode,
-      final Language lang, final Language motherTongue) {
-    //
-    // IMPORTANT: people rely on this format, don't change it!
-    //
-    final StringBuilder xml = new StringBuilder();
-
-    if (xmlMode == XmlPrintMode.NORMAL_XML || xmlMode == XmlPrintMode.START_XML) {
-      xml.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-      xml.append("<matches software=\"LanguageTool\" version=\"" + JLanguageTool.VERSION + "\"" + " buildDate=\"")
-         .append(JLanguageTool.BUILD_DATE).append("\">\n");
-    }
-    
-    if (lang != null || motherTongue != null) {
-      String languageXml;
-      languageXml = "<language ";
-      if (lang != null) {
-        languageXml += "shortname=\"" + lang.getShortNameWithVariant() + "\" name=\"" + lang.getName() + "\"";
-      }
-      if(null != motherTongue && (lang == null || !motherTongue.getShortName().equals(lang.getShortNameWithVariant()))) {
-        languageXml += " mothertongueshortname=\"" + motherTongue.getShortName() + "\" mothertonguename=\"" + motherTongue.getName() + "\"";
-      }
-      languageXml += "/>\n";
-      xml.append(languageXml);
-    }
-
-    final ContextTools contextTools = new ContextTools();
-    contextTools.setEscapeHtml(false);
-    contextTools.setContextSize(contextSize);
-    final String START_MARKER = "__languagetool_start_marker";
-    contextTools.setErrorMarkerStart(START_MARKER);
-    contextTools.setErrorMarkerEnd("");
-
-    for (final RuleMatch match : ruleMatches) {
-      String subId = "";
-      if (match.getRule() instanceof PatternRule) {
-        final PatternRule pRule = (PatternRule) match.getRule();
-        if (pRule.getSubId() != null) {
-          subId = " subId=\"" + escapeXMLForAPIOutput(pRule.getSubId()) + "\" ";
-        }
-      }
-      xml.append("<error fromy=\"").append(match.getLine()).append("\"")
-         .append(" fromx=\"").append(match.getColumn() - 1).append("\"")
-         .append(" toy=\"").append(match.getEndLine()).append("\"")
-         .append(" tox=\"").append(match.getEndColumn() - 1).append("\"")
-         .append(" ruleId=\"").append(match.getRule().getId()).append("\"");
-      final String msg = match.getMessage().replaceAll("</?suggestion>", "'");
-      xml.append(subId);
-      xml.append(" msg=\"").append(escapeXMLForAPIOutput(msg)).append("\"");
-      String context = contextTools.getContext(match.getFromPos(), match.getToPos(), text);
-      xml.append(" replacements=\"").append(escapeXMLForAPIOutput(listToString(
-              match.getSuggestedReplacements(), "#"))).append("\"");
-      // get position of error in context and remove artificial marker again:
-      final int contextOffset = context.indexOf(START_MARKER);
-      context = context.replaceFirst(START_MARKER, "");
-      context = context.replaceAll("[\n\r]", " ");
-      xml.append(" context=\"").append(StringTools.escapeXML(context)).append("\"")
-         .append(" contextoffset=\"").append(contextOffset).append("\"")
-         .append(" offset=\"").append(match.getFromPos()).append("\"")
-         .append(" errorlength=\"").append(match.getToPos() - match.getFromPos()).append("\"");
-      if (match.getRule().getUrl() != null) {
-          xml.append(" url=\"").append(escapeXMLForAPIOutput(match.getRule().getUrl().toString())).append("\"");
-      }
-      final Category category = match.getRule().getCategory();
-      if (category != null) {
-        xml.append(" category=\"").append(escapeXMLForAPIOutput(category.getName())).append("\"");
-      }
-      final String type = match.getRule().getLocQualityIssueType();
-      if (type != null) {
-        xml.append(" locqualityissuetype=\"").append(escapeXMLForAPIOutput(type)).append("\"");
-      }
-      xml.append("/>\n");
-    }
-    if (xmlMode == XmlPrintMode.END_XML || xmlMode == XmlPrintMode.NORMAL_XML) {
-      xml.append("</matches>\n");
-    }
-    return xml.toString();
-  }
-
-  /**
-   * Get an XML representation of the given rule matches.
-   *
-   * @param text the original text that was checked, used to get the context of the matches
-   * @param contextSize the desired context size in characters
-   * @param xmlMode how to print the XML
-   */
-  public static String ruleMatchesToXML(final List<RuleMatch> ruleMatches,
-      final String text, final int contextSize, final XmlPrintMode xmlMode) {
-    return ruleMatchesToXML(ruleMatches, text, contextSize, xmlMode, null, null);
-  }
-
-  private static String escapeXMLForAPIOutput(final String s) {
-    // this is simplified XML, i.e. put the "<error>" in one line:
-    return escapeXML(s).replaceAll("[\n\r]", " ");
-  }
-
   public static String listToString(final Collection<String> l, final String delimiter) {
     final StringBuilder sb = new StringBuilder();
     for (final Iterator<String> iter = l.iterator(); iter.hasNext();) {
@@ -430,37 +294,24 @@ public final class StringTools {
   }
 
   /**
-   * @deprecated use {@link ContextTools#getPlainTextContext(int, int, String)} instead (deprecated since LanguageTool 2.3)
-   */
-  public static String getContext(final int fromPos, final int toPos,
-      final String contents) {
-    final ContextTools contextTools = new ContextTools();
-    contextTools.setContextSize(DEFAULT_CONTEXT_SIZE);
-    return contextTools.getPlainTextContext(fromPos, toPos, contents);
-  }
-
-  /**
-   * @deprecated use {@link ContextTools#getPlainTextContext(int, int, String)} instead (deprecated since LanguageTool 2.3)
-   */
-  public static String getContext(final int fromPos, final int toPos,
-      final String contents, final int contextSize) {
-    final ContextTools contextTools = new ContextTools();
-    contextTools.setContextSize(contextSize);
-    return contextTools.getPlainTextContext(fromPos, toPos, contents);
-  }
-
-  /**
    * Filters any whitespace characters. Useful for trimming the contents of
-   * token elements that cannot possibly contain any spaces.
+   * token elements that cannot possibly contain any spaces, with the exception
+   * for a single space in a word (for example, if the language supports numbers
+   * formatted with spaces as single tokens, as Catalan in LanguageTool).
    * 
-   * @param str String to be filtered.
+   * @param string String to be filtered.
    * @return Filtered string.
    */
-  public static String trimWhitespace(final String str) {
+  public static String trimWhitespace(final String string) {
     final StringBuilder filter = new StringBuilder();
+    String str = string.trim();
     for (int i = 0; i < str.length(); i++) {
+      while (str.charAt(i) <= ' ' && i < str.length() &&
+          (str.charAt(i + 1) <= ' ' || i > 1 && str.charAt(i - 1) <= ' ')) {
+        i++;
+      }
       final char c = str.charAt(i);
-      if (c != '\n' && c != ' ' && c != '\t' && c != '\r') {
+      if (c != '\n' && c != '\t' && c != '\r') {
         filter.append(c);
       }
     }
@@ -493,47 +344,6 @@ public final class StringTools {
       }
     }
     return space;
-  }
-
-  /**
-   * Returns translation of the UI element without the control character "&". To
-   * have "&" in the UI, use "&&".
-   * 
-   * @param label Label to convert.
-   * @return String UI element string without mnemonics.
-   */
-  public static String getLabel(final String label) {
-    return label.replaceAll("&([^&])", "$1").
-    replaceAll("&&", "&");
-  }
-
-  /**
-   * Returns the UI element string with mnemonics encoded in OpenOffice.org
-   * convention (using "~").
-   * 
-   * @param label Label to convert
-   * @return String UI element with {@code ~} replacing {@code &}.
-   */
-  public static String getOOoLabel(final String label) {
-    return label.replaceAll("&([^&])", "~$1").replaceAll("&&", "&");
-  }
-
-  /**
-   * Returns mnemonic of a UI element.
-   * 
-   * @param label String Label of the UI element
-   * @return @char Mnemonic of the UI element, or \u0000 in case of no mnemonic set.
-   */
-  public static char getMnemonic(final String label) {
-    int mnemonicPos = label.indexOf('&');
-    while (mnemonicPos != -1 && mnemonicPos == label.indexOf("&&")
-        && mnemonicPos < label.length()) {
-      mnemonicPos = label.indexOf('&', mnemonicPos + 2);
-    }
-    if (mnemonicPos == -1 || mnemonicPos == label.length()) {
-      return '\u0000';
-    }
-    return label.charAt(mnemonicPos + 1);
   }
 
   /**
@@ -596,7 +406,7 @@ public final class StringTools {
    */
   public static String filterXML(final String str) {
     String s = str;       
-    s = XML_COMMENT_PATTERN.matcher(s).replaceAll(" ");        
+    s = XML_COMMENT_PATTERN.matcher(s).replaceAll(" ");
     s = XML_PATTERN.matcher(s).replaceAll("");
     return s;
   }
@@ -606,21 +416,6 @@ public final class StringTools {
       return null;
     }
     return s.toString();
-  }
-  
-  /**
-   * Mimicks Java 1.7 {@link Character#isAlphabetic} (needed as we require only Java 1.6)
-   *  
-   * @param codePoint The input character.
-   * @return True if the character is a Unicode alphabetic character.
-   */
-  public static boolean isAlphabetic(int codePoint) {
-      return (((((1 << Character.UPPERCASE_LETTER) |
-          (1 << Character.LOWERCASE_LETTER) |
-          (1 << Character.TITLECASE_LETTER) |
-          (1 << Character.MODIFIER_LETTER) |
-          (1 << Character.OTHER_LETTER) |
-          (1 << Character.LETTER_NUMBER)) >> Character.getType(codePoint)) & 1) != 0);
   }
 
 }

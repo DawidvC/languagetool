@@ -1,4 +1,4 @@
-/* LanguageTool, a natural language style checker 
+/* LanguageTool, a natural language style checker
  * Copyright (C) 2010 Daniel Naber (http://www.languagetool.org)
  * 
  * This library is free software; you can redistribute it and/or
@@ -24,14 +24,18 @@ import java.util.regex.Pattern;
 
 import org.languagetool.AnalyzedTokenReadings;
 import org.languagetool.Language;
+import org.languagetool.rules.Example;
 import org.languagetool.rules.GenericUnpairedBracketsRule;
+import org.languagetool.rules.SymbolLocator;
 
 public class EnglishUnpairedBracketsRule extends GenericUnpairedBracketsRule {
-  
+
   private static final String[] EN_START_SYMBOLS = { "[", "(", "{", "“", "\"", "'" };
   private static final String[] EN_END_SYMBOLS   = { "]", ")", "}", "”", "\"", "'" };
-  
-  private static final Pattern NUMBER = Pattern.compile("\\d+");
+
+  private static final Pattern NUMBER = Pattern.compile("\\d+(?:-\\d+)?");
+  private static final Pattern YEAR_NUMBER = Pattern.compile("\\d\\ds?");
+  private static final Pattern ALPHA = Pattern.compile("\\p{L}+");
 
   public EnglishUnpairedBracketsRule(final ResourceBundle messages,
       final Language language) {
@@ -39,42 +43,55 @@ public class EnglishUnpairedBracketsRule extends GenericUnpairedBracketsRule {
     startSymbols = EN_START_SYMBOLS;
     endSymbols = EN_END_SYMBOLS;
     uniqueMapInit();
+    addExamplePair(Example.wrong("<marker>\"</marker>I'm over here, she said."),
+                   Example.fixed("\"I'm over here,<marker>\"</marker> she said."));
   }
 
   @Override
   public String getId() {
     return "EN_UNPAIRED_BRACKETS";
   }
-  
+
   @Override
   protected boolean isNoException(final String tokenStr,
       final AnalyzedTokenReadings[] tokens, final int i, final int j, final boolean precSpace,
       final boolean follSpace) {
-       
+
     //TODO: add an', o', 'till, 'tain't, 'cept, 'fore in the disambiguator
     //and mark up as contractions somehow
-    // add exception for dates like '52
-   
+
     if (i <= 1) {
       return true;
     }
-    
+
+    if (i > 2) { // we need this for al-'Adad, as we tokenize on final '-'
+      if ("'".equals(tokens[i].getToken())) {
+        if ("-".equals(tokens[i - 1].getToken()) &&
+            !tokens[i - 1].isWhitespaceBefore() &&
+            ALPHA.matcher(tokens[i - 2].getToken()).matches()) {
+          return false;
+        }
+      }
+    }
+
     final boolean superException = !super.isNoException(tokenStr, tokens, i, j, precSpace, follSpace);
     if (superException) {
       return false;
     }
-    
-    if (!precSpace && follSpace) {
+
+    if (!precSpace && follSpace || tokens[i].isSentenceEnd()) {
       // exception for English inches, e.g., 20"
       final AnalyzedTokenReadings prevToken = tokens[i - 1];
-      if ("\"".equals(tokenStr)
-          && NUMBER.matcher(prevToken.getToken()).matches()) {
-        return false;
+      if ("\"".equals(tokenStr))
+           {
+        if (!symbolStack.empty() && "\"".equals(symbolStack.peek().getSymbol())) {
+          return true;
+        } else if (NUMBER.matcher(prevToken.getToken()).matches()) {
+          return false;
+        }
       }
       // Exception for English plural Saxon genitive
-      // current disambiguation scheme is a bit too greedy
-      // for adjectives
-      if ("'".equals(tokenStr) && tokens[i].hasPosTag("POS")) {
+      if (("'".equals(tokenStr) || "’".equals(tokenStr)) && tokens[i].hasPosTag("POS")) {
         return false;
       }
       // puttin' on the Ritz
@@ -84,14 +101,19 @@ public class EnglishUnpairedBracketsRule extends GenericUnpairedBracketsRule {
       }
     }
     if (precSpace && !follSpace) {
-      // hold 'em!
-      if ("'".equals(tokenStr) && i + 1 < tokens.length
-          && "em".equals(tokens[i + 1].getToken())) {
-        return false;
+      if ("'".equals(tokenStr) && i + 1 < tokens.length) {
+        // hold 'em!
+        if ("em".equals(tokens[i + 1].getToken())) {
+          return false;
+        }
+        // '60 campaign
+        else if (YEAR_NUMBER.matcher(tokens[i + 1].getToken()).matches()) {
+          return false;
+        }
       }
     }
     return true;
   }
 
-  
+
 }

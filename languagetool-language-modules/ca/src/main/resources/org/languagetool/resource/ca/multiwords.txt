@@ -31,9 +31,11 @@ A coneixença d'	LOC_PREP
 A coneixença de	LOC_PREP
 A conseqüència d'	LOC_PREP
 A conseqüència de	LOC_PREP
+A continuació	LOC_ADV
 A contracor	LOC_ADV
 A contrafibra	LOC_ADV
 A contrafil	LOC_ADV
+A contrario sensu	LOC_ADV
 A contrapèl	LOC_ADV
 A cop d'	LOC_PREP
 A cop de	LOC_PREP
@@ -66,9 +68,11 @@ A falta d'	LOC_PREP
 A falta de	LOC_PREP
 A favor d'	LOC_PREP
 A favor de	LOC_PREP
+A fons	LOC_ADV
 A forfollons	LOC_ADV
 A força d'	LOC_PREP
 A força de	LOC_PREP
+A fortiori	LOC_ADV
 A gatamèus	LOC_ADV
 A granel	LOC_ADV
 A gratcient	LOC_ADV
@@ -139,13 +143,13 @@ A la claror de	LOC_PREP
 A la doba	LOC_ADJ
 A la funerala	LOC_ADV
 A la gatzoneta	LOC_ADV
-A la llarga	LOC_ADV
 A la mercè d'	LOC_PREP
 A la mercè de	LOC_PREP
 A la par	LOC_ADJ
 A la raseta	LOC_ADV
 A la recerca d'	LOC_PREP
 A la recerca de	LOC_PREP
+A la redor	LOC_ADV
 A la vegada	LOC_ADV
 A la vora d'	LOC_PREP
 A la vora de	LOC_PREP
@@ -165,7 +169,6 @@ A mercè d'	LOC_PREP
 A mercè de	LOC_PREP
 A mesura que	LOC_CONJ
 A mitjan	LOC_PREP
-A més	LOC_ADV
 A més a més	LOC_ADV
 A palpons	LOC_ADV
 A part	LOC_ADV
@@ -254,7 +257,7 @@ Arran d'	LOC_PREP
 Arran de	LOC_PREP
 Arreu d'	LOC_PREP
 Arreu de	LOC_PREP
-Art déco	NCMS000
+Art déco	_GN_MS
 Ascoli Piceno	NPCNG00
 Atenent que	LOC_CONJ
 Avinent d'	LOC_PREP
@@ -273,7 +276,7 @@ Banja Luka	NPCNG00
 Baton Rouge	NPCNG00
 Beer Sheva	NPCNG00
 Beit Hanoun	NPCNG00
-Bel canto	NCMS000
+Bel canto	_GN_MS
 Belo Horizonte	NPCNG00
 Ben Jawad	NPCNG00
 Ben bé	LOC_ADV
@@ -300,7 +303,6 @@ Chiang Rai	NPCNG00
 Ciudad Juárez	NPCNG00
 Ciudad Real	NPCNG00
 Colúmbia Britànica	NPCNG00
-Com a	LOC_PREP
 Com ara	LOC_CONJ
 Consell de Cent	NPMSO00
 Cos a cos	LOC_ADV
@@ -336,7 +338,7 @@ D' estranquis	LOC_ADV
 D' estrena	LOC_ADV
 D' etiqueta	LOC_ADV
 D' hora	LOC_ADV
-D' imitació	LOC_ADV
+#D' imitació	LOC_ADV
 D' improvís	LOC_ADV
 D' inicògnit	LOC_ADV
 D' un a un	LOC_ADV
@@ -423,15 +425,17 @@ De través	LOC_ADV
 De trobadures	LOC_ADV
 De vegades	LOC_ADV
 De veres	LOC_ADV
-De veritat	LOC_ADV
 De via estreta	LOC_ADV
 De viu en viu	LOC_ADV
 De viva veu	LOC_ADV
 Deir ez-Zor	NPCNG00
 De l tot	LOC_ADV
 Des Moines	NPCNG00
+Després d'	LOC_PREP
+Després de	LOC_PREP
 Deçà i dellà d'	LOC_PREP
 Deçà i dellà de	LOC_PREP
+Deus ex machina	NCMN000
 Dia i nit	LOC_ADV
 Dia sí dia no	LOC_ADV
 Dien Bien Phu	NPCNG00
@@ -499,6 +503,8 @@ En especial	LOC_ADV
 En evidència	LOC_ADV
 En exclusiva	LOC_ADV
 En fals	LOC_ADV
+en favor d'	LOC_PREP
+en favor de	LOC_PREP
 En ferm	LOC_ADV
 En fet d'	LOC_PREP
 En fet de	LOC_PREP
@@ -557,16 +563,18 @@ Fa poc	LOC_ADV
 Fet i fet	LOC_ADV
 Fil per l' agulla	LOC_ADV
 Fil per randa	LOC_ADV
+Financial Times	NPMSO00
 Fins a l punt d'	LOC_PREP
 Fins a l punt de	LOC_PREP
 Fins a mitjan	LOC_PREP
 Fins ara	LOC_ADV
 Fins avui	LOC_ADV
 Fins i tot	LOC_ADV
-Foie gras	NCMS000
+Foie gras	_GN_MS
 Fort Lauderdale	NPCNG00
+Frankfurt am Main	NPCSG00
 Front a front	LOC_ADV
-Futbol sala	NCMS000
+Futbol sala	_GN_MS
 Gens ni mica	LOC_ADV
 Gracias a Dios	NPCNG00
 Gran Bretanya	NPFSG00
@@ -577,6 +585,7 @@ Guangxi Zhuang	NPCNG00
 Hai Phong	NPCNG00
 Hindu Kush	NPCNG00
 Ho Chi Minh	NPCNG00
+Hong Kong	NPCNG00
 Honoris causa	LOC_ADV
 Hradec Králové	NPCNG00
 Huang He	NPCNG00
@@ -613,19 +622,22 @@ La Línea de la Concepción	NPCNG00
 La Mosquitia	NPCNG00
 La Paz	NPCNG00
 La Pequeña Habana	NPCNG00
-Castella -la Manxa	NPFSG00
+La Tour	NPCNG00
 La Toussuire	NPCNG00
 La Valletta	NPCNG00
 Las Alpujarras	NPCNG00
+Las Casas	NPCNG00
 Las Palmas	NPCNG00
 Las Palmas de Gran Canaria	NPCNG00
 Las Vegas	NPCNG00
 Le Bourg-d'Oisans	NPCNG00
 Le Castellet	NPCNG00
+Le Corbusier	NPCNSP0
 Le Creusot	NPCNG00
 Le Havre	NPCNG00
 Le Louron	NPCNG00
 Le Mans	NPCNG00
+Le Monde	NPMSO00
 Le Puy-en-Velay	NPCNG00
 Les Essarts	NPCNG00
 Les Herbiers	NPCNG00
@@ -649,6 +661,7 @@ Mercès a	LOC_PREP
 Millor dit	LOC_ADV
 Minas Gerais	NPCNG00
 Modus operandi	NCMN000
+Modus vivendi	NCMN000
 Molt i molt	LOC_ADV
 Montego Bay	NPCNG00
 Motu proprio	LOC_ADV
@@ -659,6 +672,7 @@ Més o menys	LOC_ADV
 Nagorno Karabakh	NPCNG00
 Neuhausen am Rheinfall	NPCNG00
 New Providence	NPCNG00
+New York Times	NPMSO00
 Ningxia Hui	NPCNG00
 Nit i dia	LOC_ADV
 No fa gaire	LOC_ADV
@@ -673,15 +687,16 @@ Novi Sad	NPCNG00
 O sia	LOC_CONJ
 Oi més	LOC_ADV
 Pas a pas	LOC_ADV
+Pax romana	_GN_FS
 Pe l cap alt	LOC_ADV
 Pe l cap baix	LOC_ADV
 Pearl Harbor	NPCNG00
-Pel cap alt	LOC_ADV
-Pel cap baix	LOC_ADV
-Pel que es refereix a	LOC_PREP
-Pel que fa a	LOC_PREP
-Pels volts d'	LOC_PREP
-Pels volts de	LOC_PREP
+Pe l cap alt	LOC_ADV
+Pe l cap baix	LOC_ADV
+Pe l que es refereix a	LOC_PREP
+Pe l que fa a	LOC_PREP
+Pe ls volts d'	LOC_PREP
+Pe ls volts de	LOC_PREP
 Per capita	LOC_ADV
 Per causa d'	LOC_PREP
 Per causa de	LOC_PREP
@@ -724,6 +739,7 @@ Punta Arenas	NPCNG00
 Quant i més	LOC_PREP
 Quant més	LOC_PREP
 Qui-sap-lo	LOC_ADV
+Rara avis	_GN_FS
 Ras Ajdir	NPCNG00
 Ras Lanuf	NPCNG00
 Ras al-Khaimah	NPCNG00
@@ -737,7 +753,7 @@ Respecte d'	LOC_PREP
 Respecte de	LOC_PREP
 Rhode Island	NPCNG00
 Rift Valley	NPCNG00
-Rigor mortis	NCMS000
+Rigor mortis	_GN_MS
 Rio de Janeiro	NPCNG00
 Roquetas de Mar	NPCNG00
 Rub al-Khali	NPCNG00
@@ -745,6 +761,7 @@ Sadr City	NPCNG00
 Saint George 's	NPCNG00
 Saint Louis	NPCNG00
 Salt Lake City	NPCNG00
+San Diego	NPCNG00
 San Francisco	NPCNG00
 San José	NPCNG00
 San Juan	NPCNG00
@@ -773,10 +790,12 @@ Si més no	LOC_ADV
 Sidi Bouzid	NPCNG00
 Sine die	LOC_ADV
 Sine qua non	LOC_ADJ
+Sobre manera	LOC_ADV
+Son Servera	NPCNG00
 Sota capa d'	LOC_PREP
 Sota capa de	LOC_PREP
 Staten Island	NPCNG00
-Statu quo	NCMS000
+Statu quo	_GN_MS
 Stricto sensu	LOC_ADV
 Sui generis	LOC_ADJ
 Taj Mahal	NPMSG00
@@ -788,8 +807,9 @@ Tan solament	LOC_ADV
 Tan sols	LOC_ADV
 Tant menys	LOC_ADV
 Tant més	LOC_ADV
-Tarin Kowt	NPCNG00
-Terranova i Labrador	NPCNG00
+Tarin Kowt	NPCSG00
+Tel Aviv	NPCSG00
+Terranova i Labrador	NPCSG00
 Tocant a	LOC_PREP
 Tot d' una	LOC_ADV
 Tot just	LOC_ADV
@@ -798,7 +818,7 @@ Tot sol	LOC_ADV
 Tota sola	LOC_ADV
 Totes soles	LOC_ADV
 Tots sols	LOC_ADV
-Tour de force	NCMS000
+Tour de force	_GN_MS
 Tristão da Cunha	NPCNG00
 Tuxtla Gutiérrez	NPCNG00
 Tîrgu Mures	NPCNG00
@@ -813,14 +833,16 @@ Una mica	LOC_ADV
 Una per una	LOC_ADV
 Una vegada per sempre	LOC_ADV
 Una vegada per totes	LOC_ADV
+Urbi et orbi	LOC_ADV
 Vanua Levu	NPCNG00
 Veliko Tarnovo	NPCNG00
+Via crucis	NCMS000
 Villa Cisneros	NPCNG00
 Villa La Angostura	NPCNG00
 Virginia Beach	NPCNG00
 Vist i no vist	LOC_ADV
 Viti Levu	NPCNG00
-Vox populi	NCFS000
+Vox populi	_GN_FS
 Vulgues no vulgues	LOC_ADV
 Walvis Bay	NPCNG00
 West Bromwich	NPCNG00
@@ -860,9 +882,11 @@ a coneixença d'	LOC_PREP
 a coneixença de	LOC_PREP
 a conseqüència d'	LOC_PREP
 a conseqüència de	LOC_PREP
+a continuació	LOC_ADV
 a contracor	LOC_ADV
 a contrafibra	LOC_ADV
 a contrafil	LOC_ADV
+a contrario sensu	LOC_ADV
 a contrapèl	LOC_ADV
 a cop d'	LOC_PREP
 a cop de	LOC_PREP
@@ -895,9 +919,11 @@ a falta d'	LOC_PREP
 a falta de	LOC_PREP
 a favor d'	LOC_PREP
 a favor de	LOC_PREP
+a fons	LOC_ADV
 a forfollons	LOC_ADV
 a força d'	LOC_PREP
 a força de	LOC_PREP
+a fortiori	LOC_ADV
 a gatamèus	LOC_ADV
 a granel	LOC_ADV
 a gratcient	LOC_ADV
@@ -969,13 +995,13 @@ a la claror de	LOC_PREP
 a la doba	LOC_ADJ
 a la funerala	LOC_ADV
 a la gatzoneta	LOC_ADV
-a la llarga	LOC_ADV
 a la mercè d'	LOC_PREP
 a la mercè de	LOC_PREP
 a la par	LOC_ADJ
 a la raseta	LOC_ADV
 a la recerca d'	LOC_PREP
 a la recerca de	LOC_PREP
+a la redor	LOC_ADV
 a la vegada	LOC_ADV
 a la vora d'	LOC_PREP
 a la vora de	LOC_PREP
@@ -995,7 +1021,6 @@ a mercè d'	LOC_PREP
 a mercè de	LOC_PREP
 a mesura que	LOC_CONJ
 a mitjan	LOC_PREP
-a més	LOC_ADV
 a més a més	LOC_ADV
 a palpons	LOC_ADV
 a part	LOC_ADV
@@ -1072,13 +1097,13 @@ arran d'	LOC_PREP
 arran de	LOC_PREP
 arreu d'	LOC_PREP
 arreu de	LOC_PREP
-art déco	NCMS000
+art déco	_GN_MS
 atenent que	LOC_CONJ
 avinent d'	LOC_PREP
 avinent de	LOC_PREP
 avui dia	LOC_ADV
 avui en dia	LOC_ADV
-bel canto	NCMS000
+bel canto	_GN_MS
 ben bé	LOC_ADV
 boca per amunt	LOC_ADV
 boca per avall	LOC_ADV
@@ -1089,12 +1114,12 @@ camp a través	LOC_ADV
 campe qui puga	LOC_ADV
 campi qui pugui	LOC_ADV
 cara a cara	LOC_ADV
-com a	LOC_PREP
 com ara	LOC_CONJ
 cos a cos	LOC_ADV
 cos per cos	LOC_ADV
 costa amunt	LOC_ADV
 costa avall	LOC_ADV
+cum laude	LOC_ADV
 d' acord amb	LOC_PREP
 d' alguna manera	LOC_ADV
 d' allò més	LOC_ADV
@@ -1121,7 +1146,7 @@ d' estranquis	LOC_ADV
 d' estrena	LOC_ADV
 d' etiqueta	LOC_ADV
 d' hora	LOC_ADV
-d' imitació	LOC_ADV
+#d' imitació	LOC_ADV
 d' improvís	LOC_ADV
 d' inicògnit	LOC_ADV
 d' un a un	LOC_ADV
@@ -1158,6 +1183,7 @@ de facto	LOC_ADV
 de folondres	LOC_ADV
 de franc	LOC_ADV
 de futris	LOC_ADV
+de Gaulle	NPCNSP0
 de gaidó	LOC_ADV
 de gairell	LOC_ADV
 de genollons	LOC_ADV
@@ -1205,7 +1231,6 @@ de través	LOC_ADV
 de trobadures	LOC_ADV
 de vegades	LOC_ADV
 de veres	LOC_ADV
-de veritat	LOC_ADV
 de via estreta	LOC_ADV
 de viu en viu	LOC_ADV
 de viva veu	LOC_ADV
@@ -1213,6 +1238,9 @@ de l tot	LOC_ADV
 delírium trèmens	NCMN000
 deçà i dellà d'	LOC_PREP
 deçà i dellà de	LOC_PREP
+després d'	LOC_PREP
+després de	LOC_PREP
+deus ex machina	NCMN000
 dia i nit	LOC_ADV
 dia sí dia no	LOC_ADV
 en absolut	LOC_ADV
@@ -1271,6 +1299,8 @@ en especial	LOC_ADV
 en evidència	LOC_ADV
 en exclusiva	LOC_ADV
 en fals	LOC_ADV
+en favor d'	LOC_PREP
+en favor de	LOC_PREP
 en ferm	LOC_ADV
 en fet d'	LOC_PREP
 en fet de	LOC_PREP
@@ -1312,6 +1342,7 @@ en virtut de	LOC_PREP
 en vist	LOC_PREP
 en vistes d'	LOC_PREP
 en vistes de	LOC_PREP
+en voga 	LOC_ADV
 enfront d'	LOC_PREP
 enfront d' 	LOC_ADV
 enfront de	LOC_ADV
@@ -1320,9 +1351,15 @@ enmig d'	LOC_PREP
 enmig de	LOC_PREP
 entorn d'	LOC_PREP
 entorn de	LOC_PREP
+et alii	LOC_ADV
+et a l .	LOC_ADV
 ex aequo	LOC_ADV
 ex ante	LOC_ADV
 ex cathedra	LOC_ADV
+ex nihilo	LOC_ADV
+ex officio	LOC_ADV
+exalt càrrec	_GN_MS
+exalts càrrecs	_GN_MP
 fa molt poc	LOC_ADV
 fa poc	LOC_ADV
 fet i fet	LOC_ADV
@@ -1334,9 +1371,9 @@ fins a mitjan	LOC_PREP
 fins ara	LOC_ADV
 fins avui	LOC_ADV
 fins i tot	LOC_ADV
-foie gras	NCMS000
+foie gras	_GN_MS
 front a front	LOC_ADV
-futbol sala	NCMS000
+futbol sala	_GN_MS
 gens ni mica	LOC_ADV
 grosso modo	LOC_ADV
 gràcies a	LOC_PREP
@@ -1357,16 +1394,19 @@ llevat que	LOC_CONJ
 lluny d'	LOC_PREP
 lluny de	LOC_PREP
 manta vegada	LOC_ADV
+mass media	NCMN000
+mea culpa	NCMN000
 mercès a	LOC_PREP
 millor dit	LOC_ADV
 modus operandi	NCMN000
+modus vivendi	NCMN000
 molt i molt	LOC_ADV
 motu proprio	LOC_ADV
 mutatis mutandis	LOC_ADV
 més ben dit	LOC_ADV
 més i més	LOC_ADV
 més o menys	LOC_ADV
-nihil obstat	NCMS000
+nihil obstat	_GN_MS
 nit i dia	LOC_ADV
 no fa gaire	LOC_ADV
 no gaire	LOC_ADV
@@ -1377,14 +1417,15 @@ noli me tàngere	NCMN000
 o sia	LOC_CONJ
 oi més	LOC_ADV
 pas a pas	LOC_ADV
+pax romana	_GN_FS
 pe l cap alt	LOC_ADV
 pe l cap baix	LOC_ADV
-pel cap alt	LOC_ADV
-pel cap baix	LOC_ADV
-pel que es refereix a	LOC_PREP
-pel que fa a	LOC_PREP
-pels volts d'	LOC_PREP
-pels volts de	LOC_PREP
+pe l cap alt	LOC_ADV
+pe l cap baix	LOC_ADV
+pe l que es refereix a	LOC_PREP
+pe l que fa a	LOC_PREP
+pe ls volts d'	LOC_PREP
+pe ls volts de	LOC_PREP
 per capita	LOC_ADV
 per causa d'	LOC_PREP
 per causa de	LOC_PREP
@@ -1418,27 +1459,29 @@ post mortem	LOC_ADV
 quant i més	LOC_PREP
 quant més	LOC_PREP
 qui-sap-lo	LOC_ADV
+rara avis	_GN_FS
 referent a	LOC_PREP
 relativament a	LOC_PREP
 respecte a	LOC_PREP
 respecte d'	LOC_PREP
 respecte de	LOC_PREP
-rigor mortis	NCMS000
-sancta sanctorum	NCMS000
+rigor mortis	_GN_MS
+sancta sanctorum	_GN_MS
 segons que	LOC_CONJ
 seguit seguit	LOC_ADV
 sens dubte	LOC_ADV
 sense perjudici d'	LOC_PREP
 sense perjudici de	LOC_PREP
-sex ratio	NCFS000
-sex ratios	NCFP000
+sex ratio	_GN_FS
+sex ratios	_GN_FP
 si fa no fa	LOC_ADV
 si més no	LOC_ADV
 sine die	LOC_ADV
 sine qua non	LOC_ADJ
+sobre manera	LOC_ADV
 sota capa d'	LOC_PREP
 sota capa de	LOC_PREP
-statu quo	NCMS000
+statu quo	_GN_MS
 stricto sensu	LOC_ADV
 sui generis	LOC_ADJ
 tal vegada	LOC_ADV
@@ -1456,7 +1499,7 @@ tot sol	LOC_ADV
 tota sola	LOC_ADV
 totes soles	LOC_ADV
 tots sols	LOC_ADV
-tour de force	NCMS000
+tour de force	_GN_MS
 ultra mesura	LOC_ADV
 un per un	LOC_ADV
 un poc	LOC_ADV
@@ -1466,6 +1509,8 @@ una mica	LOC_ADV
 una per una	LOC_ADV
 una vegada per sempre	LOC_ADV
 una vegada per totes	LOC_ADV
+urbi et orbi	LOC_ADV
+via crucis	NCMS000
 vist i no vist	LOC_ADV
-vox populi	NCFS000
+vox populi	_GN_FS
 vulgues no vulgues	LOC_ADV

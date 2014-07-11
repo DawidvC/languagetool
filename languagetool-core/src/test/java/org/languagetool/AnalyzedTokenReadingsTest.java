@@ -34,9 +34,6 @@ public class AnalyzedTokenReadingsTest extends TestCase {
     assertEquals(false, tokenReadings.isSentenceEnd());
     assertEquals(false, tokenReadings.isParagraphEnd());
     assertEquals(false, tokenReadings.isSentenceStart());
-    assertEquals(false, tokenReadings.isSentStart()); // deprecated
-    assertEquals(false, tokenReadings.isSentEnd());   // deprecated
-    assertEquals(false, tokenReadings.isParaEnd());   // deprecated
     tokenReadings.setSentEnd();
     assertEquals(false, tokenReadings.isSentenceStart());
     assertEquals(true, tokenReadings.isSentenceEnd());
@@ -112,7 +109,6 @@ public class AnalyzedTokenReadingsTest extends TestCase {
               new AnalyzedToken("word2", null, null)), 0);
     int i = 0;
     for (AnalyzedToken tokenReading : tokenReadings) {
-      System.out.println(tokenReading);
       if (i == 0) {
         assertThat(tokenReading.getToken(), is("word1"));
       } else if (i == 1) {

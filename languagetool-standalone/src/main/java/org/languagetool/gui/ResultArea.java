@@ -18,17 +18,6 @@
  */
 package org.languagetool.gui;
 
-import org.apache.commons.lang.StringUtils;
-import org.languagetool.Language;
-import org.languagetool.rules.Rule;
-import org.languagetool.rules.RuleMatch;
-import org.languagetool.rules.spelling.SpellingCheckRule;
-import org.languagetool.tools.ContextTools;
-import org.languagetool.tools.StringTools;
-
-import javax.swing.JTextPane;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 import java.awt.Cursor;
 import java.awt.Desktop;
 import java.io.IOException;
@@ -37,6 +26,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.Set;
+
+import javax.swing.JTextPane;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
+
+import org.apache.commons.lang.StringUtils;
+import org.languagetool.Language;
+import org.languagetool.rules.ITSIssueType;
+import org.languagetool.rules.Rule;
+import org.languagetool.rules.RuleMatch;
+import org.languagetool.tools.ContextTools;
+import org.languagetool.tools.StringTools;
 
 /**
  * Area where the result of text checking is displayed.
@@ -70,9 +71,9 @@ class ResultArea {
     statusPane.setTransferHandler(new RetainLineBreakTransferHandler());
     ltSupport.addLanguageToolListener(new LanguageToolListener() {
       @Override
-      public void languageToolEventOccured(LanguageToolEvent event) {
+      public void languageToolEventOccurred(LanguageToolEvent event) {
         if (event.getType() == LanguageToolEvent.Type.CHECKING_STARTED) {
-          final Language lang = ltSupport.getLanguageTool().getLanguage();
+          final Language lang = ltSupport.getLanguage();
           final String langName;
           if (lang.isExternal()) {
             langName = lang.getTranslatedName(messages) + Main.EXTERNAL_LANGUAGE_SUFFIX;
@@ -80,7 +81,7 @@ class ResultArea {
             langName = lang.getTranslatedName(messages);
           }
           final String startCheckText = Main.HTML_GREY_FONT_START
-                  + Tools.makeTexti18n(messages, "startChecking", langName) + "..." + Main.HTML_FONT_END;
+              + Tools.makeTexti18n(messages, "startChecking", langName) + "..." + Main.HTML_FONT_END;
           statusPane.setText(startCheckText);
           setStartText(startCheckText);
           if (event.getCaller() == marker) {
@@ -106,7 +107,7 @@ class ResultArea {
 
   private String getRuleMatchHtml(List<RuleMatch> ruleMatches, String text, String startCheckText) {
     final ContextTools contextTools = new ContextTools();
-    final StringBuilder sb = new StringBuilder();
+    final StringBuilder sb = new StringBuilder(200);
     sb.append(startCheckText);
     sb.append("<br>\n");
     int i = 0;
@@ -114,8 +115,8 @@ class ResultArea {
       final String output = Tools.makeTexti18n(messages, "result1", i + 1, match.getLine() + 1, match.getColumn());
       sb.append(output);
       final String msg = match.getMessage()
-              .replaceAll("<suggestion>", "<b>").replaceAll("</suggestion>", "</b>")
-              .replaceAll("<old>", "<b>").replaceAll("</old>", "</b>");
+          .replaceAll("<suggestion>", "<b>").replaceAll("</suggestion>", "</b>")
+          .replaceAll("<old>", "<b>").replaceAll("</old>", "</b>");
       sb.append("<b>").append(messages.getString("errorMessage")).append("</b> ");
       sb.append(msg);
       final RuleLink ruleLink = RuleLink.buildDeactivationLink(match.getRule());
@@ -124,7 +125,7 @@ class ResultArea {
         final String replacement = StringTools.listToString(match.getSuggestedReplacements(), "; ");
         sb.append("<b>").append(messages.getString("correctionMessage")).append("</b> ").append(replacement).append("<br>\n");
       }
-      if (match.getRule() instanceof SpellingCheckRule) {
+      if (ITSIssueType.Misspelling.equals(match.getRule().getLocQualityIssueType())) {
         contextTools.setErrorMarkerStart(SPELL_ERROR_MARKER_START);
       } else {
         contextTools.setErrorMarkerStart(LT_ERROR_MARKER_START);
@@ -145,12 +146,13 @@ class ResultArea {
     sb.append(getDisabledRulesHtml());
     final String checkDone = Tools.makeTexti18n(messages, "checkDone", ruleMatches.size(), runTime);
     sb.append("<br>\n").append(checkDone);
+    sb.append("<br>\n").append(messages.getString("makeLanguageToolBetter"));
     sb.append(Main.HTML_FONT_END).append("<br>\n");
     return sb.toString();
   }
 
   private String getDisabledRulesHtml() {
-    final StringBuilder sb = new StringBuilder();
+    final StringBuilder sb = new StringBuilder(40);
     sb.append(messages.getString("deactivatedRulesText"));
     int i = 0;
     int deactivatedRuleCount = 0;
@@ -163,7 +165,7 @@ class ResultArea {
         continue;
       }
       if (i++ > 0) {
-        sb.append(",");
+        sb.append(',');
       }
       final RuleLink reactivationLink = RuleLink.buildReactivationLink(rule);
       sb.append(" <a href=\"").append(reactivationLink).append("\">").append(rule.getDescription()).append("</a>");
@@ -243,7 +245,7 @@ class ResultArea {
       } else {
         ltSupport.enableRule(ruleId);
       }
-      ltSupport.getConfig().saveConfiguration(ltSupport.getLanguageTool().getLanguage());
+      ltSupport.getConfig().saveConfiguration(ltSupport.getLanguage());
       ltSupport.checkImmediately(marker);
     }
 

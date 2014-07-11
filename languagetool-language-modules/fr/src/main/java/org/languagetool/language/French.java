@@ -22,12 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.languagetool.Language;
-import org.languagetool.rules.CommaWhitespaceRule;
-import org.languagetool.rules.DoublePunctuationRule;
-import org.languagetool.rules.GenericUnpairedBracketsRule;
-import org.languagetool.rules.Rule;
-import org.languagetool.rules.UppercaseSentenceStartRule;
-import org.languagetool.rules.WhitespaceRule;
+import org.languagetool.rules.*;
 import org.languagetool.rules.fr.QuestionWhitespaceRule;
 import org.languagetool.rules.spelling.hunspell.HunspellNoSuggestionRule;
 import org.languagetool.tagging.Tagger;
@@ -42,6 +37,7 @@ public class French extends Language {
   private SentenceTokenizer sentenceTokenizer;
   private Tagger tagger;
   private Disambiguator disambiguator;
+  private String name = "French";
 
   @Override
   public final SentenceTokenizer getSentenceTokenizer() {
@@ -53,7 +49,12 @@ public class French extends Language {
 
   @Override
   public String getName() {
-    return "French";
+    return name;
+  }
+
+  @Override
+  public void setName(final String name) {
+    this.name = name;
   }
 
   @Override
@@ -62,7 +63,7 @@ public class French extends Language {
   }
 
   @Override
-  public String[] getCountryVariants() {
+  public String[] getCountries() {
     return new String[]{"FR", "", "BE", "CH", "CA", "LU", "MC", "CM",
             "CI", "HI", "ML", "SN", "CD", "MA", "RE"};
   }
@@ -100,9 +101,9 @@ public class French extends Language {
     final Contributor hVoisard = new Contributor("Hugo Voisard");
     hVoisard.setRemark("2006-2007");
     return new Contributor[] {
-        new Contributor("Agnes Souque"),
-        hVoisard,
         Contributors.DOMINIQUE_PELLE,
+        new Contributor("Agnes Souque"),
+        hVoisard
     };
   }
 
@@ -114,7 +115,8 @@ public class French extends Language {
             GenericUnpairedBracketsRule.class,
             HunspellNoSuggestionRule.class,
             UppercaseSentenceStartRule.class,
-            WhitespaceRule.class,
+            MultipleWhitespaceRule.class,
+            SentenceWhitespaceRule.class,
             // specific to French:
             QuestionWhitespaceRule.class
     );

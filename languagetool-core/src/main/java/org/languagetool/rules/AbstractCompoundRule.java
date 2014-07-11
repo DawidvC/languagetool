@@ -1,4 +1,4 @@
-/* LanguageTool, a natural language style checker 
+/* LanguageTool, a natural language style checker
  * Copyright (C) 2006 Daniel Naber (http://www.danielnaber.de)
  * 
  * This library is free software; you can redistribute it and/or
@@ -42,10 +42,9 @@ import org.languagetool.tools.StringTools;
  * 
  * @author Daniel Naber & Marcin Miłkowski (refactoring)
  */
-
 public abstract class AbstractCompoundRule extends Rule {
 
-  private static final int MAX_TERMS = 5;  
+  private static final int MAX_TERMS = 5;
 
   private final Set<String> incorrectCompounds = new HashSet<>();
   private final Set<String> noDashSuggestion = new HashSet<>();
@@ -63,9 +62,9 @@ public abstract class AbstractCompoundRule extends Rule {
    * See Language.getWordTokenizer()
    */
   private boolean hyphenIgnored = true;
-  
+
   public AbstractCompoundRule(final ResourceBundle messages, final String fileName,
-        final String withHyphenMessage, final String withoutHyphenMessage, final String withOrWithoutHyphenMessage) throws IOException {
+      final String withHyphenMessage, final String withoutHyphenMessage, final String withOrWithoutHyphenMessage) throws IOException {
     if (messages != null) {
       super.setCategory(new Category(messages.getString("category_misc")));
     }
@@ -73,11 +72,11 @@ public abstract class AbstractCompoundRule extends Rule {
     this.withHyphenMessage = withHyphenMessage;
     this.withoutHyphenMessage = withoutHyphenMessage;
     this.withOrWithoutHyphenMessage = withOrWithoutHyphenMessage;
-    setLocQualityIssueType("misspelling");
+    setLocQualityIssueType(ITSIssueType.Misspelling);
   }
 
   @Override
-  public abstract String getId();    
+  public abstract String getId();
 
   @Override
   public abstract String getDescription();
@@ -95,9 +94,9 @@ public abstract class AbstractCompoundRule extends Rule {
   }
 
   @Override
-  public RuleMatch[] match(final AnalyzedSentence text) {
+  public RuleMatch[] match(final AnalyzedSentence sentence) {
     final List<RuleMatch> ruleMatches = new ArrayList<>();
-    final AnalyzedTokenReadings[] tokens = text.getTokensWithoutWhitespace();
+    final AnalyzedTokenReadings[] tokens = sentence.getTokensWithoutWhitespace();
 
     RuleMatch prevRuleMatch = null;
     final Queue<AnalyzedTokenReadings> prevTokens = new ArrayBlockingQueue<>(MAX_TERMS);
@@ -130,8 +129,9 @@ public abstract class AbstractCompoundRule extends Rule {
           final String stringToCheck = normalize(sb.toString());
           stringsToCheck.add(stringToCheck);
           origStringsToCheck.add(sb.toString().trim());
-          if (!stringToToken.containsKey(stringToCheck))
+          if (!stringToToken.containsKey(stringToCheck)) {
             stringToToken.put(stringToCheck, atr);
+          }
         }
         j++;
       }
@@ -148,7 +148,7 @@ public abstract class AbstractCompoundRule extends Rule {
             replacement.add(origStringToCheck.replace(' ', '-'));
             msg = withHyphenMessage;
           }
-          if (!hasAllUppercaseParts(origStringToCheck) && !onlyDashSuggestion.contains(stringToCheck)) {
+          if (isNotAllUppercase(origStringToCheck) && !onlyDashSuggestion.contains(stringToCheck)) {
             replacement.add(mergeCompound(origStringToCheck));
             msg = withoutHyphenMessage;
           }
@@ -160,7 +160,7 @@ public abstract class AbstractCompoundRule extends Rule {
           } else if (replacement.isEmpty() || replacement.size() == 2) {     // isEmpty shouldn't happen
             msg = withOrWithoutHyphenMessage;
           }
-          final RuleMatch ruleMatch = new RuleMatch(this, firstMatchToken.getStartPos(), 
+          final RuleMatch ruleMatch = new RuleMatch(this, firstMatchToken.getStartPos(),
               atr.getStartPos() + atr.getToken().length(), msg, shortDesc);
           // avoid duplicate matches:
           if (prevRuleMatch != null && prevRuleMatch.getFromPos() == ruleMatch.getFromPos()) {
@@ -191,20 +191,16 @@ public abstract class AbstractCompoundRule extends Rule {
     return str;
   }
 
-  private boolean hasAllUppercaseParts(final String str) {
+  private boolean isNotAllUppercase(final String str) {
     final String[] parts = str.split(" ");
     for (String part : parts) {
       if (isHyphenIgnored() || !"-".equals(part)) { // do not treat '-' as an upper-case word
         if (StringTools.isAllUppercase(part)) {
-          return true;
+          return false;
         }
       }
     }
-    return false;
-  }
-
-  private int countParts(final String str) {    
-    return str.split(" ").length;
+    return true;
   }
 
   private String mergeCompound(final String str) {
@@ -212,11 +208,12 @@ public abstract class AbstractCompoundRule extends Rule {
     final StringBuilder sb = new StringBuilder();
     for (int k = 0; k < stringParts.length; k++) {
       if (isHyphenIgnored() || !"-".equals(stringParts[k])) {
-        if (k == 0)
+        if (k == 0) {
           sb.append(stringParts[k]);
-        else
+        } else {
           sb.append(stringParts[k].toLowerCase());
-      }  
+        }
+      }
     }
     return sb.toString();
   }
@@ -230,8 +227,7 @@ public abstract class AbstractCompoundRule extends Rule {
   }
 
   private void loadCompoundFile(final InputStream file, final String encoding) throws IOException {
-    final Scanner scanner = new Scanner(file, encoding);
-    try {
+    try (Scanner scanner = new Scanner(file, encoding)) {
       while (scanner.hasNextLine()) {
         String line = scanner.nextLine().trim();
         if (line.length() < 1 || line.charAt(0) == '#') {
@@ -255,8 +251,6 @@ public abstract class AbstractCompoundRule extends Rule {
         }
         incorrectCompounds.add(line.toLowerCase());
       }
-    } finally {
-      scanner.close();
     }
   }
 

@@ -86,7 +86,7 @@ public class FalseFriendRuleLoader extends DefaultHandler {
       if (suggestionMap != null) {
         final MessageFormat msgFormat = new MessageFormat(messages
             .getString("false_friend_suggestion"));
-        final Object[] msg = new Object[] { formatSuggestions(suggestionMap) };
+        final Object[] msg = { formatSuggestions(suggestionMap) };
         rule.setMessage(rule.getMessage() + " " + msgFormat.format(msg));
       }
     }
@@ -202,7 +202,7 @@ class FalseFriendRuleHandler extends XMLRuleHandler {
 
   @Override
   public void endElement(final String namespaceURI, final String sName,
-      final String qName) {
+      final String qName) throws SAXException {
     if (qName.equals(RULE)) {
       if (language.equalsConsiderVariantsIfSpecified(textLanguage) && translationLanguage != null
           && translationLanguage.equalsConsiderVariantsIfSpecified(motherTongue) && language != motherTongue
@@ -214,7 +214,7 @@ class FalseFriendRuleHandler extends XMLRuleHandler {
             formatTranslations(translations),
             messages.getString(motherTongue.getShortName()) };
         final String description = formatter.format(messageArguments);
-        final PatternRule rule = new PatternRule(id, language, elementList,
+        final PatternRule rule = new FalseFriendPatternRule(id, language, elementList,
             messages.getString("false_friend_desc") + " "
                 + tokensAsString, description, messages
                 .getString("false_friend"));

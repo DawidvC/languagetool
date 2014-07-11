@@ -20,7 +20,6 @@ package org.languagetool.rules;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.regex.Pattern;
 
@@ -37,19 +36,23 @@ import org.languagetool.tools.StringTools;
  */
 public class UppercaseSentenceStartRule extends Rule {
 
+  private static final Pattern NUMERALS_EN =
+          Pattern.compile("[a-z]|(m{0,4}(cm|cd|d?c{0,3})(xc|xl|l?x{0,3})(ix|iv|v?i{0,3}))$");
+  private static final Pattern WHITESPACE_OR_QUOTE = Pattern.compile("[ \"'„»«“\\n]");
+  private static final Pattern SENTENCE_END1 = Pattern.compile("[.?!…]|");
+  private static final Pattern SENTENCE_END2 = Pattern.compile("[.?!…]");
+  private static final Pattern DUTCH_SPECIAL_CASE = Pattern.compile("k|m|n|r|s|t");
+
   private final Language language;
 
   private String lastParagraphString = "";
   
-  private static final Pattern NUMERALS_EN =
-      Pattern.compile("[a-z]|(m{0,4}(cm|cd|d?c{0,3})(xc|xl|l?x{0,3})(ix|iv|v?i{0,3}))$");
-
   public UppercaseSentenceStartRule(final ResourceBundle messages,
       final Language language) {
     super(messages);
     super.setCategory(new Category(messages.getString("category_case")));
     this.language = language;
-    setLocQualityIssueType("typographical");
+    setLocQualityIssueType(ITSIssueType.Typographical);
   }
 
   @Override
@@ -63,9 +66,9 @@ public class UppercaseSentenceStartRule extends Rule {
   }
 
   @Override
-  public final RuleMatch[] match(final AnalyzedSentence text) {
+  public final RuleMatch[] match(final AnalyzedSentence sentence) {
     final List<RuleMatch> ruleMatches = new ArrayList<>();
-    final AnalyzedTokenReadings[] tokens = text.getTokensWithoutWhitespace();
+    final AnalyzedTokenReadings[] tokens = sentence.getTokensWithoutWhitespace();
     if (tokens.length < 2) {
       return toRuleMatchArray(ruleMatches);
     }
@@ -93,37 +96,16 @@ public class UppercaseSentenceStartRule extends Rule {
     }
 
     String lastToken = tokens[tokens.length - 1].getToken();
-    if (lastToken.matches("[ \"'„»«“\\n]") && tokens.length >= 2) {
+    if (tokens.length >= 2 && WHITESPACE_OR_QUOTE.matcher(lastToken).matches()) {
       // ignore trailing whitespace or quote
       lastToken = tokens[tokens.length - 2].getToken();
     }
     
     boolean preventError = false;
-    // TODO: why do only *these* languages have that special case?
-    /*final String langCode = language.getShortName();
-    final boolean languageHasSpecialCases = langCode.equals("ru") || langCode.equals("pl")
-            || langCode.equals("uk") || langCode.equals("be") || langCode.equals(Locale.ENGLISH.getLanguage())
-            || langCode.equals(Locale.ITALIAN.getLanguage()) || langCode.equals(Locale.GERMAN.getLanguage());
-    if (languageHasSpecialCases) {
-      //fix for lists; note - this will not always work for the last point in OOo,
-      //as OOo might serve paragraphs in any order.
-      if (";".equals(lastParagraphString) || ";".equals(lastToken) || ",".equals(lastParagraphString) || ",".equals(lastToken)) {
-        preventError = true;
-      }
-      //fix for words in table (not sentences); note - this will not always work for the last point in OOo,
-      //as OOo might serve paragraphs in any order.
-      if (!lastToken.matches("[.?!…]")) {
-        preventError = true;
-      }
-    } */
-
-    if (lastParagraphString.matches("[;,]")) {
+    if (lastParagraphString.equals(",") || lastParagraphString.equals(";")) {
       preventError = true;
     }
-    /*if (lastParagraphString.matches(":") && lastToken.matches("[;,]")) {
-      preventError = true;
-    }*/  
-    if (!lastParagraphString.matches("[.?!…]|") && !lastToken.matches("[.?!…]")) {
+    if (!SENTENCE_END1.matcher(lastParagraphString).matches() && !SENTENCE_END2.matcher(lastToken).matches()) {
       preventError = true;
     }
     
@@ -133,24 +115,24 @@ public class UppercaseSentenceStartRule extends Rule {
     if (matchTokenPos+1 < tokens.length
         && NUMERALS_EN.matcher(tokens[matchTokenPos].getToken()).matches()
         && (tokens[matchTokenPos+1].getToken().equals(".")
-            || tokens[matchTokenPos+1].getToken().equals(")"))) {
-          preventError = true;
-        }
+         || tokens[matchTokenPos+1].getToken().equals(")"))) {
+      preventError = true;
+    }
     
     if (isUrl(checkToken)) {
       preventError = true;
     }
 
     if (checkToken.length() > 0) {
-        final char firstChar = checkToken.charAt(0);
-        if (!preventError && Character.isLowerCase(firstChar)) {
-          final RuleMatch ruleMatch = new RuleMatch(this, 
-              tokens[matchTokenPos].getStartPos(),
-              tokens[matchTokenPos].getStartPos() + tokens[matchTokenPos].getToken().length(),
-              messages.getString("incorrect_case"));
-          ruleMatch.setSuggestedReplacement(StringTools.uppercaseFirstChar(checkToken));
-          ruleMatches.add(ruleMatch);
-        }
+      final char firstChar = checkToken.charAt(0);
+      if (!preventError && Character.isLowerCase(firstChar)) {
+        final RuleMatch ruleMatch = new RuleMatch(this,
+                tokens[matchTokenPos].getStartPos(),
+                tokens[matchTokenPos].getStartPos() + tokens[matchTokenPos].getToken().length(),
+                messages.getString("incorrect_case"));
+        ruleMatch.setSuggestedReplacement(StringTools.uppercaseFirstChar(checkToken));
+        ruleMatches.add(ruleMatch);
+      }
     }
     return toRuleMatchArray(ruleMatches);
   }
@@ -161,7 +143,7 @@ public class UppercaseSentenceStartRule extends Rule {
       return null;
     }
     if (tokens.length >= 3 && firstToken.equals("'")
-        && secondToken.matches("k|m|n|r|s|t")) {
+        && DUTCH_SPECIAL_CASE.matcher(secondToken).matches()) {
       return tokens[3].getToken();
     }
     return null;

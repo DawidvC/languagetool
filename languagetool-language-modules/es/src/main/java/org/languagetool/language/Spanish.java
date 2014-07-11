@@ -22,13 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.languagetool.Language;
-import org.languagetool.rules.CommaWhitespaceRule;
-import org.languagetool.rules.DoublePunctuationRule;
-import org.languagetool.rules.GenericUnpairedBracketsRule;
-import org.languagetool.rules.Rule;
-import org.languagetool.rules.UppercaseSentenceStartRule;
-import org.languagetool.rules.WhitespaceRule;
-import org.languagetool.rules.WordRepeatRule;
+import org.languagetool.rules.*;
 import org.languagetool.rules.spelling.hunspell.HunspellRule;
 import org.languagetool.synthesis.Synthesizer;
 import org.languagetool.synthesis.es.SpanishSynthesizer;
@@ -48,10 +42,16 @@ public class Spanish extends Language {
   private Synthesizer synthesizer;
   private Tagger tagger;
   private Disambiguator disambiguator;
+  private String name = "Spanish";
 
   @Override
   public String getName() {
-    return "Spanish";
+    return name;
+  }
+
+  @Override
+  public void setName(final String name) {
+    this.name = name;
   }
 
   @Override
@@ -60,7 +60,7 @@ public class Spanish extends Language {
   }
 
   @Override
-  public String[] getCountryVariants() {
+  public String[] getCountries() {
     return new String[]{
             "ES", "", "MX", "GT", "CR", "PA", "DO",
             "VE", "PE", "AR", "EC", "CL", "UY", "PY",
@@ -120,7 +120,7 @@ public class Spanish extends Language {
   
   @Override
   public Contributor[] getMaintainers() {
-	  final Contributor contributor = new Contributor("Juan Martorell");
+    final Contributor contributor = new Contributor("Juan Martorell");
     contributor.setUrl("http://languagetool-es.blogspot.com/");
     return new Contributor[] { contributor };
   }
@@ -134,7 +134,7 @@ public class Spanish extends Language {
             HunspellRule.class,
             UppercaseSentenceStartRule.class,
             WordRepeatRule.class,
-            WhitespaceRule.class
+            MultipleWhitespaceRule.class
     );
   }
 

@@ -317,8 +317,8 @@ estrijol;estríjol;NCMS000
 etile;etilè;NCMS000
 evidencia;evidència;NCFS000
 evidencies;evidències;NCFP000
-exercit;exèrcit;NCMS000
-exercits;exèrcits;NCMP000
+#exercit;exèrcit;NCMS000
+#exercits;exèrcits;NCMP000
 extremuncio;extremunció;NCFS000
 fabrica;fàbrica;NCFS000
 fabriques;fàbriques;NCFP000
@@ -614,7 +614,7 @@ pronuncies;pronúncies;NCFP000
 prorroga;pròrroga;NCFS000
 prorrogues;pròrrogues;NCFP000
 public;públic;NCMS000
-publica;publicà;NCMS000
+#publica;publicà;NCMS000
 punxo;punxó;NCMS000
 quadricula;quadrícula;NCFS000
 quadricules;quadrícules;NCFP000
@@ -655,6 +655,8 @@ repelo;repeló;NCMS000
 repico;repicó;NCMS000
 replica;rèplica;NCFS000
 repliques;rèpliques;NCFP000
+republica;república;NCFS000
+republiques;repúbliques;NCFP000
 residencia;residència;NCFS000
 residencies;residències;NCFP000
 ressopo;ressopó;NCMS000
@@ -743,7 +745,7 @@ testo;testó;NCMS000
 teulis;teulís;NCMS000
 tiro;tiró;NCMS000
 titi;tití;NCMS000
-topi;topí;NCMS000
+#topi;topí;NCMS000
 torro;torró;NCMS000
 torço;torçó;NCMS000
 trafic;tràfic;NCMS000

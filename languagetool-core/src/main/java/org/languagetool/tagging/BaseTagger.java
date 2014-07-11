@@ -1,4 +1,4 @@
-/* LanguageTool, a natural language style checker 
+/* LanguageTool, a natural language style checker
  * Copyright (C) 2006 Daniel Naber (http://www.danielnaber.de)
  * 
  * This library is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@ import org.languagetool.JLanguageTool;
 import org.languagetool.tools.StringTools;
 
 /**
- * Base tagger using Lametyzator.
+ * Base tagger using Morfologik binary dictionaries.
  *
  * @author Marcin Milkowski
  */
@@ -44,10 +44,10 @@ public abstract class BaseTagger implements Tagger {
   protected Locale conversionLocale = Locale.getDefault();
 
   private boolean tagLowercaseWithUppercase = true;
-  private Dictionary dictionary;
+  private volatile Dictionary dictionary;
 
   /**
-   * Get the filename, e.g., <tt>/resource/fr/french.dict</tt>.
+   * Get the filename, e.g., {@code /en/english.dict}.
    */
   public abstract String getFileName();
 
@@ -56,20 +56,22 @@ public abstract class BaseTagger implements Tagger {
   }
 
   protected Dictionary getDictionary() throws IOException {
-    if (dictionary == null) {
+    Dictionary dict = dictionary;
+    if (dict == null) {
       synchronized (this) {
-        if (dictionary == null) {
+        dict = dictionary;
+        if (dict == null) {
           final URL url = JLanguageTool.getDataBroker().getFromResourceDirAsUrl(getFileName());
-          dictionary = Dictionary.read(url);
+          dictionary = dict = Dictionary.read(url);
         }
       }
     }
-    return dictionary;
+    return dict;
   }
 
   @Override
   public List<AnalyzedTokenReadings> tag(final List<String> sentenceTokens)
-          throws IOException {
+      throws IOException {
     List<AnalyzedToken> taggerTokens;
     List<AnalyzedToken> lowerTaggerTokens;
     List<AnalyzedToken> upperTaggerTokens;
@@ -106,7 +108,7 @@ public abstract class BaseTagger implements Tagger {
         }
       }
 
-      // Additional language-dependent-tagging 
+      // Additional language-dependent-tagging
       if (l.isEmpty()) {
         List<AnalyzedToken> additionalTaggedTokens = additionalTags(word);
         addTokens(additionalTaggedTokens, l);
@@ -132,12 +134,19 @@ public abstract class BaseTagger implements Tagger {
   }
 
   protected AnalyzedToken asAnalyzedToken(final String word, final WordData wd) {
+    String tag = StringTools.asString(wd.getTag());
+    // Remove frequency data from tags (if exists)
+    // The frequency data is in the last byte after a separator
+    if (dictionary.metadata.isFrequencyIncluded() && tag.length()>2) {
+      tag = tag.substring(0, tag.length()-2);
+    }
     return new AnalyzedToken(
         word,
-        StringTools.asString(wd.getTag()),
+        tag,
         StringTools.asString(wd.getStem()));
   }
 
+  //please do not make protected, this breaks other languages
   private void addTokens(final List<AnalyzedToken> taggedTokens, final List<AnalyzedToken> l) {
     if (taggedTokens != null) {
       for (AnalyzedToken at : taggedTokens) {
@@ -157,7 +166,7 @@ public abstract class BaseTagger implements Tagger {
   }
 
   public void dontTagLowercaseWithUppercase() {
-    tagLowercaseWithUppercase=false;
+    tagLowercaseWithUppercase = false;
   }
 
   /*

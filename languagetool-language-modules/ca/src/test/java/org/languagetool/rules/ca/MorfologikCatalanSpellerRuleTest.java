@@ -42,7 +42,7 @@ public class MorfologikCatalanSpellerRuleTest {
 
         // prefixes and suffixes.
         assertEquals(0, rule.match(langTool.getAnalyzedSentence("S'autodefineixin com a populars.")).length);
-        assertEquals(0, rule.match(langTool.getAnalyzedSentence("Redibuixen el futur.")).length);
+        //assertEquals(0, rule.match(langTool.getAnalyzedSentence("Redibuixen el futur.")).length);
         assertEquals(0, rule.match(langTool.getAnalyzedSentence("L'exdirigent del partit.")).length);
 
         // correct sentences:
@@ -68,29 +68,63 @@ public class MorfologikCatalanSpellerRuleTest {
         
         //test for "LanguageTool":
         assertEquals(0, rule.match(langTool.getAnalyzedSentence("LanguageTool!")).length);
+        
+        //test for numbers, punctuation
         assertEquals(0, rule.match(langTool.getAnalyzedSentence(",")).length);
         assertEquals(0, rule.match(langTool.getAnalyzedSentence("123454")).length);
+        assertEquals(0, rule.match(langTool.getAnalyzedSentence("1234,54")).length);
+        assertEquals(0, rule.match(langTool.getAnalyzedSentence("1.234,54")).length);
+        assertEquals(0, rule.match(langTool.getAnalyzedSentence("1 234,54")).length);
+        assertEquals(0, rule.match(langTool.getAnalyzedSentence("-1 234,54")).length);
+        assertEquals(0, rule.match(langTool.getAnalyzedSentence("Fa una temperatura de 30°C")).length);
+        assertEquals(0, rule.match(langTool.getAnalyzedSentence("Fa una temperatura de 30 °C")).length);
+        assertEquals(1, rule.match(langTool.getAnalyzedSentence("Any2010")).length);
         
         //tests for mixed case words
         assertEquals(0, rule.match(langTool.getAnalyzedSentence("pH")).length);
         assertEquals(0, rule.match(langTool.getAnalyzedSentence("McDonald")).length);
+        assertEquals(1, rule.match(langTool.getAnalyzedSentence("AixòÉsUnError")).length);
 
-        //incorrect sentences:
-        //TODO: quna --> quan ?, uan --> una, Qie-Què, línees->línies, especialisats -> especialitzats
+        //incorrect words:
+        
+        matches = rule.match(langTool.getAnalyzedSentence("Bordoy"));
+        assertEquals(1, matches.length);
+        
+        //Bordó; Bordoi; Bordo; bordon
+        assertEquals("Bordó", matches[0].getSuggestedReplacements().get(0));
+        assertEquals("Bordoi", matches[0].getSuggestedReplacements().get(1));
+        assertEquals("Bordo", matches[0].getSuggestedReplacements().get(2));
+        assertEquals("Bordon", matches[0].getSuggestedReplacements().get(3));
+        
+        matches = rule.match(langTool.getAnalyzedSentence("Malaysia"));
+        assertEquals(1, matches.length);
+        assertEquals("Malàisia", matches[0].getSuggestedReplacements().get(0));
+        assertEquals(1 , matches[0].getSuggestedReplacements().size());
         
         matches = rule.match(langTool.getAnalyzedSentence("quna"));
         assertEquals(1, matches.length);
-        //assertEquals("quan", matches[0].getSuggestedReplacements().get(0));
+        assertEquals("que", matches[0].getSuggestedReplacements().get(0));
+        assertEquals("una", matches[0].getSuggestedReplacements().get(1));
+        assertEquals("quan", matches[0].getSuggestedReplacements().get(2));
         
+        //capitalized suggestion
         matches = rule.match(langTool.getAnalyzedSentence("Video"));
         assertEquals(1, matches.length);
-        assertEquals("vídeo", matches[0].getSuggestedReplacements().get(0));
+        assertEquals("Vídeo", matches[0].getSuggestedReplacements().get(0));
         
         matches = rule.match(langTool.getAnalyzedSentence("bànner"));
         assertEquals(1, matches.length);
         assertEquals("bàner", matches[0].getSuggestedReplacements().get(0));
         
+        matches = rule.match(langTool.getAnalyzedSentence("especialisats"));
+        assertEquals(1, matches.length);
+        assertEquals("especialitzats", matches[0].getSuggestedReplacements().get(0));
+        
         matches = rule.match(langTool.getAnalyzedSentence("colaborassió"));
+        assertEquals(1, matches.length);
+        assertEquals("col·laboració", matches[0].getSuggestedReplacements().get(0));
+        
+        matches = rule.match(langTool.getAnalyzedSentence("colaboració"));
         assertEquals(1, matches.length);
         assertEquals("col·laboració", matches[0].getSuggestedReplacements().get(0));
         
@@ -130,27 +164,34 @@ public class MorfologikCatalanSpellerRuleTest {
         assertEquals(0, matches[0].getFromPos());
         assertEquals(6, matches[0].getToPos());
         assertEquals("arguït", matches[0].getSuggestedReplacements().get(0));
-        assertEquals("arguïa", matches[0].getSuggestedReplacements().get(1));
-        assertEquals("arguïm", matches[0].getSuggestedReplacements().get(2));
+        assertEquals("argüir", matches[0].getSuggestedReplacements().get(1));
+        assertEquals("argüint", matches[0].getSuggestedReplacements().get(2));
 
         
         matches = rule.match(langTool.getAnalyzedSentence("ángel"));
         assertEquals(1, matches.length);
-        assertEquals("Àngel", matches[0].getSuggestedReplacements().get(0));
-        assertEquals("àngel", matches[0].getSuggestedReplacements().get(1));
+        assertEquals("àngel", matches[0].getSuggestedReplacements().get(0));
+        assertEquals("Àngel", matches[0].getSuggestedReplacements().get(1));
         
         matches = rule.match(langTool.getAnalyzedSentence("caçessim"));
         assertEquals(1, matches.length);
         assertEquals("cacéssim", matches[0].getSuggestedReplacements().get(0));
-        assertEquals("caséssim", matches[0].getSuggestedReplacements().get(1));
+        assertEquals("cassàssim", matches[0].getSuggestedReplacements().get(1));
         assertEquals("casséssim", matches[0].getSuggestedReplacements().get(2));
-        assertEquals("cesséssim", matches[0].getSuggestedReplacements().get(3));
+        assertEquals("casàssim", matches[0].getSuggestedReplacements().get(3));
+        assertEquals("caséssim", matches[0].getSuggestedReplacements().get(4));
+        
+        matches = rule.match(langTool.getAnalyzedSentence("coche"));
+        assertEquals(1, matches.length);
+        assertEquals("cotxe", matches[0].getSuggestedReplacements().get(0));
+        assertEquals("cuixa", matches[0].getSuggestedReplacements().get(1));
+        assertEquals("coixa", matches[0].getSuggestedReplacements().get(2));
         
         
         matches = rule.match(langTool.getAnalyzedSentence("cantaríà"));
         assertEquals(1, matches.length);
         assertEquals("cantaria", matches[0].getSuggestedReplacements().get(0));
-        assertEquals("Cantàbria", matches[0].getSuggestedReplacements().get(1));
+        assertEquals("cantera", matches[0].getSuggestedReplacements().get(1));
         
         //best suggestion first
         matches = rule.match(langTool.getAnalyzedSentence("poguem"));
@@ -168,7 +209,7 @@ public class MorfologikCatalanSpellerRuleTest {
         
         matches = rule.match(langTool.getAnalyzedSentence("TAula"));
         assertEquals(1, matches.length);
-        assertEquals("taula", matches[0].getSuggestedReplacements().get(0));
+        assertEquals("Taula", matches[0].getSuggestedReplacements().get(0));
         
         matches = rule.match(langTool.getAnalyzedSentence("col·Labora"));
         assertEquals(1, matches.length);
@@ -178,14 +219,56 @@ public class MorfologikCatalanSpellerRuleTest {
         assertEquals(1, matches.length);
         assertEquals("col·laborà", matches[0].getSuggestedReplacements().get(0));
         
+        matches = rule.match(langTool.getAnalyzedSentence("después"));
+        assertEquals(1, matches.length);
+        assertEquals("després", matches[0].getSuggestedReplacements().get(0));
+        
+        matches = rule.match(langTool.getAnalyzedSentence("dessinstalasio"));
+        assertEquals(1, matches.length);
+        assertEquals("desinstal·làssiu", matches[0].getSuggestedReplacements().get(0));
+        assertEquals("desinstal·lació", matches[0].getSuggestedReplacements().get(1));
+       
+
+        matches = rule.match(langTool.getAnalyzedSentence("matitzàrem"));
+        assertEquals(1, matches.length);
+        assertEquals("matisarem", matches[0].getSuggestedReplacements().get(0));
+        assertEquals("matisàrem", matches[0].getSuggestedReplacements().get(1));
+        
+        matches = rule.match(langTool.getAnalyzedSentence("tamitzéssim"));
+        assertEquals(1, matches.length);
+        assertEquals("tamisàssim", matches[0].getSuggestedReplacements().get(0));
+        
+        matches = rule.match(langTool.getAnalyzedSentence("adquireixquen"));
+        assertEquals(1, matches.length);
+        assertEquals("adquirisquen", matches[0].getSuggestedReplacements().get(0));
+        assertEquals("adquiresquen", matches[0].getSuggestedReplacements().get(1));
+        
+        matches = rule.match(langTool.getAnalyzedSentence("calificar"));
+        assertEquals(1, matches.length);
+        assertEquals("qualificar", matches[0].getSuggestedReplacements().get(0));
+        
         //capitalized wrong words
         matches = rule.match(langTool.getAnalyzedSentence("En la Pecra"));
         assertEquals(1, matches.length);
-        assertEquals("Macra", matches[0].getSuggestedReplacements().get(0));
-        assertEquals("Pacià", matches[0].getSuggestedReplacements().get(1));
+        assertEquals("Para", matches[0].getSuggestedReplacements().get(0));
+        assertEquals("Pare", matches[0].getSuggestedReplacements().get(1));
+
+        matches = rule.match(langTool.getAnalyzedSentence("IVa"));
+        assertEquals(1, matches.length);
+        assertEquals("Iva", matches[0].getSuggestedReplacements().get(0));
+        assertEquals("IVA", matches[0].getSuggestedReplacements().get(1));
+
+        matches = rule.match(langTool.getAnalyzedSentence("Dvd"));
+        assertEquals(1, matches.length);
+        assertEquals("DVD", matches[0].getSuggestedReplacements().get(0));
+        
+        // deprecated characters of "ela geminada"
+        assertEquals(0, rule.match(langTool.getAnalyzedSentence("S'hi havien instaŀlat.")).length);
+        assertEquals(0, rule.match(langTool.getAnalyzedSentence("S'HI HAVIEN INSTAĿLAT.")).length);
 
         assertEquals(1, rule.match(langTool.getAnalyzedSentence("aõh")).length);
         assertEquals(0, rule.match(langTool.getAnalyzedSentence("a")).length);
+
     }
     
 }
